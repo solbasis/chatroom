@@ -300,7 +300,7 @@ const COLS=["#6ee75a","#5abbe7","#e75ae7","#e7a85a","#e75a5a","#5ae7c8","#e7e15a
 const MX=1000,DEV_NAME='basis';
 const ROLE_ORDER={dev:4,admin:3,mod:2,user:1};
 
-let mode='login',selCol=COLS[0],me=null,unM=null,unU=null,unT=null,unSelf=null,hbIv=null,tpTo=null,db,au,lmc=0,atBot=true,busy=false;
+let mode='login',selCol=COLS[0],me=null,unM=null,unU=null,unT=null,unSelf=null,unBan=null,hbIv=null,tpTo=null,db,au,lmc=0,atBot=true,busy=false,disconnected=false;
 let allUsers=[]; // cached user list for commands
 let cmdResults=[]; // local-only command output
 
@@ -389,7 +389,7 @@ async function doAuth(){
 
 // ENTER CHAT
 async function enterChat(){
-  show('chat');setLd(false);cmdResults=[];
+  show('chat');setLd(false);cmdResults=[];disconnected=false;
   $('hName').textContent=me.name;$('hName').style.color=me.color;
   const a=$('hAv');a.textContent=ini(me.name);a.style.background=me.color;
 
@@ -414,41 +414,33 @@ async function enterChat(){
     if(ts.length){$('typTxt').textContent=ts.map(t=>t.name).join(', ')+(ts.length>1?' are':' is')+' typing...';b.classList.add('on')}else b.classList.remove('on');
   });
 
-  updPres(true);if(hbIv)clearInterval(hbIv);hbIv=setInterval(()=>updPres(true),25000);
+  updPres(true);if(hbIv)clearInterval(hbIv);hbIv=setInterval(()=>{if(!disconnected)updPres(true)},25000);
 
-  // SELF-MONITOR: watch own doc for kick/ban/mute changes
+  // SELF-MONITOR: watch own doc for kick/ban/mute changes in real-time
   if(unSelf)unSelf();
-  unSelf=db.collection('users').doc(me.uid).onSnapshot(async snap=>{
-    if(!snap.exists)return;
+  unSelf=db.collection('users').doc(me.uid).onSnapshot(snap=>{
+    if(!snap.exists||disconnected)return;
     const d=snap.data();
-    // Update muted state in real-time
+    // Sync muted + role in real-time
     me.muted=d.muted||false;
     me.role=d.role||'user';
-    // Check if kicked
+    // Kicked? — kill everything SYNCHRONOUSLY first, then clean up
     if(d.kicked){
-      // Reset kicked flag so they can rejoin later (for kick, not ban)
-      try{await db.collection('users').doc(me.uid).update({kicked:false,online:false})}catch{}
+      // Immediately stop heartbeat so it can't set online:true
+      if(hbIv){clearInterval(hbIv);hbIv=null}
       forceDisconnect('You have been kicked from the room.');
-      return;
     }
   });
 
-  // Also monitor ban list for own name
-  const banCheck=db.collection('bans').doc(me.nameLower);
-  const banSnap=await banCheck.get();
-  // Don't need a persistent listener — we check on presence heartbeat
-  const origUpdPres=updPres;
-  const kickedBanCheck=async()=>{
-    try{
-      const b=await banCheck.get();
-      if(b.exists){forceDisconnect('You have been banned from this room.');return}
-    }catch{}
-    origUpdPres(true);
-  };
-  if(hbIv)clearInterval(hbIv);
-  hbIv=setInterval(kickedBanCheck,25000);
-  // Immediate ban check
-  if(banSnap.exists){forceDisconnect('You have been banned from this room.');return}
+  // BAN MONITOR: real-time listener on own ban doc
+  if(unBan)unBan();
+  unBan=db.collection('bans').doc(me.nameLower).onSnapshot(snap=>{
+    if(disconnected)return;
+    if(snap.exists){
+      if(hbIv){clearInterval(hbIv);hbIv=null}
+      forceDisconnect('You have been banned from this room.');
+    }
+  });
 
   const inp=$('iInp');
   inp.oninput=()=>{
@@ -466,9 +458,16 @@ async function enterChat(){
 }
 
 // TYPING
-async function setTyp(){if(!me)return;try{await db.collection('typing').doc(me.uid).set({uid:me.uid,name:me.name,ts:firebase.firestore.FieldValue.serverTimestamp()})}catch{}if(tpTo)clearTimeout(tpTo);tpTo=setTimeout(clrTyp,3000)}
-async function clrTyp(){if(!me)return;try{await db.collection('typing').doc(me.uid).delete()}catch{}}
-async function updPres(on){if(!me)return;try{await db.collection('users').doc(me.uid).update({online:on,lastSeen:firebase.firestore.FieldValue.serverTimestamp()})}catch{}}
+async function setTyp(){if(!me||disconnected)return;try{await db.collection('typing').doc(me.uid).set({uid:me.uid,name:me.name,ts:firebase.firestore.FieldValue.serverTimestamp()})}catch{}if(tpTo)clearTimeout(tpTo);tpTo=setTimeout(clrTyp,3000)}
+async function clrTyp(){if(!me||disconnected)return;try{await db.collection('typing').doc(me.uid).delete()}catch{}}
+async function updPres(on){if(!me||disconnected)return;try{await db.collection('users').doc(me.uid).update({online:on,lastSeen:firebase.firestore.FieldValue.serverTimestamp()})}catch{}}
+
+// ═══ MUTE CHECK ═══
+async function amIMuted(){
+  if(me.muted)return true;
+  try{const d=await db.collection('users').doc(me.uid).get();if(d.exists&&d.data().muted){me.muted=true;return true}}catch{}
+  return false;
+}
 
 // ═══ COMMANDS ═══
 function addLocal(text,type='info'){cmdResults.push({type,text,ts:Date.now()});renderMsgsFromCache()}
@@ -485,8 +484,8 @@ async function handleSend(){
     inp.focus();return;
   }
 
-  // Check if muted
-  if(me.muted){addLocal('You are muted and cannot send messages.','err');inp.focus();return}
+  // Check if muted — fresh check from Firestore
+  if(await amIMuted()){addLocal('You are muted and cannot send messages.','err');inp.focus();return}
 
   try{
     await db.collection('messages').add({type:'user',uid:me.uid,name:me.name,color:me.color,text:raw,ts:firebase.firestore.FieldValue.serverTimestamp(),deleted:false});
@@ -533,7 +532,7 @@ async function handleCommand(raw){
 
     case'/me':
       if(!rest){addLocal('/me <action>','err');break}
-      if(me.muted){addLocal('You are muted.','err');break}
+      if(await amIMuted()){addLocal('You are muted.','err');break}
       await db.collection('messages').add({type:'action',uid:me.uid,name:me.name,color:me.color,text:rest,ts:firebase.firestore.FieldValue.serverTimestamp()});break;
 
     case'/clear':cmdResults=[];$('msgs').innerHTML='';addLocal('Chat cleared locally.');break;
@@ -556,11 +555,11 @@ async function handleCommand(raw){
       await db.collection('messages').add({type:'action',uid:me.uid,name:me.name,color:me.color,text:`flipped a coin: ${coin}`,ts:firebase.firestore.FieldValue.serverTimestamp()});break;
 
     case'/shrug':
-      if(me.muted){addLocal('You are muted.','err');break}
+      if(await amIMuted()){addLocal('You are muted.','err');break}
       await db.collection('messages').add({type:'user',uid:me.uid,name:me.name,color:me.color,text:'¯\\_(ツ)_/¯',ts:firebase.firestore.FieldValue.serverTimestamp(),deleted:false});break;
 
     case'/tableflip':
-      if(me.muted){addLocal('You are muted.','err');break}
+      if(await amIMuted()){addLocal('You are muted.','err');break}
       await db.collection('messages').add({type:'user',uid:me.uid,name:me.name,color:me.color,text:'(╯°□°)╯︵ ┻━┻',ts:firebase.firestore.FieldValue.serverTimestamp(),deleted:false});break;
 
     // MOD+
@@ -936,23 +935,46 @@ function togSb(){const s=$('sb'),o=$('sbOv');if(s.classList.contains('open')){s.
 
 // FORCE DISCONNECT (kicked/banned)
 async function forceDisconnect(reason){
-  // Tear down all listeners immediately
-  if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}if(unSelf){unSelf();unSelf=null}
+  if(disconnected)return; // prevent double-fire
+  disconnected=true;
+
+  // SYNCHRONOUSLY kill everything to prevent any more Firestore writes
   if(hbIv){clearInterval(hbIv);hbIv=null}
-  clrTyp();
+  if(unM){unM();unM=null}
+  if(unU){unU();unU=null}
+  if(unT){unT();unT=null}
+  if(unSelf){unSelf();unSelf=null}
+  if(unBan){unBan();unBan=null}
+  if(tpTo){clearTimeout(tpTo);tpTo=null}
+
+  // Reset kicked flag so they can rejoin later (for kicks, not bans)
+  const uid=me?.uid;
+  if(uid){try{await db.collection('users').doc(uid).update({kicked:false,online:false})}catch{}}
+
   try{await au.signOut()}catch{}
   me=null;lmc=0;cmdResults=[];allUsers=[];
 
-  // Show kicked/banned notice on auth screen
   show('auth');setLd(false);swAuth('login');
   $('aName').value='';$('aPass').value='';
   showSts(reason,'err');
 }
 
 async function logout(){
-  if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}if(unSelf){unSelf();unSelf=null}
+  // Stop heartbeat first
   if(hbIv){clearInterval(hbIv);hbIv=null}
-  clrTyp();await updPres(false);await au.signOut();
+  if(tpTo){clearTimeout(tpTo);tpTo=null}
+  // Mark offline while still connected
+  try{await updPres(false)}catch{}
+  try{clrTyp()}catch{}
+  // Now set guard and tear down everything
+  disconnected=true;
+  if(unM){unM();unM=null}
+  if(unU){unU();unU=null}
+  if(unT){unT();unT=null}
+  if(unSelf){unSelf();unSelf=null}
+  if(unBan){unBan();unBan=null}
+  await au.signOut();
+  disconnected=false;
   me=null;lmc=0;cmdResults=[];allUsers=[];$('aName').value='';$('aPass').value='';hideSts();setLd(false);swAuth('login');show('auth');
 }
 
