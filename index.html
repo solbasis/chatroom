@@ -145,9 +145,12 @@ body::after{
   width:260px;min-width:260px;background:var(--surface);border-right:1px solid var(--border);
   display:flex;flex-direction:column;overflow:hidden;position:relative;z-index:100
 }
-.sb-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.03),transparent)}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);display:flex;justify-content:space-between;align-items:flex-start}
+.sb-logo-info{}
 .sb-logo-t{font-size:.84rem;font-weight:700;color:var(--g);letter-spacing:4px;text-transform:uppercase;text-shadow:0 0 22px rgba(110,231,90,.3)}
 .sb-logo-s{font-size:.54rem;color:var(--text-dim);letter-spacing:2.5px;text-transform:uppercase;margin-top:3px}
+.sb-close{display:none;background:0;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:.9rem;width:32px;height:32px;border-radius:var(--r-sm);cursor:pointer;transition:.12s;flex-shrink:0;align-items:center;justify-content:center}
+.sb-close:hover{border-color:var(--g);color:var(--g)}
 .sb-nav{padding:8px 0;border-bottom:1px solid var(--border)}
 .sb-nav-i{display:flex;align-items:center;gap:10px;padding:11px 20px;font-size:.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--g);background:var(--g06);border-left:2px solid var(--g)}
 .sb-nav-ic{font-size:.9rem;width:18px;text-align:center}
@@ -291,9 +294,10 @@ body::after{
 
 /* ═══ RESPONSIVE ═══ */
 @media(max-width:768px){
-  .sb{position:fixed;left:0;top:0;bottom:0;z-index:100;transform:translateX(-100%);transition:transform .25s ease}
+  .sb{position:fixed;left:0;top:0;bottom:0;z-index:100;transform:translateX(-100%);transition:transform .25s ease;width:280px;min-width:280px}
   .sb.open{transform:translateX(0)}
   .mob-btn{display:block}
+  .sb-close{display:flex}
   .m-grp{max-width:88%}
   .i-input{font-size:16px}
   .ibar{padding:10px 14px 14px}
@@ -304,7 +308,7 @@ body::after{
   .i-send{padding:14px 18px;font-size:.68rem;letter-spacing:1.5px}
 }
 @media(max-width:400px){
-  .sb{width:100%;min-width:100%}
+  .sb{width:85%;min-width:85%}
   .i-send{padding:14px;letter-spacing:1px}
 }
 </style>
@@ -360,10 +364,13 @@ body::after{
   <div class="chat-wrap">
     <aside class="sb" id="sb">
       <div class="sb-logo">
-        <div class="sb-logo-t">BASIS://CHAT</div>
-        <div class="sb-logo-s">Terminal Room</div>
+        <div class="sb-logo-info">
+          <div class="sb-logo-t">BASIS://CHAT</div>
+          <div class="sb-logo-s">Terminal Room</div>
+        </div>
+        <button class="sb-close" onclick="togSb()">✕</button>
       </div>
-      <div class="sb-nav"><div class="sb-nav-i"><span class="sb-nav-ic">◈</span> Chatroom</div></div>
+      <div class="sb-nav"><div class="sb-nav-i" onclick="if(window.innerWidth<=768)togSb()"><span class="sb-nav-ic">◈</span> Chatroom</div></div>
       <div class="sb-users">
         <div class="sb-users-h">Connected Nodes <span class="sb-cnt" id="uCnt">0</span></div>
         <div id="uList"></div>
@@ -596,7 +603,7 @@ async function send(){
 }
 
 function toBottom(){const a=$('msgs');a.scrollTop=a.scrollHeight;$('npill').classList.remove('on')}
-function togSb(){$('sb').classList.toggle('open');$('sbOv').classList.toggle('on')}
+function togSb(){const s=$('sb'),o=$('sbOv');if(s.classList.contains('open')){s.classList.remove('open');o.classList.remove('on')}else{s.classList.add('open');o.classList.add('on')}}
 
 async function logout(){
   if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}
