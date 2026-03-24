@@ -51,7 +51,6 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
 
 .scr{display:none;height:100%}.scr.on{display:flex}
 
-/* LOADING */
 #S_load{align-items:center;justify-content:center;flex-direction:column;gap:10px}
 .ld-logo{font-size:1.15rem;font-weight:700;color:var(--g);letter-spacing:6px;text-transform:uppercase;animation:glow 2.5s ease-in-out infinite}
 .ld-sub{font-size:.58rem;color:var(--text-dim);letter-spacing:3px;text-transform:uppercase}
@@ -59,7 +58,6 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
 .ld-track{width:200px;height:2px;background:var(--g06);border-radius:1px;overflow:hidden;margin-top:6px}
 .ld-fill{height:100%;background:linear-gradient(90deg,var(--g25),var(--g));border-radius:1px;transition:width .35s}
 
-/* AUTH */
 #S_auth{align-items:center;justify-content:center;padding:24px;position:relative;z-index:1}
 .a-wrap{width:100%;max-width:440px;animation:fadeUp .45s ease}
 .a-card{border-radius:12px;background:var(--surface);border:1px solid var(--border);overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.4)}
@@ -83,14 +81,12 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
 .a-btn .sp{display:none;width:14px;height:14px;border:2px solid var(--g25);border-top-color:var(--g);border-radius:50%;animation:spin .5s linear infinite}.a-btn.ld .bt{opacity:0}.a-btn.ld .sp{display:inline-block;position:absolute;left:50%;top:50%;margin:-7px 0 0 -7px}
 .a-foot{font-size:.54rem;color:var(--text-mute);text-align:center;margin-top:20px;letter-spacing:1.5px}
 
-/* BADGES */
 .badge{display:inline-block;padding:1px 5px;border-radius:4px;font-size:.48rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;vertical-align:middle;margin-left:4px}
 .badge-dev{background:rgba(110,231,90,.15);color:var(--g);border:1px solid var(--g40)}
 .badge-admin{background:rgba(90,180,255,.12);color:#5ab8ff;border:1px solid rgba(90,180,255,.3)}
 .badge-mod{background:rgba(255,200,68,.10);color:var(--warn);border:1px solid rgba(255,200,68,.25)}
 .badge-muted{background:rgba(255,85,85,.10);color:var(--neg);border:1px solid rgba(255,85,85,.2)}
 
-/* CHAT LAYOUT */
 .chat-wrap{display:flex;width:100%;height:100%;overflow:hidden}
 .sb{width:260px;min-width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:relative;z-index:100}
 .sb-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);display:flex;justify-content:space-between;align-items:flex-start}
@@ -110,76 +106,40 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
 .sb-u-name span{overflow:hidden;text-overflow:ellipsis}
 .sb-u-role{font-size:.50rem;color:var(--text-mute);letter-spacing:1px;text-transform:uppercase}
 
-/* User popup */
-.u-popup-ov{display:none;position:fixed;inset:0;z-index:200}
-.u-popup-ov.on{display:block}
-.u-popup{
-  position:fixed;z-index:201;
-  width:220px;
-  background:var(--bg2);border:1px solid var(--border-hi);border-radius:var(--r);
-  box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 20px rgba(110,231,90,.04);
-  overflow:hidden;animation:fadeUp .15s ease;
-}
-.u-popup-head{
-  padding:14px 16px 12px;border-bottom:1px solid var(--border);
-  background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);
-  display:flex;align-items:center;gap:10px;
-}
+.u-popup-ov{display:none;position:fixed;inset:0;z-index:200}.u-popup-ov.on{display:block}
+.u-popup{position:fixed;z-index:201;width:220px;background:var(--bg2);border:1px solid var(--border-hi);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 20px rgba(110,231,90,.04);overflow:hidden;animation:fadeUp .15s ease}
+.u-popup-head{padding:14px 16px 12px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);display:flex;align-items:center;gap:10px}
 .u-popup-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.56rem;font-weight:700;color:rgba(0,0,0,.7);flex-shrink:0}
 .u-popup-info{flex:1;min-width:0}
 .u-popup-name{font-size:.76rem;font-weight:700;display:flex;align-items:center;gap:4px;overflow:hidden;white-space:nowrap}
 .u-popup-name span{overflow:hidden;text-overflow:ellipsis}
 .u-popup-role{font-size:.52rem;color:var(--text-mute);letter-spacing:1.2px;text-transform:uppercase;margin-top:1px}
 .u-popup-body{padding:8px 6px}
-.u-popup-btn{
-  display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;
-  background:0;border:0;border-radius:var(--r-sm);
-  font-family:var(--mono);font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;
-  color:var(--text-dim);cursor:pointer;transition:.12s;text-align:left;
-}
+.u-popup-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;background:0;border:0;border-radius:var(--r-sm);font-family:var(--mono);font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);cursor:pointer;transition:.12s;text-align:left}
 .u-popup-btn:hover{background:var(--g06);color:var(--text)}
-.u-popup-btn.danger{color:rgba(255,85,85,.6)}
-.u-popup-btn.danger:hover{background:rgba(255,85,85,.06);color:var(--neg)}
+.u-popup-btn.danger{color:rgba(255,85,85,.6)}.u-popup-btn.danger:hover{background:rgba(255,85,85,.06);color:var(--neg)}
 .u-popup-btn .p-icon{width:16px;text-align:center;font-size:.72rem;opacity:.5}
 .u-popup-sep{height:1px;background:var(--border);margin:4px 10px}
 .u-popup-empty{padding:12px 16px;font-size:.60rem;color:var(--text-mute);text-align:center;letter-spacing:1px}
 
-/* Confirm modal */
-.confirm-ov{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);align-items:center;justify-content:center}
-.confirm-ov.on{display:flex}
-.confirm-box{
-  width:320px;max-width:90vw;background:var(--bg2);border:1px solid var(--border-hi);
-  border-radius:var(--r);box-shadow:0 12px 48px rgba(0,0,0,.7),0 0 30px rgba(110,231,90,.04);
-  overflow:hidden;animation:fadeUp .15s ease;
-}
-.confirm-head{
-  padding:16px 20px 12px;border-bottom:1px solid var(--border);
-  background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);
-  font-size:.72rem;font-weight:700;color:var(--g);letter-spacing:1.5px;text-transform:uppercase;
-  display:flex;align-items:center;gap:8px;
-}
+.confirm-ov{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);align-items:center;justify-content:center}.confirm-ov.on{display:flex}
+.confirm-box{width:320px;max-width:90vw;background:var(--bg2);border:1px solid var(--border-hi);border-radius:var(--r);box-shadow:0 12px 48px rgba(0,0,0,.7),0 0 30px rgba(110,231,90,.04);overflow:hidden;animation:fadeUp .15s ease}
+.confirm-head{padding:16px 20px 12px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);font-size:.72rem;font-weight:700;color:var(--g);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
 .confirm-head-icon{font-size:.9rem;opacity:.6}
 .confirm-body{padding:18px 20px;font-size:.76rem;color:var(--text);line-height:1.6;letter-spacing:.3px}
 .confirm-body strong{color:var(--g90);font-weight:700}
 .confirm-body .confirm-warn{font-size:.64rem;color:var(--text-dim);margin-top:8px;letter-spacing:.5px}
 .confirm-btns{display:flex;gap:8px;padding:12px 20px 18px;justify-content:flex-end}
-.confirm-btn{
-  padding:9px 18px;border-radius:var(--r-sm);font-family:var(--mono);font-size:.66rem;
-  font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:.15s;
-}
-.confirm-btn.cancel{background:0;border:1px solid var(--border);color:var(--text-dim)}
-.confirm-btn.cancel:hover{border-color:var(--text);color:var(--text);background:var(--g03)}
-.confirm-btn.proceed{background:var(--g10);border:1px solid var(--g40);color:var(--g)}
-.confirm-btn.proceed:hover{background:rgba(110,231,90,.18);box-shadow:0 0 16px rgba(110,231,90,.15)}
-.confirm-btn.proceed.danger{background:rgba(255,85,85,.08);border:1px solid rgba(255,85,85,.25);color:var(--neg)}
-.confirm-btn.proceed.danger:hover{background:rgba(255,85,85,.14);box-shadow:0 0 16px rgba(255,85,85,.12)}
+.confirm-btn{padding:9px 18px;border-radius:var(--r-sm);font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:.15s}
+.confirm-btn.cancel{background:0;border:1px solid var(--border);color:var(--text-dim)}.confirm-btn.cancel:hover{border-color:var(--text);color:var(--text);background:var(--g06)}
+.confirm-btn.proceed{background:var(--g10);border:1px solid var(--g40);color:var(--g)}.confirm-btn.proceed:hover{background:rgba(110,231,90,.18);box-shadow:0 0 16px rgba(110,231,90,.15)}
+.confirm-btn.proceed.danger{background:rgba(255,85,85,.08);border:1px solid rgba(255,85,85,.25);color:var(--neg)}.confirm-btn.proceed.danger:hover{background:rgba(255,85,85,.14);box-shadow:0 0 16px rgba(255,85,85,.12)}
 
 .sb-foot{padding:14px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
 .sb-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--border-hi);border-radius:20px;font-size:.56rem;letter-spacing:2px;text-transform:uppercase;color:var(--g55);background:var(--g06)}
 .dp{width:5px;height:5px;border-radius:50%;background:var(--g);animation:pulse 2s ease-in-out infinite;display:inline-block}
 .sb-dc{background:0;border:1px solid var(--border);color:var(--text-mute);font-family:var(--mono);font-size:.54rem;cursor:pointer;letter-spacing:1.5px;transition:.12s;padding:5px 10px;border-radius:var(--r-sm);text-transform:uppercase}.sb-dc:hover{border-color:var(--neg);color:var(--neg);background:rgba(255,85,85,.05)}
 
-/* MAIN */
 .mc{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;min-width:0}
 .mc-head{display:flex;justify-content:space-between;align-items:center;padding:12px 24px;border-bottom:1px solid var(--border);background:linear-gradient(to right,var(--g06),transparent);flex-shrink:0}
 .mc-head-l{display:flex;align-items:center;gap:14px}
@@ -191,15 +151,12 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
 .mc-h-name{font-size:.70rem;font-weight:600;letter-spacing:1px}
 .mc-exit{padding:7px 14px;border-radius:var(--r-sm);border:1px solid var(--border-hi);background:0;color:var(--text-dim);font-family:var(--mono);font-size:.62rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:.12s}.mc-exit:hover{background:var(--g06);border-color:var(--g);color:var(--g)}
 
-/* MESSAGES */
 .msgs{flex:1;overflow-y:auto;padding:20px 28px;display:flex;flex-direction:column;gap:3px}
 .msgs-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;color:var(--text-mute)}
 .msgs-empty-ic{font-size:52px;opacity:.1}.msgs-empty-t{font-size:.80rem;letter-spacing:2.5px;text-transform:uppercase}.msgs-empty-s{font-size:.58rem;letter-spacing:1.2px}
 .d-sep{display:flex;align-items:center;gap:16px;padding:18px 0 12px}.d-sep-l{flex:1;height:1px;background:var(--border)}.d-sep-t{font-size:.52rem;color:var(--text-mute);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;padding:3px 14px;border:1px solid var(--border);border-radius:12px;background:var(--bg2)}
 .s-msg{display:flex;align-items:center;gap:14px;padding:10px 0;justify-content:center;animation:fadeIn .3s}.s-msg-l{width:40px;height:1px;background:var(--border);flex-shrink:0}.s-msg-t{font-size:.56rem;color:var(--text-mute);letter-spacing:2px;text-transform:uppercase;white-space:nowrap;text-align:center}
-/* Action messages (/me) */
-.act-msg{padding:6px 0;font-size:.76rem;color:var(--text-dim);font-style:italic;animation:fadeIn .3s;letter-spacing:.3px;text-align:center}
-.act-msg strong{font-style:normal;font-weight:700}
+.act-msg{padding:6px 0;font-size:.76rem;color:var(--text-dim);font-style:italic;animation:fadeIn .3s;letter-spacing:.3px;text-align:center}.act-msg strong{font-style:normal;font-weight:700}
 
 .m-row{display:flex;width:100%;animation:msgIn .2s;position:relative}.m-row.mi{justify-content:flex-end}.m-row.ot{justify-content:flex-start}
 .m-grp{display:flex;gap:10px;max-width:70%}
@@ -211,25 +168,19 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
 .m-bub.deleted{opacity:.4;font-style:italic}
 .m-txt{color:var(--text);letter-spacing:.3px;white-space:pre-wrap}.m-txt a{color:var(--g);text-decoration:underline;text-underline-offset:2px}.m-txt code{background:rgba(0,0,0,.45);padding:2px 6px;border-radius:3px;font-size:.74rem;color:var(--g70)}
 .m-meta{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:3px}.m-time{font-size:.50rem;color:var(--text-mute);letter-spacing:.8px}
-/* Delete button on messages */
 .m-del{display:none;background:0;border:1px solid var(--border);color:var(--text-mute);font-family:var(--mono);font-size:.46rem;padding:1px 5px;border-radius:3px;cursor:pointer;letter-spacing:.5px;transition:.12s;text-transform:uppercase}
 .m-row:hover .m-del{display:inline-block}
 .m-del:hover{border-color:var(--neg);color:var(--neg);background:rgba(255,85,85,.06)}
 
-/* TYPING */
 .typ{display:none;align-items:center;gap:10px;padding:4px 28px 2px;font-size:.60rem;color:var(--text-mute);letter-spacing:.8px;flex-shrink:0}.typ.on{display:flex}
 .typ-d{display:flex;gap:3px}.typ-d span{width:4px;height:4px;border-radius:50%;background:var(--g40);animation:typeBounce 1.2s ease-in-out infinite}.typ-d span:nth-child(2){animation-delay:.15s}.typ-d span:nth-child(3){animation-delay:.3s}
 
-/* CMD RESULT */
 .cmd-res{padding:8px 14px;margin:4px 0;border-radius:var(--r-sm);font-size:.72rem;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text-dim);animation:fadeIn .2s;letter-spacing:.3px;max-width:500px}
-.cmd-res.cmd-err{border-color:rgba(255,85,85,.2);color:var(--neg)}
-.cmd-res.cmd-ok{border-color:rgba(90,255,106,.15);color:var(--pos)}
+.cmd-res.cmd-err{border-color:rgba(255,85,85,.2);color:var(--neg)}.cmd-res.cmd-ok{border-color:rgba(90,255,106,.15);color:var(--pos)}
 
-/* NEW PILL */
 .npill{position:absolute;bottom:100px;left:50%;transform:translateX(-50%);padding:8px 20px;border-radius:20px;background:rgba(8,16,8,.95);border:1px solid var(--g40);color:var(--g);font-size:.60rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;display:none;z-index:10;backdrop-filter:blur(10px);box-shadow:0 4px 24px rgba(0,0,0,.5);transition:.15s}
 .npill.on{display:block;animation:fadeUp .25s ease}.npill:hover{background:var(--g06)}
 
-/* INPUT */
 .ibar{flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);padding:14px 28px 18px}
 .ibar-row{display:flex;align-items:flex-end;gap:12px;width:100%}
 .ibar-box{flex:1;min-width:0;display:flex;align-items:flex-end;background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:10px;padding:14px 18px;transition:.15s;min-height:56px;gap:12px}
@@ -269,9 +220,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
   <div class="sb-ov" id="sbOv" onclick="togSb()"></div>
   <div class="u-popup-ov" id="popOv" onclick="closePop()"></div>
   <div class="u-popup" id="uPop" style="display:none"></div>
-  <div class="confirm-ov" id="confirmOv">
-    <div class="confirm-box" id="confirmBox"></div>
-  </div>
+  <div class="confirm-ov" id="confirmOv"><div class="confirm-box" id="confirmBox"></div></div>
   <div class="chat-wrap">
     <aside class="sb" id="sb">
       <div class="sb-logo"><div class="sb-logo-info"><div class="sb-logo-t">BASIS://CHAT</div><div class="sb-logo-s">Terminal Room</div></div><button class="sb-close" onclick="togSb()">✕</button></div>
@@ -289,9 +238,10 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<!-- Firebase SDK v11 compat -->
+<script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore-compat.js"></script>
 <script>
 'use strict';
 const FC={apiKey:"AIzaSyDh3Xdavtn8q3w_g6kiDyWJfK5jeMD46ww",authDomain:"basis-acfec.firebaseapp.com",projectId:"basis-acfec",storageBucket:"basis-acfec.firebasestorage.app",messagingSenderId:"884887459105",appId:"1:884887459105:web:e39be97abde4afcc271a60"};
@@ -301,8 +251,22 @@ const MX=1000,DEV_NAME='basis';
 const ROLE_ORDER={dev:4,admin:3,mod:2,user:1};
 
 let mode='login',selCol=COLS[0],me=null,unM=null,unU=null,unT=null,unSelf=null,unBan=null,hbIv=null,tpTo=null,db,au,lmc=0,atBot=true,busy=false,disconnected=false;
-let allUsers=[]; // cached user list for commands
-let cmdResults=[]; // local-only command output
+let allUsers=[],cmdResults=[],cachedMsgs=[];
+
+// FIX: Reuse single AudioContext
+let _audioCtx=null;
+function ping(){
+  try{
+    if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=_audioCtx.createOscillator(),g=_audioCtx.createGain();
+    o.connect(g);g.connect(_audioCtx.destination);
+    o.type='sine';o.frequency.setValueAtTime(1100,_audioCtx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(700,_audioCtx.currentTime+.12);
+    g.gain.setValueAtTime(.06,_audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,_audioCtx.currentTime+.12);
+    o.start(_audioCtx.currentTime);o.stop(_audioCtx.currentTime+.12);
+  }catch{}
+}
 
 // HELPERS
 const $=id=>document.getElementById(id);
@@ -311,7 +275,6 @@ function ini(n){return(n||'??').substring(0,2).toUpperCase()}
 function fTime(d){return d?d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}
 function fDate(d){const n=new Date(),t=new Date(n.getFullYear(),n.getMonth(),n.getDate()),m=new Date(d.getFullYear(),d.getMonth(),d.getDate()),df=(t-m)/864e5;if(df===0)return'Today';if(df===1)return'Yesterday';return d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})}
 function fMsg(t){let s=esc(t);s=s.replace(/`([^`]+)`/g,'<code>$1</code>');s=s.replace(/\*\*([^*]+)\*\*/g,'<strong style="color:var(--g90)">$1</strong>');s=s.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');return s}
-function ping(){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.setValueAtTime(1100,c.currentTime);o.frequency.exponentialRampToValueAtTime(700,c.currentTime+.12);g.gain.setValueAtTime(.06,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.12);o.start(c.currentTime);o.stop(c.currentTime+.12)}catch{}}
 
 function roleBadge(role){
   if(role==='dev')return'<span class="badge badge-dev">DEV</span>';
@@ -321,6 +284,11 @@ function roleBadge(role){
 }
 function myRole(){return me?.role||'user'}
 function hasRole(min){return(ROLE_ORDER[myRole()]||1)>=(ROLE_ORDER[min]||1)}
+
+// FIX: Helper to build message object with role included
+function msgObj(type,text,extra){
+  return{type,uid:me.uid,name:me.name,color:me.color,role:me.role||'user',text,ts:firebase.firestore.FieldValue.serverTimestamp(),...extra};
+}
 
 // INIT
 function init(){
@@ -352,16 +320,19 @@ async function doAuth(){
   const email=name.toLowerCase()+'@basis.chat';
   try{
     if(mode==='signup'){
-      // Check ban list first
-      try{const banDoc=await db.collection('bans').doc(name.toLowerCase()).get();if(banDoc.exists){busy=false;showSts('This username is banned','err');setLd(false);return}}catch{}
+      // FIX: Create auth first (ban check needs auth to read Firestore)
       const cr=await au.createUserWithEmailAndPassword(email,pass);
       try{
+        // Now we're authenticated — check ban list
+        const banDoc=await db.collection('bans').doc(name.toLowerCase()).get();
+        if(banDoc.exists){await cr.user.delete();busy=false;showSts('This username is banned','err');setLd(false);return}
+        // Check username taken
         const ex=await db.collection('users').where('nameLower','==',name.toLowerCase()).limit(1).get();
         if(!ex.empty){await cr.user.delete();busy=false;showSts('Username already taken','err');setLd(false);return}
         const role=name.toLowerCase()===DEV_NAME?'dev':'user';
-        await db.collection('users').doc(cr.user.uid).set({name,nameLower:name.toLowerCase(),color:selCol,role,muted:false,createdAt:firebase.firestore.FieldValue.serverTimestamp(),lastSeen:firebase.firestore.FieldValue.serverTimestamp(),online:true});
+        await db.collection('users').doc(cr.user.uid).set({name,nameLower:name.toLowerCase(),color:selCol,role,muted:false,kicked:false,createdAt:firebase.firestore.FieldValue.serverTimestamp(),lastSeen:firebase.firestore.FieldValue.serverTimestamp(),online:true});
         await db.collection('messages').add({type:'system',text:name+' has entered the room',ts:firebase.firestore.FieldValue.serverTimestamp()});
-        me={uid:cr.user.uid,name,nameLower:name.toLowerCase(),color:selCol,role,muted:false};busy=false;enterChat();
+        me={uid:cr.user.uid,name,nameLower:name.toLowerCase(),color:selCol,role,muted:false,kicked:false};busy=false;enterChat();
       }catch(e){try{await cr.user.delete()}catch{}busy=false;showSts(e.message||'Setup failed','err');setLd(false)}
     }else{
       const cr=await au.signInWithEmailAndPassword(email,pass);
@@ -371,10 +342,11 @@ async function doAuth(){
       const banDoc=await db.collection('bans').doc(d.data().nameLower).get();
       if(banDoc.exists){await au.signOut();busy=false;showSts('You are banned from this room','err');setLd(false);return}
       me={uid:cr.user.uid,...d.data()};
-      // Ensure dev role for "basis"
-      if(me.nameLower===DEV_NAME&&me.role!=='dev')await db.collection('users').doc(cr.user.uid).update({role:'dev'});
-      if(me.nameLower===DEV_NAME)me.role='dev';
-      await db.collection('users').doc(cr.user.uid).update({online:true,lastSeen:firebase.firestore.FieldValue.serverTimestamp()});
+      // Ensure dev role for DEV_NAME
+      if(me.nameLower===DEV_NAME&&me.role!=='dev'){await db.collection('users').doc(cr.user.uid).update({role:'dev'});me.role='dev'}
+      // FIX: Reset kicked flag and sync muted state on login
+      await db.collection('users').doc(cr.user.uid).update({online:true,kicked:false,lastSeen:firebase.firestore.FieldValue.serverTimestamp()});
+      me.kicked=false;
       busy=false;enterChat();
     }
   }catch(e){
@@ -416,17 +388,14 @@ async function enterChat(){
 
   updPres(true);if(hbIv)clearInterval(hbIv);hbIv=setInterval(()=>{if(!disconnected)updPres(true)},25000);
 
-  // SELF-MONITOR: watch own doc for kick/ban/mute changes in real-time
+  // SELF-MONITOR: watch own doc for kick/mute/role changes
   if(unSelf)unSelf();
   unSelf=db.collection('users').doc(me.uid).onSnapshot(snap=>{
     if(!snap.exists||disconnected)return;
     const d=snap.data();
-    // Sync muted + role in real-time
     me.muted=d.muted||false;
     me.role=d.role||'user';
-    // Kicked? — kill everything SYNCHRONOUSLY first, then clean up
     if(d.kicked){
-      // Immediately stop heartbeat so it can't set online:true
       if(hbIv){clearInterval(hbIv);hbIv=null}
       forceDisconnect('You have been kicked from the room.');
     }
@@ -457,49 +426,46 @@ async function enterChat(){
   setTimeout(()=>inp.focus(),150);
 }
 
-// TYPING
+// TYPING & PRESENCE
 async function setTyp(){if(!me||disconnected)return;try{await db.collection('typing').doc(me.uid).set({uid:me.uid,name:me.name,ts:firebase.firestore.FieldValue.serverTimestamp()})}catch{}if(tpTo)clearTimeout(tpTo);tpTo=setTimeout(clrTyp,3000)}
 async function clrTyp(){if(!me||disconnected)return;try{await db.collection('typing').doc(me.uid).delete()}catch{}}
 async function updPres(on){if(!me||disconnected)return;try{await db.collection('users').doc(me.uid).update({online:on,lastSeen:firebase.firestore.FieldValue.serverTimestamp()})}catch{}}
 
-// ═══ MUTE CHECK ═══
+// MUTE CHECK — fresh from Firestore
 async function amIMuted(){
   if(me.muted)return true;
   try{const d=await db.collection('users').doc(me.uid).get();if(d.exists&&d.data().muted){me.muted=true;return true}}catch{}
   return false;
 }
 
-// ═══ COMMANDS ═══
-function addLocal(text,type='info'){cmdResults.push({type,text,ts:Date.now()});renderMsgsFromCache()}
-let cachedMsgs=[];
-function renderMsgsFromCache(){renderMsgs(cachedMsgs)}
-
+// ═══ SEND ═══
 async function handleSend(){
   const inp=$('iInp'),raw=inp.value.trim();
-  if(!raw||!me)return;
+  // FIX: guard against disconnected state
+  if(!raw||!me||disconnected)return;
   inp.value='';inp.style.height='auto';$('iSend').disabled=true;$('iSend').className='i-send';$('iCc').textContent='';clrTyp();
 
-  if(raw.startsWith('/')){
-    await handleCommand(raw);
-    inp.focus();return;
-  }
+  if(raw.startsWith('/')){await handleCommand(raw);inp.focus();return}
 
-  // Check if muted — fresh check from Firestore
   if(await amIMuted()){addLocal('You are muted and cannot send messages.','err');inp.focus();return}
 
+  // FIX: include role in message
   try{
-    await db.collection('messages').add({type:'user',uid:me.uid,name:me.name,color:me.color,text:raw,ts:firebase.firestore.FieldValue.serverTimestamp(),deleted:false});
+    await db.collection('messages').add(msgObj('user',raw,{deleted:false}));
     toBot();
   }catch(e){console.error(e);inp.value=raw}
   inp.focus();
 }
+
+// ═══ COMMANDS ═══
+function addLocal(text,type='info'){cmdResults.push({type,text,ts:Date.now()});renderMsgsFromCache()}
+function renderMsgsFromCache(){renderMsgs(cachedMsgs)}
 
 async function handleCommand(raw){
   const parts=raw.split(/\s+/);
   const cmd=parts[0].toLowerCase();
   const arg1=parts[1]||'';
   const rest=parts.slice(1).join(' ');
-  const restFrom2=parts.slice(2).join(' ');
 
   switch(cmd){
     case'/help':
@@ -533,13 +499,12 @@ async function handleCommand(raw){
     case'/me':
       if(!rest){addLocal('/me <action>','err');break}
       if(await amIMuted()){addLocal('You are muted.','err');break}
-      await db.collection('messages').add({type:'action',uid:me.uid,name:me.name,color:me.color,text:rest,ts:firebase.firestore.FieldValue.serverTimestamp()});break;
+      await db.collection('messages').add(msgObj('action',rest));break;
 
     case'/clear':cmdResults=[];$('msgs').innerHTML='';addLocal('Chat cleared locally.');break;
 
     case'/users':case'/who':
-      const ulist=allUsers.map(u=>`  ${u.name} [${u.role||'user'}]${u.muted?' (muted)':''}`).join('\n');
-      addLocal(`<strong>Online users (${allUsers.length}):</strong>\n${ulist}`);break;
+      addLocal(`<strong>Online users (${allUsers.length}):</strong>\n`+allUsers.map(u=>`  ${u.name} [${u.role||'user'}]${u.muted?' (muted)':''}`).join('\n'));break;
 
     case'/roll':{
       const match=arg1.match(/^(\d+)d(\d+)$/i);
@@ -548,21 +513,19 @@ async function handleCommand(raw){
       if(s<1||s>100||n<1||n>20){addLocal('Max 20 dice, max 100 sides.','err');break}
       const rolls=Array.from({length:n},()=>Math.floor(Math.random()*s)+1);
       const sum=rolls.reduce((a,b)=>a+b,0);
-      await db.collection('messages').add({type:'action',uid:me.uid,name:me.name,color:me.color,text:`rolled ${arg1}: [${rolls.join(', ')}] = ${sum}`,ts:firebase.firestore.FieldValue.serverTimestamp()});break}
+      await db.collection('messages').add(msgObj('action',`rolled ${arg1}: [${rolls.join(', ')}] = ${sum}`));break}
 
     case'/flip':
-      const coin=Math.random()<.5?'heads':'tails';
-      await db.collection('messages').add({type:'action',uid:me.uid,name:me.name,color:me.color,text:`flipped a coin: ${coin}`,ts:firebase.firestore.FieldValue.serverTimestamp()});break;
+      await db.collection('messages').add(msgObj('action',`flipped a coin: ${Math.random()<.5?'heads':'tails'}`));break;
 
     case'/shrug':
       if(await amIMuted()){addLocal('You are muted.','err');break}
-      await db.collection('messages').add({type:'user',uid:me.uid,name:me.name,color:me.color,text:'¯\\_(ツ)_/¯',ts:firebase.firestore.FieldValue.serverTimestamp(),deleted:false});break;
+      await db.collection('messages').add(msgObj('user','¯\\_(ツ)_/¯',{deleted:false}));break;
 
     case'/tableflip':
       if(await amIMuted()){addLocal('You are muted.','err');break}
-      await db.collection('messages').add({type:'user',uid:me.uid,name:me.name,color:me.color,text:'(╯°□°)╯︵ ┻━┻',ts:firebase.firestore.FieldValue.serverTimestamp(),deleted:false});break;
+      await db.collection('messages').add(msgObj('user','(╯°□°)╯︵ ┻━┻',{deleted:false}));break;
 
-    // MOD+
     case'/mute':
       if(!hasRole('mod')){addLocal('Insufficient permissions.','err');break}
       if(!arg1){addLocal('/mute <username>','err');break}
@@ -572,7 +535,6 @@ async function handleCommand(raw){
       if(!arg1){addLocal('/unmute <username>','err');break}
       if(await askConfirm(arg1,'unmute'))await setUserFlag(arg1,'muted',false,'unmuted');break;
 
-    // ADMIN+
     case'/kick':
       if(!hasRole('admin')){addLocal('Insufficient permissions.','err');break}
       if(!arg1){addLocal('/kick <username>','err');break}
@@ -596,7 +558,6 @@ async function handleCommand(raw){
       if(!arg1){addLocal('/unmod <username>','err');break}
       if(await askConfirm(arg1,'unmod'))await setUserRole(arg1,'user');break;
 
-    // DEV only
     case'/admin':
       if(!hasRole('dev')){addLocal('Only DEV can assign admins.','err');break}
       if(!arg1){addLocal('/admin <username>','err');break}
@@ -639,6 +600,7 @@ async function banUser(username){
   if(!target){addLocal(`User "${esc(username)}" not found.`,'err');return}
   if(target.id===me.uid){addLocal("You can't ban yourself.",'err');return}
   if((ROLE_ORDER[target.role]||1)>=(ROLE_ORDER[myRole()]||1)){addLocal("Can't ban someone of equal or higher rank.",'err');return}
+  // FIX: Create ban doc FIRST so the target's ban monitor fires
   await db.collection('bans').doc(target.nameLower).set({name:target.name,bannedBy:me.name,bannedAt:firebase.firestore.FieldValue.serverTimestamp()});
   await db.collection('users').doc(target.id).update({online:false,kicked:true});
   await db.collection('messages').add({type:'system',text:`${target.name} was banned by ${me.name}`,ts:firebase.firestore.FieldValue.serverTimestamp()});
@@ -655,12 +617,11 @@ async function unbanUser(username){
 async function showBanList(){
   const snap=await db.collection('bans').get();
   if(snap.empty){addLocal('No banned users.');return}
-  const list=snap.docs.map(d=>`  ${d.data().name} — banned by ${d.data().bannedBy}`).join('\n');
-  addLocal(`<strong>Ban list (${snap.size}):</strong>\n${list}`);
+  addLocal(`<strong>Ban list (${snap.size}):</strong>\n`+snap.docs.map(d=>`  ${d.data().name} — banned by ${d.data().bannedBy}`).join('\n'));
 }
 
 async function setUserRole(username,role){
-  if(!username){addLocal(`Usage: provide a username`,'err');return}
+  if(!username){addLocal('Usage: provide a username','err');return}
   const target=await findUser(username);
   if(!target){addLocal(`User "${esc(username)}" not found.`,'err');return}
   if(target.id===me.uid){addLocal("You can't change your own role.",'err');return}
@@ -676,16 +637,13 @@ async function deleteMsg(msgId){
 }
 
 async function findUser(username){
-  // Search in online users first
   let u=allUsers.find(u=>u.nameLower===username.toLowerCase());
   if(u)return u;
-  // Search Firestore
   const snap=await db.collection('users').where('nameLower','==',username.toLowerCase()).limit(1).get();
   if(!snap.empty){const d=snap.docs[0];return{id:d.id,...d.data()}}
   return null;
 }
 
-// Quick actions from sidebar
 async function sideAction(username,action){
   switch(action){
     case'mute':await handleCommand('/mute '+username);break;
@@ -699,7 +657,7 @@ async function sideAction(username,action){
   }
 }
 
-// RENDER MESSAGES
+// ═══ RENDER MESSAGES ═══
 function renderMsgs(ms){
   cachedMsgs=ms;
   const a=$('msgs'),wb=a.scrollTop+a.clientHeight>=a.scrollHeight-80;
@@ -712,6 +670,7 @@ function renderMsgs(ms){
     const mi=m.uid===me?.uid,t=m.ts?.toDate?fTime(m.ts.toDate()):'',mn=m.ts?.toDate?m.ts.toDate().getHours()+':'+m.ts.toDate().getMinutes():'',gr=m.uid===lu&&mn===lm,c=esc(m.color||'#6ee75a');
     const del=m.deleted;
     const canDel=hasRole('admin')&&!del;
+    // FIX: use role from message, fallback to 'user'
     const mRole=m.role||'user';
 
     h+=`<div class="m-row ${mi?'mi':'ot'}"><div class="m-grp" ${mi?'style="flex-direction:row-reverse"':''}>`;
@@ -724,14 +683,11 @@ function renderMsgs(ms){
     h+=`</div></div></div></div>`;
     lu=m.uid;lm=mn;
   });
-  // Local command results
-  cmdResults.forEach(cr=>{
-    h+=`<div class="cmd-res ${cr.type==='err'?'cmd-err':cr.type==='ok'?'cmd-ok':''}">${cr.text}</div>`;
-  });
+  cmdResults.forEach(cr=>{h+=`<div class="cmd-res ${cr.type==='err'?'cmd-err':cr.type==='ok'?'cmd-ok':''}">${cr.text}</div>`});
   a.innerHTML=h;if(wb)a.scrollTop=a.scrollHeight;
 }
 
-// RENDER USERS
+// ═══ RENDER USERS ═══
 function renderUsers(us){
   const n=us.length;$('uCnt').textContent=n;$('hDesc').textContent=n+' node'+(n!==1?'s':'')+' connected';
   const l=$('uList');
@@ -755,224 +711,130 @@ function renderUsers(us){
   }).join('');
 }
 
-// EVENT DELEGATION — click on user list
+// USER POPUP (event delegation)
 $('uList').addEventListener('click',function(ev){
   const row=ev.target.closest('.sb-u[data-uname]');
   if(!row)return;
   openPop(row);
 });
 
-// USER POPUP
 let _popTarget=null;
 function openPop(el){
-  const name=el.dataset.uname;
-  const color=el.dataset.ucolor;
-  const role=el.dataset.urole;
-  const muted=el.dataset.umuted==='true';
+  const name=el.dataset.uname,color=el.dataset.ucolor,role=el.dataset.urole,muted=el.dataset.umuted==='true';
   _popTarget=name;
-
   const pop=$('uPop'),ov=$('popOv');
   const targetRank=ROLE_ORDER[role]||1,myRank=ROLE_ORDER[myRole()]||1;
   const canAct=myRank>targetRank;
-
   let btns='';
   if(canAct){
     if(hasRole('mod')){
-      if(muted) btns+=`<button class="u-popup-btn" data-act="unmute"><span class="p-icon">◉</span>Unmute</button>`;
-      else btns+=`<button class="u-popup-btn" data-act="mute"><span class="p-icon">◎</span>Mute</button>`;
+      btns+=muted?`<button class="u-popup-btn" data-act="unmute"><span class="p-icon">◉</span>Unmute</button>`
+                  :`<button class="u-popup-btn" data-act="mute"><span class="p-icon">◎</span>Mute</button>`;
     }
     if(hasRole('admin')){
       if(btns)btns+=`<div class="u-popup-sep"></div>`;
       btns+=`<button class="u-popup-btn danger" data-act="kick"><span class="p-icon">⏏</span>Kick</button>`;
       btns+=`<button class="u-popup-btn danger" data-act="ban"><span class="p-icon">⊘</span>Ban</button>`;
       btns+=`<div class="u-popup-sep"></div>`;
-      if(role==='user') btns+=`<button class="u-popup-btn" data-act="mod"><span class="p-icon">↑</span>Promote to Mod</button>`;
-      if(role==='mod') btns+=`<button class="u-popup-btn" data-act="unmod"><span class="p-icon">↓</span>Remove Mod</button>`;
+      if(role==='user')btns+=`<button class="u-popup-btn" data-act="mod"><span class="p-icon">↑</span>Promote to Mod</button>`;
+      if(role==='mod')btns+=`<button class="u-popup-btn" data-act="unmod"><span class="p-icon">↓</span>Remove Mod</button>`;
     }
     if(hasRole('dev')){
-      if(role!=='admin') btns+=`<button class="u-popup-btn" data-act="admin"><span class="p-icon">★</span>Promote to Admin</button>`;
+      if(role!=='admin')btns+=`<button class="u-popup-btn" data-act="admin"><span class="p-icon">★</span>Promote to Admin</button>`;
       else btns+=`<button class="u-popup-btn" data-act="unadmin"><span class="p-icon">☆</span>Remove Admin</button>`;
     }
   }
-
-  if(!btns) btns=`<div class="u-popup-empty">No actions available</div>`;
-
-  pop.innerHTML=`
-    <div class="u-popup-head">
-      <div class="u-popup-av" style="background:${color}">${ini(name)}</div>
-      <div class="u-popup-info">
-        <div class="u-popup-name"><span style="color:${color}">${esc(name)}</span>${roleBadge(role)}${muted?'<span class="badge badge-muted">MUTED</span>':''}</div>
-        <div class="u-popup-role">${role!=='user'?role:'Member'}${muted?' · Muted':''}</div>
-      </div>
-    </div>
-    <div class="u-popup-body">${btns}</div>`;
-
-  // Position near the clicked row
+  if(!btns)btns=`<div class="u-popup-empty">No actions available</div>`;
+  pop.innerHTML=`<div class="u-popup-head"><div class="u-popup-av" style="background:${color}">${ini(name)}</div><div class="u-popup-info"><div class="u-popup-name"><span style="color:${color}">${esc(name)}</span>${roleBadge(role)}${muted?'<span class="badge badge-muted">MUTED</span>':''}</div><div class="u-popup-role">${role!=='user'?role:'Member'}${muted?' · Muted':''}</div></div></div><div class="u-popup-body">${btns}</div>`;
   const rect=el.getBoundingClientRect();
-  let top=rect.top;
-  let left=rect.right+8;
-  if(left+230>window.innerWidth) left=rect.left-228;
-  if(left<4) left=Math.max(4,(window.innerWidth-220)/2);
-  if(top+250>window.innerHeight) top=window.innerHeight-260;
-  if(top<4) top=4;
-
-  pop.style.top=top+'px';
-  pop.style.left=left+'px';
-  pop.style.display='block';
-  ov.classList.add('on');
+  let top=rect.top,left=rect.right+8;
+  if(left+230>innerWidth)left=rect.left-228;
+  if(left<4)left=Math.max(4,(innerWidth-220)/2);
+  if(top+250>innerHeight)top=innerHeight-260;
+  if(top<4)top=4;
+  pop.style.top=top+'px';pop.style.left=left+'px';pop.style.display='block';ov.classList.add('on');
 }
+function closePop(){$('uPop').style.display='none';$('popOv').classList.remove('on');_popTarget=null}
 
-function closePop(){
-  $('uPop').style.display='none';
-  $('popOv').classList.remove('on');
-  _popTarget=null;
-}
-
-// EVENT DELEGATION — popup action buttons → show confirm
+// Popup action delegation
 $('uPop').addEventListener('click',async function(ev){
   const btn=ev.target.closest('.u-popup-btn[data-act]');
   if(!btn||!_popTarget)return;
-  const action=btn.dataset.act;
-  const name=_popTarget;
-  closePop();
-  showConfirm(name,action);
+  const action=btn.dataset.act;closePop();showConfirm(_popTarget,action);
 });
 
-// EVENT DELEGATION — delete message buttons → show confirm
+// Delete button delegation
 $('msgs').addEventListener('click',async function(ev){
   const btn=ev.target.closest('.m-del[data-delid]');
-  if(!btn)return;
-  showConfirm(null,'delete',btn.dataset.delid);
+  if(!btn)return;showConfirm(null,'delete',btn.dataset.delid);
 });
 
-// ═══ CONFIRMATION SYSTEM ═══
+// ═══ CONFIRMATION ═══
 const ACTION_META={
-  mute:     {icon:'◎',label:'Mute',verb:'mute',desc:'They won\'t be able to send messages.',danger:false},
-  unmute:   {icon:'◉',label:'Unmute',verb:'unmute',desc:'They will be able to send messages again.',danger:false},
-  kick:     {icon:'⏏',label:'Kick',verb:'kick',desc:'They will be disconnected from the room.',danger:true},
-  ban:      {icon:'⊘',label:'Ban',verb:'ban',desc:'They will be permanently banned and unable to log back in.',danger:true},
-  mod:      {icon:'↑',label:'Promote to Mod',verb:'promote to MOD',desc:'They will be able to mute and unmute users.',danger:false},
-  unmod:    {icon:'↓',label:'Remove Mod',verb:'remove MOD from',desc:'They will become a regular user.',danger:false},
-  admin:    {icon:'★',label:'Promote to Admin',verb:'promote to ADMIN',desc:'They will be able to kick, ban, delete messages, and manage mods.',danger:false},
-  unadmin:  {icon:'☆',label:'Remove Admin',verb:'remove ADMIN from',desc:'They will become a regular user.',danger:true},
-  delete:   {icon:'✕',label:'Delete Message',verb:'delete this message',desc:'The message will be marked as deleted for everyone.',danger:true},
+  mute:{icon:'◎',label:'Mute',verb:'mute',desc:'They won\'t be able to send messages.',danger:false},
+  unmute:{icon:'◉',label:'Unmute',verb:'unmute',desc:'They will be able to send messages again.',danger:false},
+  kick:{icon:'⏏',label:'Kick',verb:'kick',desc:'They will be disconnected from the room.',danger:true},
+  ban:{icon:'⊘',label:'Ban',verb:'ban',desc:'They will be permanently banned and unable to log back in.',danger:true},
+  mod:{icon:'↑',label:'Promote to Mod',verb:'promote to MOD',desc:'They will be able to mute and unmute users.',danger:false},
+  unmod:{icon:'↓',label:'Remove Mod',verb:'remove MOD from',desc:'They will become a regular user.',danger:false},
+  admin:{icon:'★',label:'Promote to Admin',verb:'promote to ADMIN',desc:'They will be able to kick, ban, delete messages, and manage mods.',danger:false},
+  unadmin:{icon:'☆',label:'Remove Admin',verb:'remove ADMIN from',desc:'They will become a regular user.',danger:true},
+  delete:{icon:'✕',label:'Delete Message',verb:'delete this message',desc:'The message will be marked as deleted for everyone.',danger:true},
 };
 
-// Promise-based confirm for slash commands
 function askConfirm(username,action){
   return new Promise(resolve=>{
     const m=ACTION_META[action]||{icon:'?',label:action,verb:action,desc:'',danger:false};
-    const box=$('confirmBox');
-    box.innerHTML=`
-      <div class="confirm-head"><span class="confirm-head-icon">${m.icon}</span>${m.label}</div>
-      <div class="confirm-body">
-        Are you sure you want to ${m.verb} <strong>${esc(username)}</strong>?
-        <div class="confirm-warn">${m.desc}</div>
-      </div>
-      <div class="confirm-btns">
-        <button class="confirm-btn cancel" id="cfCancel">Cancel</button>
-        <button class="confirm-btn proceed ${m.danger?'danger':''}" id="cfProceed">${m.label}</button>
-      </div>`;
+    $('confirmBox').innerHTML=`<div class="confirm-head"><span class="confirm-head-icon">${m.icon}</span>${m.label}</div><div class="confirm-body">Are you sure you want to ${m.verb} <strong>${esc(username)}</strong>?<div class="confirm-warn">${m.desc}</div></div><div class="confirm-btns"><button class="confirm-btn cancel" id="cfCancel">Cancel</button><button class="confirm-btn proceed ${m.danger?'danger':''}" id="cfProceed">${m.label}</button></div>`;
     $('confirmOv').classList.add('on');
     $('cfCancel').onclick=()=>{closeConfirm();resolve(false)};
     $('cfProceed').onclick=()=>{closeConfirm();resolve(true)};
   });
 }
 
-// Callback-based confirm for GUI popup buttons
 let _confirmCb=null;
 function showConfirm(username,action,msgId){
   const m=ACTION_META[action]||{icon:'?',label:action,verb:action,desc:'',danger:false};
-  const box=$('confirmBox');
   const isDelete=action==='delete';
-  const targetStr=isDelete?'':'<strong>'+esc(username)+'</strong>';
-
-  box.innerHTML=`
-    <div class="confirm-head"><span class="confirm-head-icon">${m.icon}</span>${m.label}</div>
-    <div class="confirm-body">
-      Are you sure you want to ${m.verb}${isDelete?'':' '+targetStr}?
-      <div class="confirm-warn">${m.desc}</div>
-    </div>
-    <div class="confirm-btns">
-      <button class="confirm-btn cancel" id="cfCancel">Cancel</button>
-      <button class="confirm-btn proceed ${m.danger?'danger':''}" id="cfProceed">${m.label}</button>
-    </div>`;
-
+  $('confirmBox').innerHTML=`<div class="confirm-head"><span class="confirm-head-icon">${m.icon}</span>${m.label}</div><div class="confirm-body">Are you sure you want to ${m.verb}${isDelete?'':' <strong>'+esc(username)+'</strong>'}?<div class="confirm-warn">${m.desc}</div></div><div class="confirm-btns"><button class="confirm-btn cancel" id="cfCancel">Cancel</button><button class="confirm-btn proceed ${m.danger?'danger':''}" id="cfProceed">${m.label}</button></div>`;
   $('confirmOv').classList.add('on');
   _confirmCb={action,username,msgId};
-
   $('cfCancel').onclick=()=>closeConfirm();
-  $('cfProceed').onclick=async()=>{
-    closeConfirm();
-    if(isDelete&&msgId){
-      await deleteMsg(msgId);
-    }else if(username&&action){
-      await sideAction(username,action);
-    }
-  };
+  $('cfProceed').onclick=async()=>{closeConfirm();if(isDelete&&msgId)await deleteMsg(msgId);else if(username&&action)await sideAction(username,action)};
 }
 
-function closeConfirm(){
-  $('confirmOv').classList.remove('on');
-  _confirmCb=null;
-}
-
-// Close confirm on overlay click
-$('confirmOv').addEventListener('click',function(ev){
-  if(ev.target===$('confirmOv'))closeConfirm();
-});
-
-// Close confirm on Escape
-document.addEventListener('keydown',function(ev){
-  if(ev.key==='Escape'){
-    if($('confirmOv').classList.contains('on'))closeConfirm();
-    else if($('uPop').style.display==='block')closePop();
-  }
-});
+function closeConfirm(){$('confirmOv').classList.remove('on');_confirmCb=null}
+$('confirmOv').addEventListener('click',function(ev){if(ev.target===$('confirmOv'))closeConfirm()});
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape'){if($('confirmOv').classList.contains('on'))closeConfirm();else if($('uPop').style.display==='block')closePop()}});
 
 function toBot(){const a=$('msgs');a.scrollTop=a.scrollHeight;$('npill').classList.remove('on')}
 function togSb(){const s=$('sb'),o=$('sbOv');if(s.classList.contains('open')){s.classList.remove('open');o.classList.remove('on')}else{s.classList.add('open');o.classList.add('on')}}
 
-// FORCE DISCONNECT (kicked/banned)
+// FORCE DISCONNECT
 async function forceDisconnect(reason){
-  if(disconnected)return; // prevent double-fire
+  if(disconnected)return;
   disconnected=true;
-
-  // SYNCHRONOUSLY kill everything to prevent any more Firestore writes
   if(hbIv){clearInterval(hbIv);hbIv=null}
-  if(unM){unM();unM=null}
-  if(unU){unU();unU=null}
-  if(unT){unT();unT=null}
-  if(unSelf){unSelf();unSelf=null}
-  if(unBan){unBan();unBan=null}
+  if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}
+  if(unSelf){unSelf();unSelf=null}if(unBan){unBan();unBan=null}
   if(tpTo){clearTimeout(tpTo);tpTo=null}
-
-  // Reset kicked flag so they can rejoin later (for kicks, not bans)
   const uid=me?.uid;
   if(uid){try{await db.collection('users').doc(uid).update({kicked:false,online:false})}catch{}}
-
   try{await au.signOut()}catch{}
   me=null;lmc=0;cmdResults=[];allUsers=[];
-
   show('auth');setLd(false);swAuth('login');
   $('aName').value='';$('aPass').value='';
   showSts(reason,'err');
 }
 
 async function logout(){
-  // Stop heartbeat first
   if(hbIv){clearInterval(hbIv);hbIv=null}
   if(tpTo){clearTimeout(tpTo);tpTo=null}
-  // Mark offline while still connected
   try{await updPres(false)}catch{}
-  try{clrTyp()}catch{}
-  // Now set guard and tear down everything
+  try{await clrTyp()}catch{}
   disconnected=true;
-  if(unM){unM();unM=null}
-  if(unU){unU();unU=null}
-  if(unT){unT();unT=null}
-  if(unSelf){unSelf();unSelf=null}
-  if(unBan){unBan();unBan=null}
+  if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}
+  if(unSelf){unSelf();unSelf=null}if(unBan){unBan();unBan=null}
   await au.signOut();
   disconnected=false;
   me=null;lmc=0;cmdResults=[];allUsers=[];$('aName').value='';$('aPass').value='';hideSts();setLd(false);swAuth('login');show('auth');
