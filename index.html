@@ -300,7 +300,7 @@ const COLS=["#6ee75a","#5abbe7","#e75ae7","#e7a85a","#e75a5a","#5ae7c8","#e7e15a
 const MX=1000,DEV_NAME='basis';
 const ROLE_ORDER={dev:4,admin:3,mod:2,user:1};
 
-let mode='login',selCol=COLS[0],me=null,unM=null,unU=null,unT=null,hbIv=null,tpTo=null,db,au,lmc=0,atBot=true,busy=false;
+let mode='login',selCol=COLS[0],me=null,unM=null,unU=null,unT=null,unSelf=null,hbIv=null,tpTo=null,db,au,lmc=0,atBot=true,busy=false;
 let allUsers=[]; // cached user list for commands
 let cmdResults=[]; // local-only command output
 
@@ -388,7 +388,7 @@ async function doAuth(){
 }
 
 // ENTER CHAT
-function enterChat(){
+async function enterChat(){
   show('chat');setLd(false);cmdResults=[];
   $('hName').textContent=me.name;$('hName').style.color=me.color;
   const a=$('hAv');a.textContent=ini(me.name);a.style.background=me.color;
@@ -415,6 +415,40 @@ function enterChat(){
   });
 
   updPres(true);if(hbIv)clearInterval(hbIv);hbIv=setInterval(()=>updPres(true),25000);
+
+  // SELF-MONITOR: watch own doc for kick/ban/mute changes
+  if(unSelf)unSelf();
+  unSelf=db.collection('users').doc(me.uid).onSnapshot(async snap=>{
+    if(!snap.exists)return;
+    const d=snap.data();
+    // Update muted state in real-time
+    me.muted=d.muted||false;
+    me.role=d.role||'user';
+    // Check if kicked
+    if(d.kicked){
+      // Reset kicked flag so they can rejoin later (for kick, not ban)
+      try{await db.collection('users').doc(me.uid).update({kicked:false,online:false})}catch{}
+      forceDisconnect('You have been kicked from the room.');
+      return;
+    }
+  });
+
+  // Also monitor ban list for own name
+  const banCheck=db.collection('bans').doc(me.nameLower);
+  const banSnap=await banCheck.get();
+  // Don't need a persistent listener — we check on presence heartbeat
+  const origUpdPres=updPres;
+  const kickedBanCheck=async()=>{
+    try{
+      const b=await banCheck.get();
+      if(b.exists){forceDisconnect('You have been banned from this room.');return}
+    }catch{}
+    origUpdPres(true);
+  };
+  if(hbIv)clearInterval(hbIv);
+  hbIv=setInterval(kickedBanCheck,25000);
+  // Immediate ban check
+  if(banSnap.exists){forceDisconnect('You have been banned from this room.');return}
 
   const inp=$('iInp');
   inp.oninput=()=>{
@@ -900,8 +934,23 @@ document.addEventListener('keydown',function(ev){
 function toBot(){const a=$('msgs');a.scrollTop=a.scrollHeight;$('npill').classList.remove('on')}
 function togSb(){const s=$('sb'),o=$('sbOv');if(s.classList.contains('open')){s.classList.remove('open');o.classList.remove('on')}else{s.classList.add('open');o.classList.add('on')}}
 
+// FORCE DISCONNECT (kicked/banned)
+async function forceDisconnect(reason){
+  // Tear down all listeners immediately
+  if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}if(unSelf){unSelf();unSelf=null}
+  if(hbIv){clearInterval(hbIv);hbIv=null}
+  clrTyp();
+  try{await au.signOut()}catch{}
+  me=null;lmc=0;cmdResults=[];allUsers=[];
+
+  // Show kicked/banned notice on auth screen
+  show('auth');setLd(false);swAuth('login');
+  $('aName').value='';$('aPass').value='';
+  showSts(reason,'err');
+}
+
 async function logout(){
-  if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}
+  if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}if(unSelf){unSelf();unSelf=null}
   if(hbIv){clearInterval(hbIv);hbIv=null}
   clrTyp();await updPres(false);await au.signOut();
   me=null;lmc=0;cmdResults=[];allUsers=[];$('aName').value='';$('aPass').value='';hideSts();setLd(false);swAuth('login');show('auth');
