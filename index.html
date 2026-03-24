@@ -48,9 +48,6 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
 @keyframes msgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @keyframes glow{0%,100%{text-shadow:0 0 20px rgba(110,231,90,.25)}50%{text-shadow:0 0 35px rgba(110,231,90,.45)}}
 @keyframes typeBounce{0%,60%,100%{transform:translateY(0);opacity:.25}30%{transform:translateY(-5px);opacity:1}}
-/* ── FIX 1: pending shimmer for optimistic messages ── */
-@keyframes pendingPulse{0%,100%{opacity:.55}50%{opacity:.85}}
-.m-bub.pending{animation:pendingPulse 1.2s ease-in-out infinite}
 
 .scr{display:none;height:100%}.scr.on{display:flex}
 
@@ -153,22 +150,8 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
 .mc-h-user{display:flex;align-items:center;gap:8px}
 .mc-h-name{font-size:.70rem;font-weight:600;letter-spacing:1px}
 .mc-exit{padding:7px 14px;border-radius:var(--r-sm);border:1px solid var(--border-hi);background:0;color:var(--text-dim);font-family:var(--mono);font-size:.62rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:.12s}.mc-exit:hover{background:var(--g06);border-color:var(--g);color:var(--g)}
-/* ── connection state banner ── */
-@keyframes bannerIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-@keyframes bannerOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-6px)}}
-.conn-banner{display:none;align-items:center;justify-content:center;gap:8px;padding:6px 24px;font-size:.58rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;flex-shrink:0;border-bottom:1px solid transparent}
-.conn-banner.show{display:flex;animation:bannerIn .2s ease}
-.conn-banner.offline{background:rgba(255,204,68,.06);border-color:rgba(255,204,68,.18);color:var(--warn)}
-.conn-banner.back{background:rgba(90,255,106,.06);border-color:rgba(90,255,106,.18);color:var(--pos)}
-.conn-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
-.conn-banner.offline .conn-dot{background:var(--warn);animation:pulse 1s ease-in-out infinite}
-.conn-banner.back .conn-dot{background:var(--pos)}
 
-/* ── FIX 2: msgs is the real-time container; cmd-log sits below it ── */
-.msgs-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .msgs{flex:1;overflow-y:auto;padding:20px 28px;display:flex;flex-direction:column;gap:3px}
-/* ── FIX 2: cmd-log is a separate, non-scrolling overlay at the bottom ── */
-.cmd-log{padding:0 28px 6px;display:flex;flex-direction:column;gap:3px;max-height:220px;overflow-y:auto;flex-shrink:0}
 .msgs-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;color:var(--text-mute)}
 .msgs-empty-ic{font-size:52px;opacity:.1}.msgs-empty-t{font-size:.80rem;letter-spacing:2.5px;text-transform:uppercase}.msgs-empty-s{font-size:.58rem;letter-spacing:1.2px}
 .d-sep{display:flex;align-items:center;gap:16px;padding:18px 0 12px}.d-sep-l{flex:1;height:1px;background:var(--border)}.d-sep-t{font-size:.52rem;color:var(--text-mute);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;padding:3px 14px;border:1px solid var(--border);border-radius:12px;background:var(--bg2)}
@@ -192,7 +175,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
 .typ{display:none;align-items:center;gap:10px;padding:4px 28px 2px;font-size:.60rem;color:var(--text-mute);letter-spacing:.8px;flex-shrink:0}.typ.on{display:flex}
 .typ-d{display:flex;gap:3px}.typ-d span{width:4px;height:4px;border-radius:50%;background:var(--g40);animation:typeBounce 1.2s ease-in-out infinite}.typ-d span:nth-child(2){animation-delay:.15s}.typ-d span:nth-child(3){animation-delay:.3s}
 
-.cmd-res{padding:8px 14px;margin:4px 0;border-radius:var(--r-sm);font-size:.72rem;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text-dim);animation:fadeIn .2s;letter-spacing:.3px}
+.cmd-res{padding:8px 14px;margin:4px 0;border-radius:var(--r-sm);font-size:.72rem;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text-dim);animation:fadeIn .2s;letter-spacing:.3px;max-width:500px}
 .cmd-res.cmd-err{border-color:rgba(255,85,85,.2);color:var(--neg)}.cmd-res.cmd-ok{border-color:rgba(90,255,106,.15);color:var(--pos)}
 
 .npill{position:absolute;bottom:100px;left:50%;transform:translateX(-50%);padding:8px 20px;border-radius:20px;background:rgba(8,16,8,.95);border:1px solid var(--g40);color:var(--g);font-size:.60rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;display:none;z-index:10;backdrop-filter:blur(10px);box-shadow:0 4px 24px rgba(0,0,0,.5);transition:.15s}
@@ -216,7 +199,6 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
   .sb{position:fixed;left:0;top:0;bottom:0;z-index:100;transform:translateX(-100%);transition:transform .25s ease;width:280px;min-width:280px}
   .sb.open{transform:translateX(0)}.mob-btn{display:block}.sb-close{display:flex}
   .m-grp{max-width:88%}.i-input{font-size:16px}.ibar{padding:10px 14px 14px}.ibar-box{padding:12px 14px}.msgs{padding:14px 16px}.mc-head{padding:10px 16px}.mc-h-name{display:none}.i-send{padding:14px 18px;font-size:.68rem;letter-spacing:1.5px}
-  .cmd-log{padding:0 16px 6px}
 }
 @media(max-width:400px){.sb{width:85%;min-width:85%}.i-send{padding:14px;letter-spacing:1px}}
 </style>
@@ -248,14 +230,9 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
     </aside>
     <div class="mc">
       <div class="mc-head"><div class="mc-head-l"><button class="mob-btn" onclick="togSb()">☰</button><div><div class="mc-h-title">&gt; Chatroom</div><span class="mc-h-desc" id="hDesc">0 nodes connected</span></div></div><div class="mc-head-r"><div class="mc-h-user"><div class="av" id="hAv" style="width:30px;height:30px;font-size:.52rem"></div><span class="mc-h-name" id="hName"></span></div><button class="mc-exit" onclick="logout()">EXIT</button></div></div>
-      <div class="conn-banner" id="connBanner"><span class="conn-dot"></span><span id="connTxt"></span></div>
-      <!-- FIX 2: msgs-wrap contains the scrollable list + separate cmd-log -->
-      <div class="msgs-wrap">
-        <div class="msgs" id="msgs"><div class="msgs-empty" id="msgsEmpty"><div class="msgs-empty-ic">◈</div><div class="msgs-empty-t">Awaiting Transmissions</div><div class="msgs-empty-s">Type /help for commands</div></div></div>
-        <div class="npill" id="npill" onclick="toBot()">↓ New Messages</div>
-        <div class="cmd-log" id="cmdLog"></div>
-      </div>
+      <div class="msgs" id="msgs"><div class="msgs-empty"><div class="msgs-empty-ic">◈</div><div class="msgs-empty-t">Awaiting Transmissions</div><div class="msgs-empty-s">Type /help for commands</div></div></div>
       <div class="typ" id="typBar"><div class="typ-d"><span></span><span></span><span></span></div><span id="typTxt"></span></div>
+      <div class="npill" id="npill" onclick="toBot()">↓ New Messages</div>
       <div class="ibar"><div class="ibar-row"><div class="ibar-box"><span class="i-prompt">&gt;</span><textarea class="i-input" id="iInp" rows="1" placeholder="Type your message or /help..." maxlength="1000"></textarea><span class="i-cc" id="iCc"></span></div><button class="i-send" id="iSend" disabled onclick="handleSend()">SEND</button></div></div>
     </div>
   </div>
@@ -273,38 +250,14 @@ const COLS=["#6ee75a","#5abbe7","#e75ae7","#e7a85a","#e75a5a","#5ae7c8","#e7e15a
 const MX=1000,DEV_NAME='basis';
 const ROLE_ORDER={dev:4,admin:3,mod:2,user:1};
 
-let mode='login',selCol=COLS[0],me=null,unM=null,unU=null,unT=null,unSelf=null,unBan=null,hbIv=null,tpTo=null,tpDebounce=null,db,au,lmc=0,atBot=true,busy=false,disconnected=false;
-let allUsers=[],cachedMsgs=[];
+let mode='login',selCol=COLS[0],me=null,unM=null,unU=null,unT=null,unSelf=null,unBan=null,hbIv=null,tpTo=null,db,au,lmc=0,atBot=true,busy=false,disconnected=false;
+let allUsers=[],cmdResults=[],cachedMsgs=[];
 
-// ── FIX 2: incremental render state ──────────────────────────────────────────
-// Track which message IDs are already in the DOM so we only append new ones.
-// Key: message id → rendered DOM element
-const renderedIds = new Map();
-// Track the last rendered date separator so we don't duplicate them
-let lastRenderedDate = '';
-// Track last uid+minute for avatar grouping across incremental appends
-let lastRenderedUid = '';
-let lastRenderedMin = '';
-
-// ── FIX 1: optimistic message tracking ───────────────────────────────────────
-// Maps tempId → DOM element so we can remove/replace on server confirm
-const pendingMsgs = new Map();
-
+// FIX: Reuse single AudioContext
 let _audioCtx=null;
 function ping(){
   try{
     if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    // running → play immediately
-    if(_audioCtx.state==='running'){_playPing();return}
-    // suspended or interrupted (iOS Safari) → resume first, then play
-    _audioCtx.resume().then(()=>{
-      // Double-check state after resume — iOS sometimes resolves but stays interrupted
-      if(_audioCtx.state==='running')_playPing();
-    }).catch(()=>{});
-  }catch{}
-}
-function _playPing(){
-  try{
     const o=_audioCtx.createOscillator(),g=_audioCtx.createGain();
     o.connect(g);g.connect(_audioCtx.destination);
     o.type='sine';o.frequency.setValueAtTime(1100,_audioCtx.currentTime);
@@ -332,6 +285,7 @@ function roleBadge(role){
 function myRole(){return me?.role||'user'}
 function hasRole(min){return(ROLE_ORDER[myRole()]||1)>=(ROLE_ORDER[min]||1)}
 
+// FIX: Helper to build message object with role included
 function msgObj(type,text,extra){
   return{type,uid:me.uid,name:me.name,color:me.color,role:me.role||'user',text,ts:firebase.firestore.FieldValue.serverTimestamp(),...extra};
 }
@@ -366,10 +320,13 @@ async function doAuth(){
   const email=name.toLowerCase()+'@basis.chat';
   try{
     if(mode==='signup'){
+      // FIX: Create auth first (ban check needs auth to read Firestore)
       const cr=await au.createUserWithEmailAndPassword(email,pass);
       try{
+        // Now we're authenticated — check ban list
         const banDoc=await db.collection('bans').doc(name.toLowerCase()).get();
         if(banDoc.exists){await cr.user.delete();busy=false;showSts('This username is banned','err');setLd(false);return}
+        // Check username taken
         const ex=await db.collection('users').where('nameLower','==',name.toLowerCase()).limit(1).get();
         if(!ex.empty){await cr.user.delete();busy=false;showSts('Username already taken','err');setLd(false);return}
         const role=name.toLowerCase()===DEV_NAME?'dev':'user';
@@ -381,10 +338,13 @@ async function doAuth(){
       const cr=await au.signInWithEmailAndPassword(email,pass);
       const d=await db.collection('users').doc(cr.user.uid).get();
       if(!d.exists){busy=false;showSts('Profile not found','err');setLd(false);return}
+      // Check if banned
       const banDoc=await db.collection('bans').doc(d.data().nameLower).get();
       if(banDoc.exists){await au.signOut();busy=false;showSts('You are banned from this room','err');setLd(false);return}
       me={uid:cr.user.uid,...d.data()};
+      // Ensure dev role for DEV_NAME
       if(me.nameLower===DEV_NAME&&me.role!=='dev'){await db.collection('users').doc(cr.user.uid).update({role:'dev'});me.role='dev'}
+      // FIX: Reset kicked flag and sync muted state on login
       await db.collection('users').doc(cr.user.uid).update({online:true,kicked:false,lastSeen:firebase.firestore.FieldValue.serverTimestamp()});
       me.kicked=false;
       busy=false;enterChat();
@@ -401,79 +361,17 @@ async function doAuth(){
 
 // ENTER CHAT
 async function enterChat(){
-  show('chat');setLd(false);disconnected=false;
-  // Reset incremental render state on every fresh session
-  renderedIds.clear();pendingMsgs.clear();
-  lastRenderedDate='';lastRenderedUid='';lastRenderedMin='';
-  $('msgs').innerHTML='<div class="msgs-empty" id="msgsEmpty"><div class="msgs-empty-ic">◈</div><div class="msgs-empty-t">Awaiting Transmissions</div><div class="msgs-empty-s">Type /help for commands</div></div>';
-  $('cmdLog').innerHTML='';
-
+  show('chat');setLd(false);cmdResults=[];disconnected=false;
   $('hName').textContent=me.name;$('hName').style.color=me.color;
   const a=$('hAv');a.textContent=ini(me.name);a.style.background=me.color;
 
   if(unM)unM();
-  // ── paginate: start with 50; includeMetadataChanges drives the connection banner ──
-  let wasOnline=true; // tracks last known connection state for banner transitions
-  unM=db.collection('messages').orderBy('ts','asc').limitToLast(50).onSnapshot({includeMetadataChanges:true},snap=>{
-    // ── connection banner ────────────────────────────────────────────────────
-    const fromCache=snap.metadata.fromCache;
-    const banner=$('connBanner');
-    if(fromCache&&wasOnline){
-      // Just went offline — show amber reconnecting banner
-      wasOnline=false;
-      banner.className='conn-banner show offline';
-      $('connTxt').textContent='Reconnecting…';
-    } else if(!fromCache&&!wasOnline){
-      // Just came back online — flash green then hide
-      wasOnline=true;
-      banner.className='conn-banner show back';
-      $('connTxt').textContent='Back online';
-      setTimeout(()=>{banner.className='conn-banner';},2200);
-    }
-    // ── incremental message processing ───────────────────────────────────────
-    snap.docChanges().forEach(change=>{
-      const m={id:change.doc.id,...change.doc.data()};
-      if(change.type==='added'){
-        // Is this confirming one of our optimistic messages?
-        // Match by uid + text + rough time window (within 10s)
-        let confirmedPending=null;
-        if(m.uid===me?.uid&&m.type==='user'){
-          for(const[tempId,info] of pendingMsgs){
-            if(info.text===m.text&&Math.abs(Date.now()-info.sentAt)<10000){
-              confirmedPending=tempId;break;
-            }
-          }
-        }
-        if(confirmedPending){
-          // Remove the optimistic placeholder and render the real message
-          const el=pendingMsgs.get(confirmedPending);
-          if(el&&el.parentNode)el.parentNode.removeChild(el);
-          pendingMsgs.delete(confirmedPending);
-        }
-        // Only append if not already rendered (handles initial load replay)
-        if(!renderedIds.has(m.id)){
-          appendMsg(m);
-          cachedMsgs.push(m);
-        }
-        // Ping + new-message pill for incoming messages from others
-        if(lmc>0&&m.uid!==me?.uid){
-          if(!atBot)$('npill').classList.add('on');
-          ping();
-        }
-        lmc++;
-      } else if(change.type==='modified'){
-        // Handle deletions and edits: update the existing DOM node in-place
-        const el=renderedIds.get(m.id);
-        if(el){
-          const newEl=buildMsgElement(m,false,false);
-          el.replaceWith(newEl);
-          renderedIds.set(m.id,newEl);
-          // Update cached copy
-          const idx=cachedMsgs.findIndex(x=>x.id===m.id);
-          if(idx!==-1)cachedMsgs[idx]=m;
-        }
-      }
-    });
+  unM=db.collection('messages').orderBy('ts','asc').limitToLast(200).onSnapshot(s=>{
+    const ms=s.docs.map(d=>({id:d.id,...d.data()}));
+    const isNew=ms.length>lmc&&lmc>0;const last=ms[ms.length-1];
+    renderMsgs(ms);
+    if(isNew&&last&&last.uid!==me?.uid){if(!atBot)$('npill').classList.add('on');ping()}
+    lmc=ms.length;
   });
 
   if(unU)unU();
@@ -488,19 +386,13 @@ async function enterChat(){
     if(ts.length){$('typTxt').textContent=ts.map(t=>t.name).join(', ')+(ts.length>1?' are':' is')+' typing...';b.classList.add('on')}else b.classList.remove('on');
   });
 
-  // Set server-side onDisconnect handler — fires even on hard disconnects (tab crash, network loss)
-  // This replaces polling as the primary presence mechanism
-  db.collection('users').doc(me.uid).onDisconnect().update({online:false,lastSeen:firebase.firestore.FieldValue.serverTimestamp()});
-  updPres(true);
-  // Minimal keepalive: only to prevent Firestore from closing idle connections (not for presence)
-  if(hbIv)clearInterval(hbIv);hbIv=setInterval(()=>{if(!disconnected)updPres(true)},55000);
+  updPres(true);if(hbIv)clearInterval(hbIv);hbIv=setInterval(()=>{if(!disconnected)updPres(true)},25000);
 
-  // ── FIX 3: unSelf listener keeps me.muted in sync — no more per-send reads ─
+  // SELF-MONITOR: watch own doc for kick/mute/role changes
   if(unSelf)unSelf();
   unSelf=db.collection('users').doc(me.uid).onSnapshot(snap=>{
     if(!snap.exists||disconnected)return;
     const d=snap.data();
-    // Always sync muted state immediately from the live listener
     me.muted=d.muted||false;
     me.role=d.role||'user';
     if(d.kicked){
@@ -509,6 +401,7 @@ async function enterChat(){
     }
   });
 
+  // BAN MONITOR: real-time listener on own ban doc
   if(unBan)unBan();
   unBan=db.collection('bans').doc(me.nameLower).onSnapshot(snap=>{
     if(disconnected)return;
@@ -524,9 +417,7 @@ async function enterChat(){
     $('iSend').disabled=!ok;$('iSend').className=ok?'i-send ok':'i-send';
     const cc=$('iCc');if(l>MX*.75){cc.textContent=l+'/'+MX;cc.className='i-cc'+(l>MX?' o':l>MX*.9?' w':'')}else{cc.textContent='';cc.className='i-cc'}
     inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,140)+'px';
-    // Debounce: only write to Firestore if user pauses for 500ms
-    if(tpDebounce)clearTimeout(tpDebounce);
-    tpDebounce=setTimeout(setTyp,500);
+    setTyp();
   };
   inp.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend()}};
   const area=$('msgs');
@@ -535,176 +426,40 @@ async function enterChat(){
   setTimeout(()=>inp.focus(),150);
 }
 
-// ── FIX 2: build a single message DOM element ─────────────────────────────────
-// prev* args let callers control grouping when building in sequence
-function buildMsgElement(m, hidAvatar, showAuthor){
-  const mi=m.uid===me?.uid;
-  const t=m.ts?.toDate?fTime(m.ts.toDate()):'';
-  const c=esc(m.color||'#6ee75a');
-  const del=m.deleted;
-  const canDel=hasRole('admin')&&!del;
-  const mRole=m.role||'user';
-  const isPending=!!m._pending;
-
-  const wrapper=document.createElement('div');
-  wrapper.className=`m-row ${mi?'mi':'ot'}`;
-  if(m.id)wrapper.dataset.msgid=m.id;
-
-  let inner='';
-  inner+=`<div class="m-grp" ${mi?'style="flex-direction:row-reverse"':''}>`;
-  if(!mi){
-    inner+=`<div class="m-av ${hidAvatar?'hid':''}" style="background:${c}">${ini(m.name)}</div>`;
-  }
-  inner+=`<div class="m-cnt" ${mi?'style="align-items:flex-end"':''}>`;
-  if(!mi&&showAuthor){
-    inner+=`<div class="m-au" style="color:${c}"><span>${esc(m.name)}</span>${roleBadge(mRole)}</div>`;
-  }
-  inner+=`<div class="m-bub ${mi?'mi':'ot'}${del?' deleted':''}${isPending?' pending':''}" style="border-color:${mi?c+'20':'var(--border)'}">`;
-  inner+=del
-    ?`<div class="m-txt" style="color:var(--text-mute)">[message deleted${m.deletedBy?' by '+esc(m.deletedBy):''}]</div>`
-    :`<div class="m-txt">${fMsg(m.text)}</div>`;
-  inner+=`<div class="m-meta"><span class="m-time">${t}</span>`;
-  if(isPending)inner+=`<span class="m-time" style="opacity:.4">sending…</span>`;
-  else if(canDel)inner+=`<button class="m-del" data-delid="${m.id}">DEL</button>`;
-  inner+=`</div></div></div></div>`;
-  wrapper.innerHTML=inner;
-  return wrapper;
-}
-
-// ── FIX 2: append a single message to the DOM, handling date seps + grouping ──
-function appendMsg(m){
-  const area=$('msgs');
-  const wasAtBot=atBot||area.scrollHeight<=area.clientHeight;
-
-  // Remove empty-state placeholder if present
-  const empty=$('msgsEmpty');
-  if(empty)empty.remove();
-
-  // Date separator
-  if(m.ts?.toDate){
-    const ds=fDate(m.ts.toDate());
-    if(ds!==lastRenderedDate){
-      const sep=document.createElement('div');
-      sep.className='d-sep';
-      sep.innerHTML=`<span class="d-sep-l"></span><span class="d-sep-t">${ds}</span><span class="d-sep-l"></span>`;
-      area.appendChild(sep);
-      lastRenderedDate=ds;
-      lastRenderedUid='';lastRenderedMin=''; // reset grouping on new day
-    }
-  }
-
-  if(m.type==='system'){
-    const el=document.createElement('div');
-    el.className='s-msg';
-    el.innerHTML=`<span class="s-msg-l"></span><span class="s-msg-t">${esc(m.text)}</span><span class="s-msg-l"></span>`;
-    el.style.animation='fadeIn .3s';
-    area.appendChild(el);
-    if(m.id)renderedIds.set(m.id,el);
-    if(wasAtBot)area.scrollTop=area.scrollHeight;
-    return;
-  }
-
-  if(m.type==='action'){
-    const el=document.createElement('div');
-    el.className='act-msg';
-    const c=esc(m.color||'#6ee75a');
-    el.innerHTML=`<strong style="color:${c}">${esc(m.name)}</strong> ${esc(m.text)}`;
-    area.appendChild(el);
-    if(m.id)renderedIds.set(m.id,el);
-    if(wasAtBot)area.scrollTop=area.scrollHeight;
-    return;
-  }
-
-  // Regular user message — determine grouping
-  const mn=m.ts?.toDate?m.ts.toDate().getHours()+':'+m.ts.toDate().getMinutes():'';
-  const grouped=(m.uid===lastRenderedUid&&mn===lastRenderedMin);
-  // For "other" messages: hide avatar + author when grouped.
-  // For "mine": never show author label anyway.
-  const hidAv=grouped;
-  const showAuthor=!grouped;
-
-  const el=buildMsgElement(m, hidAv, showAuthor);
-  area.appendChild(el);
-
-  if(m.id)renderedIds.set(m.id,el);
-  lastRenderedUid=m.uid;
-  lastRenderedMin=mn;
-
-  if(wasAtBot)area.scrollTop=area.scrollHeight;
-}
-
 // TYPING & PRESENCE
 async function setTyp(){if(!me||disconnected)return;try{await db.collection('typing').doc(me.uid).set({uid:me.uid,name:me.name,ts:firebase.firestore.FieldValue.serverTimestamp()})}catch{}if(tpTo)clearTimeout(tpTo);tpTo=setTimeout(clrTyp,3000)}
 async function clrTyp(){if(!me||disconnected)return;try{await db.collection('typing').doc(me.uid).delete()}catch{}}
 async function updPres(on){if(!me||disconnected)return;try{await db.collection('users').doc(me.uid).update({online:on,lastSeen:firebase.firestore.FieldValue.serverTimestamp()})}catch{}}
 
-// ── FIX 3: amIMuted now reads only from the in-memory me object ───────────────
-// me.muted is kept live by the unSelf onSnapshot listener — no Firestore read needed.
-function amIMuted(){
-  return me.muted===true;
+// MUTE CHECK — fresh from Firestore
+async function amIMuted(){
+  if(me.muted)return true;
+  try{const d=await db.collection('users').doc(me.uid).get();if(d.exists&&d.data().muted){me.muted=true;return true}}catch{}
+  return false;
 }
 
 // ═══ SEND ═══
 async function handleSend(){
   const inp=$('iInp'),raw=inp.value.trim();
+  // FIX: guard against disconnected state
   if(!raw||!me||disconnected)return;
   inp.value='';inp.style.height='auto';$('iSend').disabled=true;$('iSend').className='i-send';$('iCc').textContent='';clrTyp();
 
   if(raw.startsWith('/')){await handleCommand(raw);inp.focus();return}
 
-  // ── FIX 3: synchronous mute check — no await, no Firestore read ──────────
-  if(amIMuted()){addLocal('You are muted and cannot send messages.','err');inp.focus();return}
+  if(await amIMuted()){addLocal('You are muted and cannot send messages.','err');inp.focus();return}
 
-  // ── FIX 1: inject optimistic message immediately ──────────────────────────
-  const tempId='tmp_'+Date.now();
-  const optimisticMsg={
-    id:tempId,
-    _pending:true,
-    type:'user',
-    uid:me.uid,
-    name:me.name,
-    color:me.color,
-    role:me.role||'user',
-    text:raw,
-    deleted:false,
-    ts:{toDate:()=>new Date()}
-  };
-  appendMsg(optimisticMsg);
-  toBot();
-
-  // Track it so the server confirm can remove it
-  pendingMsgs.set(tempId,{text:raw,sentAt:Date.now(),el:$('msgs').querySelector(`[data-msgid="${tempId}"]`)});
-
-  // ── FIX 1: fire-and-forget Firestore write; remove optimistic on failure ──
+  // FIX: include role in message
   try{
     await db.collection('messages').add(msgObj('user',raw,{deleted:false}));
-  }catch(e){
-    console.error('Send failed:',e);
-    // Remove failed optimistic message from DOM
-    const info=pendingMsgs.get(tempId);
-    if(info){
-      const el=$('msgs').querySelector(`[data-msgid="${tempId}"]`);
-      if(el)el.remove();
-      pendingMsgs.delete(tempId);
-    }
-    // Restore text so user doesn't lose their message
-    inp.value=raw;
-    inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,140)+'px';
-    addLocal('Failed to send — please try again.','err');
-  }
+    toBot();
+  }catch(e){console.error(e);inp.value=raw}
   inp.focus();
 }
 
 // ═══ COMMANDS ═══
-// ── FIX 2: addLocal now appends to #cmdLog, not the message stream ────────────
-function addLocal(text,type='info'){
-  const el=document.createElement('div');
-  el.className=`cmd-res ${type==='err'?'cmd-err':type==='ok'?'cmd-ok':''}`;
-  el.innerHTML=text;
-  $('cmdLog').appendChild(el);
-  // Auto-scroll cmd log
-  const cl=$('cmdLog');cl.scrollTop=cl.scrollHeight;
-}
+function addLocal(text,type='info'){cmdResults.push({type,text,ts:Date.now()});renderMsgsFromCache()}
+function renderMsgsFromCache(){renderMsgs(cachedMsgs)}
 
 async function handleCommand(raw){
   const parts=raw.split(/\s+/);
@@ -743,17 +498,10 @@ async function handleCommand(raw){
 
     case'/me':
       if(!rest){addLocal('/me <action>','err');break}
-      if(amIMuted()){addLocal('You are muted.','err');break}
+      if(await amIMuted()){addLocal('You are muted.','err');break}
       await db.collection('messages').add(msgObj('action',rest));break;
 
-    case'/clear':
-      // Clear both the message stream DOM and the incremental state
-      renderedIds.clear();pendingMsgs.clear();
-      lastRenderedDate='';lastRenderedUid='';lastRenderedMin='';
-      cachedMsgs=[];lmc=0;
-      $('msgs').innerHTML='';
-      $('cmdLog').innerHTML='';
-      addLocal('Chat cleared locally.');break;
+    case'/clear':cmdResults=[];$('msgs').innerHTML='';addLocal('Chat cleared locally.');break;
 
     case'/users':case'/who':
       addLocal(`<strong>Online users (${allUsers.length}):</strong>\n`+allUsers.map(u=>`  ${u.name} [${u.role||'user'}]${u.muted?' (muted)':''}`).join('\n'));break;
@@ -771,11 +519,11 @@ async function handleCommand(raw){
       await db.collection('messages').add(msgObj('action',`flipped a coin: ${Math.random()<.5?'heads':'tails'}`));break;
 
     case'/shrug':
-      if(amIMuted()){addLocal('You are muted.','err');break}
+      if(await amIMuted()){addLocal('You are muted.','err');break}
       await db.collection('messages').add(msgObj('user','¯\\_(ツ)_/¯',{deleted:false}));break;
 
     case'/tableflip':
-      if(amIMuted()){addLocal('You are muted.','err');break}
+      if(await amIMuted()){addLocal('You are muted.','err');break}
       await db.collection('messages').add(msgObj('user','(╯°□°)╯︵ ┻━┻',{deleted:false}));break;
 
     case'/mute':
@@ -852,6 +600,7 @@ async function banUser(username){
   if(!target){addLocal(`User "${esc(username)}" not found.`,'err');return}
   if(target.id===me.uid){addLocal("You can't ban yourself.",'err');return}
   if((ROLE_ORDER[target.role]||1)>=(ROLE_ORDER[myRole()]||1)){addLocal("Can't ban someone of equal or higher rank.",'err');return}
+  // FIX: Create ban doc FIRST so the target's ban monitor fires
   await db.collection('bans').doc(target.nameLower).set({name:target.name,bannedBy:me.name,bannedAt:firebase.firestore.FieldValue.serverTimestamp()});
   await db.collection('users').doc(target.id).update({online:false,kicked:true});
   await db.collection('messages').add({type:'system',text:`${target.name} was banned by ${me.name}`,ts:firebase.firestore.FieldValue.serverTimestamp()});
@@ -906,6 +655,36 @@ async function sideAction(username,action){
     case'admin':await handleCommand('/admin '+username);break;
     case'unadmin':await handleCommand('/unadmin '+username);break;
   }
+}
+
+// ═══ RENDER MESSAGES ═══
+function renderMsgs(ms){
+  cachedMsgs=ms;
+  const a=$('msgs'),wb=a.scrollTop+a.clientHeight>=a.scrollHeight-80;
+  if(!ms.length&&!cmdResults.length){a.innerHTML='<div class="msgs-empty"><div class="msgs-empty-ic">◈</div><div class="msgs-empty-t">Awaiting Transmissions</div><div class="msgs-empty-s">Type /help for commands</div></div>';return}
+  let h='',ld='',lu='',lm='';
+  ms.forEach(m=>{
+    if(m.ts?.toDate){const ds=fDate(m.ts.toDate());if(ds!==ld){h+=`<div class="d-sep"><span class="d-sep-l"></span><span class="d-sep-t">${ds}</span><span class="d-sep-l"></span></div>`;ld=ds;lu=''}}
+    if(m.type==='system'){lu='';h+=`<div class="s-msg"><span class="s-msg-l"></span><span class="s-msg-t">${esc(m.text)}</span><span class="s-msg-l"></span></div>`;return}
+    if(m.type==='action'){lu='';const c=esc(m.color||'#6ee75a');h+=`<div class="act-msg"><strong style="color:${c}">${esc(m.name)}</strong> ${esc(m.text)}</div>`;return}
+    const mi=m.uid===me?.uid,t=m.ts?.toDate?fTime(m.ts.toDate()):'',mn=m.ts?.toDate?m.ts.toDate().getHours()+':'+m.ts.toDate().getMinutes():'',gr=m.uid===lu&&mn===lm,c=esc(m.color||'#6ee75a');
+    const del=m.deleted;
+    const canDel=hasRole('admin')&&!del;
+    // FIX: use role from message, fallback to 'user'
+    const mRole=m.role||'user';
+
+    h+=`<div class="m-row ${mi?'mi':'ot'}"><div class="m-grp" ${mi?'style="flex-direction:row-reverse"':''}>`;
+    if(!mi)h+=`<div class="m-av ${gr?'hid':''}" style="background:${c}">${ini(m.name)}</div>`;
+    h+=`<div class="m-cnt" ${mi?'style="align-items:flex-end"':''}>`;
+    if(!mi&&!gr)h+=`<div class="m-au" style="color:${c}"><span>${esc(m.name)}</span>${roleBadge(mRole)}</div>`;
+    h+=`<div class="m-bub ${mi?'mi':'ot'}${del?' deleted':''}" style="border-color:${mi?c+'20':'var(--border)'}">`;
+    h+=del?`<div class="m-txt" style="color:var(--text-mute)">[message deleted${m.deletedBy?' by '+esc(m.deletedBy):''}]</div>`:`<div class="m-txt">${fMsg(m.text)}</div>`;
+    h+=`<div class="m-meta"><span class="m-time">${t}</span>${canDel?`<button class="m-del" data-delid="${m.id}">DEL</button>`:''}</div>`;
+    h+=`</div></div></div></div>`;
+    lu=m.uid;lm=mn;
+  });
+  cmdResults.forEach(cr=>{h+=`<div class="cmd-res ${cr.type==='err'?'cmd-err':cr.type==='ok'?'cmd-ok':''}">${cr.text}</div>`});
+  a.innerHTML=h;if(wb)a.scrollTop=a.scrollHeight;
 }
 
 // ═══ RENDER USERS ═══
@@ -977,12 +756,14 @@ function openPop(el){
 }
 function closePop(){$('uPop').style.display='none';$('popOv').classList.remove('on');_popTarget=null}
 
+// Popup action delegation
 $('uPop').addEventListener('click',async function(ev){
   const btn=ev.target.closest('.u-popup-btn[data-act]');
   if(!btn||!_popTarget)return;
   const action=btn.dataset.act;closePop();showConfirm(_popTarget,action);
 });
 
+// Delete button delegation
 $('msgs').addEventListener('click',async function(ev){
   const btn=ev.target.closest('.m-del[data-delid]');
   if(!btn)return;showConfirm(null,'delete',btn.dataset.delid);
@@ -1037,17 +818,10 @@ async function forceDisconnect(reason){
   if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}
   if(unSelf){unSelf();unSelf=null}if(unBan){unBan();unBan=null}
   if(tpTo){clearTimeout(tpTo);tpTo=null}
-  if(tpDebounce){clearTimeout(tpDebounce);tpDebounce=null}
   const uid=me?.uid;
-  if(uid){
-    // Cancel the onDisconnect handler so it doesn't fire after intentional logout
-    try{await db.collection('users').doc(uid).onDisconnect().cancel()}catch{}
-    try{await db.collection('users').doc(uid).update({kicked:false,online:false})}catch{}
-  }
+  if(uid){try{await db.collection('users').doc(uid).update({kicked:false,online:false})}catch{}}
   try{await au.signOut()}catch{}
-  me=null;lmc=0;allUsers=[];
-  renderedIds.clear();pendingMsgs.clear();cachedMsgs=[];
-  lastRenderedDate='';lastRenderedUid='';lastRenderedMin='';
+  me=null;lmc=0;cmdResults=[];allUsers=[];
   show('auth');setLd(false);swAuth('login');
   $('aName').value='';$('aPass').value='';
   showSts(reason,'err');
@@ -1056,20 +830,14 @@ async function forceDisconnect(reason){
 async function logout(){
   if(hbIv){clearInterval(hbIv);hbIv=null}
   if(tpTo){clearTimeout(tpTo);tpTo=null}
-  if(tpDebounce){clearTimeout(tpDebounce);tpDebounce=null}
   try{await updPres(false)}catch{}
   try{await clrTyp()}catch{}
-  // Cancel onDisconnect handler before intentional sign-out
-  try{if(me?.uid)await db.collection('users').doc(me.uid).onDisconnect().cancel()}catch{}
   disconnected=true;
   if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}
   if(unSelf){unSelf();unSelf=null}if(unBan){unBan();unBan=null}
   await au.signOut();
   disconnected=false;
-  me=null;lmc=0;allUsers=[];
-  renderedIds.clear();pendingMsgs.clear();cachedMsgs=[];
-  lastRenderedDate='';lastRenderedUid='';lastRenderedMin='';
-  $('aName').value='';$('aPass').value='';hideSts();setLd(false);swAuth('login');show('auth');
+  me=null;lmc=0;cmdResults=[];allUsers=[];$('aName').value='';$('aPass').value='';hideSts();setLd(false);swAuth('login');show('auth');
 }
 
 $('aPass')?.addEventListener('keydown',e=>{if(e.key==='Enter')doAuth()});
