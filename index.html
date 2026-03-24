@@ -144,6 +144,36 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
 .u-popup-sep{height:1px;background:var(--border);margin:4px 10px}
 .u-popup-empty{padding:12px 16px;font-size:.60rem;color:var(--text-mute);text-align:center;letter-spacing:1px}
 
+/* Confirm modal */
+.confirm-ov{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.confirm-ov.on{display:flex}
+.confirm-box{
+  width:320px;max-width:90vw;background:var(--bg2);border:1px solid var(--border-hi);
+  border-radius:var(--r);box-shadow:0 12px 48px rgba(0,0,0,.7),0 0 30px rgba(110,231,90,.04);
+  overflow:hidden;animation:fadeUp .15s ease;
+}
+.confirm-head{
+  padding:16px 20px 12px;border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);
+  font-size:.72rem;font-weight:700;color:var(--g);letter-spacing:1.5px;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+}
+.confirm-head-icon{font-size:.9rem;opacity:.6}
+.confirm-body{padding:18px 20px;font-size:.76rem;color:var(--text);line-height:1.6;letter-spacing:.3px}
+.confirm-body strong{color:var(--g90);font-weight:700}
+.confirm-body .confirm-warn{font-size:.64rem;color:var(--text-dim);margin-top:8px;letter-spacing:.5px}
+.confirm-btns{display:flex;gap:8px;padding:12px 20px 18px;justify-content:flex-end}
+.confirm-btn{
+  padding:9px 18px;border-radius:var(--r-sm);font-family:var(--mono);font-size:.66rem;
+  font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:.15s;
+}
+.confirm-btn.cancel{background:0;border:1px solid var(--border);color:var(--text-dim)}
+.confirm-btn.cancel:hover{border-color:var(--text);color:var(--text);background:var(--g03)}
+.confirm-btn.proceed{background:var(--g10);border:1px solid var(--g40);color:var(--g)}
+.confirm-btn.proceed:hover{background:rgba(110,231,90,.18);box-shadow:0 0 16px rgba(110,231,90,.15)}
+.confirm-btn.proceed.danger{background:rgba(255,85,85,.08);border:1px solid rgba(255,85,85,.25);color:var(--neg)}
+.confirm-btn.proceed.danger:hover{background:rgba(255,85,85,.14);box-shadow:0 0 16px rgba(255,85,85,.12)}
+
 .sb-foot{padding:14px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
 .sb-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--border-hi);border-radius:20px;font-size:.56rem;letter-spacing:2px;text-transform:uppercase;color:var(--g55);background:var(--g06)}
 .dp{width:5px;height:5px;border-radius:50%;background:var(--g);animation:pulse 2s ease-in-out infinite;display:inline-block}
@@ -239,6 +269,9 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
   <div class="sb-ov" id="sbOv" onclick="togSb()"></div>
   <div class="u-popup-ov" id="popOv" onclick="closePop()"></div>
   <div class="u-popup" id="uPop" style="display:none"></div>
+  <div class="confirm-ov" id="confirmOv">
+    <div class="confirm-box" id="confirmBox"></div>
+  </div>
   <div class="chat-wrap">
     <aside class="sb" id="sb">
       <div class="sb-logo"><div class="sb-logo-info"><div class="sb-logo-t">BASIS://CHAT</div><div class="sb-logo-s">Terminal Room</div></div><button class="sb-close" onclick="togSb()">✕</button></div>
@@ -499,18 +532,22 @@ async function handleCommand(raw){
     // MOD+
     case'/mute':
       if(!hasRole('mod')){addLocal('Insufficient permissions.','err');break}
-      await setUserFlag(arg1,'muted',true,'muted');break;
+      if(!arg1){addLocal('/mute <username>','err');break}
+      if(await askConfirm(arg1,'mute'))await setUserFlag(arg1,'muted',true,'muted');break;
     case'/unmute':
       if(!hasRole('mod')){addLocal('Insufficient permissions.','err');break}
-      await setUserFlag(arg1,'muted',false,'unmuted');break;
+      if(!arg1){addLocal('/unmute <username>','err');break}
+      if(await askConfirm(arg1,'unmute'))await setUserFlag(arg1,'muted',false,'unmuted');break;
 
     // ADMIN+
     case'/kick':
       if(!hasRole('admin')){addLocal('Insufficient permissions.','err');break}
-      await kickUser(arg1);break;
+      if(!arg1){addLocal('/kick <username>','err');break}
+      if(await askConfirm(arg1,'kick'))await kickUser(arg1);break;
     case'/ban':
       if(!hasRole('admin')){addLocal('Insufficient permissions.','err');break}
-      await banUser(arg1);break;
+      if(!arg1){addLocal('/ban <username>','err');break}
+      if(await askConfirm(arg1,'ban'))await banUser(arg1);break;
     case'/unban':
       if(!hasRole('admin')){addLocal('Insufficient permissions.','err');break}
       await unbanUser(arg1);break;
@@ -519,18 +556,22 @@ async function handleCommand(raw){
       await showBanList();break;
     case'/mod':
       if(!hasRole('admin')){addLocal('Insufficient permissions.','err');break}
-      await setUserRole(arg1,'mod');break;
+      if(!arg1){addLocal('/mod <username>','err');break}
+      if(await askConfirm(arg1,'mod'))await setUserRole(arg1,'mod');break;
     case'/unmod':
       if(!hasRole('admin')){addLocal('Insufficient permissions.','err');break}
-      await setUserRole(arg1,'user');break;
+      if(!arg1){addLocal('/unmod <username>','err');break}
+      if(await askConfirm(arg1,'unmod'))await setUserRole(arg1,'user');break;
 
     // DEV only
     case'/admin':
       if(!hasRole('dev')){addLocal('Only DEV can assign admins.','err');break}
-      await setUserRole(arg1,'admin');break;
+      if(!arg1){addLocal('/admin <username>','err');break}
+      if(await askConfirm(arg1,'admin'))await setUserRole(arg1,'admin');break;
     case'/unadmin':
       if(!hasRole('dev')){addLocal('Only DEV can remove admins.','err');break}
-      await setUserRole(arg1,'user');break;
+      if(!arg1){addLocal('/unadmin <username>','err');break}
+      if(await askConfirm(arg1,'unadmin'))await setUserRole(arg1,'user');break;
 
     default:addLocal(`Unknown command: ${esc(cmd)}. Type /help`,'err');
   }
@@ -754,20 +795,106 @@ function closePop(){
   _popTarget=null;
 }
 
-// EVENT DELEGATION — popup action buttons
+// EVENT DELEGATION — popup action buttons → show confirm
 $('uPop').addEventListener('click',async function(ev){
   const btn=ev.target.closest('.u-popup-btn[data-act]');
   if(!btn||!_popTarget)return;
   const action=btn.dataset.act;
+  const name=_popTarget;
   closePop();
-  await sideAction(_popTarget,action);
+  showConfirm(name,action);
 });
 
-// EVENT DELEGATION — delete message buttons
+// EVENT DELEGATION — delete message buttons → show confirm
 $('msgs').addEventListener('click',async function(ev){
   const btn=ev.target.closest('.m-del[data-delid]');
   if(!btn)return;
-  await deleteMsg(btn.dataset.delid);
+  showConfirm(null,'delete',btn.dataset.delid);
+});
+
+// ═══ CONFIRMATION SYSTEM ═══
+const ACTION_META={
+  mute:     {icon:'◎',label:'Mute',verb:'mute',desc:'They won\'t be able to send messages.',danger:false},
+  unmute:   {icon:'◉',label:'Unmute',verb:'unmute',desc:'They will be able to send messages again.',danger:false},
+  kick:     {icon:'⏏',label:'Kick',verb:'kick',desc:'They will be disconnected from the room.',danger:true},
+  ban:      {icon:'⊘',label:'Ban',verb:'ban',desc:'They will be permanently banned and unable to log back in.',danger:true},
+  mod:      {icon:'↑',label:'Promote to Mod',verb:'promote to MOD',desc:'They will be able to mute and unmute users.',danger:false},
+  unmod:    {icon:'↓',label:'Remove Mod',verb:'remove MOD from',desc:'They will become a regular user.',danger:false},
+  admin:    {icon:'★',label:'Promote to Admin',verb:'promote to ADMIN',desc:'They will be able to kick, ban, delete messages, and manage mods.',danger:false},
+  unadmin:  {icon:'☆',label:'Remove Admin',verb:'remove ADMIN from',desc:'They will become a regular user.',danger:true},
+  delete:   {icon:'✕',label:'Delete Message',verb:'delete this message',desc:'The message will be marked as deleted for everyone.',danger:true},
+};
+
+// Promise-based confirm for slash commands
+function askConfirm(username,action){
+  return new Promise(resolve=>{
+    const m=ACTION_META[action]||{icon:'?',label:action,verb:action,desc:'',danger:false};
+    const box=$('confirmBox');
+    box.innerHTML=`
+      <div class="confirm-head"><span class="confirm-head-icon">${m.icon}</span>${m.label}</div>
+      <div class="confirm-body">
+        Are you sure you want to ${m.verb} <strong>${esc(username)}</strong>?
+        <div class="confirm-warn">${m.desc}</div>
+      </div>
+      <div class="confirm-btns">
+        <button class="confirm-btn cancel" id="cfCancel">Cancel</button>
+        <button class="confirm-btn proceed ${m.danger?'danger':''}" id="cfProceed">${m.label}</button>
+      </div>`;
+    $('confirmOv').classList.add('on');
+    $('cfCancel').onclick=()=>{closeConfirm();resolve(false)};
+    $('cfProceed').onclick=()=>{closeConfirm();resolve(true)};
+  });
+}
+
+// Callback-based confirm for GUI popup buttons
+let _confirmCb=null;
+function showConfirm(username,action,msgId){
+  const m=ACTION_META[action]||{icon:'?',label:action,verb:action,desc:'',danger:false};
+  const box=$('confirmBox');
+  const isDelete=action==='delete';
+  const targetStr=isDelete?'':'<strong>'+esc(username)+'</strong>';
+
+  box.innerHTML=`
+    <div class="confirm-head"><span class="confirm-head-icon">${m.icon}</span>${m.label}</div>
+    <div class="confirm-body">
+      Are you sure you want to ${m.verb}${isDelete?'':' '+targetStr}?
+      <div class="confirm-warn">${m.desc}</div>
+    </div>
+    <div class="confirm-btns">
+      <button class="confirm-btn cancel" id="cfCancel">Cancel</button>
+      <button class="confirm-btn proceed ${m.danger?'danger':''}" id="cfProceed">${m.label}</button>
+    </div>`;
+
+  $('confirmOv').classList.add('on');
+  _confirmCb={action,username,msgId};
+
+  $('cfCancel').onclick=()=>closeConfirm();
+  $('cfProceed').onclick=async()=>{
+    closeConfirm();
+    if(isDelete&&msgId){
+      await deleteMsg(msgId);
+    }else if(username&&action){
+      await sideAction(username,action);
+    }
+  };
+}
+
+function closeConfirm(){
+  $('confirmOv').classList.remove('on');
+  _confirmCb=null;
+}
+
+// Close confirm on overlay click
+$('confirmOv').addEventListener('click',function(ev){
+  if(ev.target===$('confirmOv'))closeConfirm();
+});
+
+// Close confirm on Escape
+document.addEventListener('keydown',function(ev){
+  if(ev.key==='Escape'){
+    if($('confirmOv').classList.contains('on'))closeConfirm();
+    else if($('uPop').style.display==='block')closePop();
+  }
 });
 
 function toBot(){const a=$('msgs');a.scrollTop=a.scrollHeight;$('npill').classList.remove('on')}
