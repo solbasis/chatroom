@@ -386,7 +386,27 @@ async function enterChat(){
     if(ts.length){$('typTxt').textContent=ts.map(t=>t.name).join(', ')+(ts.length>1?' are':' is')+' typing...';b.classList.add('on')}else b.classList.remove('on');
   });
 
-  updPres(true);if(hbIv)clearInterval(hbIv);hbIv=setInterval(()=>{if(!disconnected)updPres(true)},25000);
+  // Heartbeat: check own state BEFORE writing online:true
+  if(hbIv)clearInterval(hbIv);
+  hbIv=setInterval(async()=>{
+    if(disconnected||!me)return;
+    try{
+      // Read own doc fresh — belt-and-suspenders enforcement
+      const snap=await db.collection('users').doc(me.uid).get();
+      if(!snap.exists)return;
+      const d=snap.data();
+      me.muted=d.muted||false;
+      me.role=d.role||'user';
+      if(d.kicked){if(hbIv){clearInterval(hbIv);hbIv=null}forceDisconnect('You have been kicked from the room.');return}
+      // Check ban list too
+      const ban=await db.collection('bans').doc(me.nameLower).get();
+      if(ban.exists){if(hbIv){clearInterval(hbIv);hbIv=null}forceDisconnect('You have been banned from this room.');return}
+      // All clear — heartbeat
+      await db.collection('users').doc(me.uid).update({online:true,lastSeen:firebase.firestore.FieldValue.serverTimestamp()});
+    }catch(e){console.warn('Heartbeat error:',e)}
+  },10000); // Check every 10s instead of 25s
+  // Initial presence
+  updPres(true);
 
   // SELF-MONITOR: watch own doc for kick/mute/role changes
   if(unSelf)unSelf();
@@ -399,7 +419,7 @@ async function enterChat(){
       if(hbIv){clearInterval(hbIv);hbIv=null}
       forceDisconnect('You have been kicked from the room.');
     }
-  });
+  },err=>console.warn('Self-monitor error:',err));
 
   // BAN MONITOR: real-time listener on own ban doc
   if(unBan)unBan();
@@ -409,7 +429,7 @@ async function enterChat(){
       if(hbIv){clearInterval(hbIv);hbIv=null}
       forceDisconnect('You have been banned from this room.');
     }
-  });
+  },err=>console.warn('Ban-monitor error:',err));
 
   const inp=$('iInp');
   inp.oninput=()=>{
@@ -431,11 +451,21 @@ async function setTyp(){if(!me||disconnected)return;try{await db.collection('typ
 async function clrTyp(){if(!me||disconnected)return;try{await db.collection('typing').doc(me.uid).delete()}catch{}}
 async function updPres(on){if(!me||disconnected)return;try{await db.collection('users').doc(me.uid).update({online:on,lastSeen:firebase.firestore.FieldValue.serverTimestamp()})}catch{}}
 
-// MUTE CHECK — fresh from Firestore
+// MUTE CHECK — force server read, not cache
 async function amIMuted(){
-  if(me.muted)return true;
-  try{const d=await db.collection('users').doc(me.uid).get();if(d.exists&&d.data().muted){me.muted=true;return true}}catch{}
-  return false;
+  try{
+    const d=await db.collection('users').doc(me.uid).get({source:'server'});
+    if(d.exists){
+      me.muted=d.data().muted||false;
+      me.role=d.data().role||'user';
+      // Also check kicked while we're at it
+      if(d.data().kicked){forceDisconnect('You have been kicked from the room.');return true}
+    }
+  }catch{
+    // Server unreachable, try cache
+    try{const d=await db.collection('users').doc(me.uid).get();if(d.exists)me.muted=d.data().muted||false}catch{}
+  }
+  return me.muted;
 }
 
 // ═══ SEND ═══
@@ -578,9 +608,11 @@ async function setUserFlag(username,field,value,verb){
   if(!target){addLocal(`User "${esc(username)}" not found.`,'err');return}
   if(target.id===me.uid){addLocal(`You can't ${verb} yourself.`,'err');return}
   if((ROLE_ORDER[target.role]||1)>=(ROLE_ORDER[myRole()]||1)){addLocal(`Can't ${verb} someone of equal or higher rank.`,'err');return}
-  await db.collection('users').doc(target.id).update({[field]:value});
-  await db.collection('messages').add({type:'system',text:`${target.name} was ${verb} by ${me.name}`,ts:firebase.firestore.FieldValue.serverTimestamp()});
-  addLocal(`${target.name} has been ${verb}.`,'ok');
+  try{
+    await db.collection('users').doc(target.id).update({[field]:value});
+    await db.collection('messages').add({type:'system',text:`${target.name} was ${verb} by ${me.name}`,ts:firebase.firestore.FieldValue.serverTimestamp()});
+    addLocal(`${target.name} has been ${verb}.`,'ok');
+  }catch(e){addLocal(`Failed to ${verb}: ${e.message}`,'err');console.error('setUserFlag error:',e)}
 }
 
 async function kickUser(username){
@@ -589,9 +621,11 @@ async function kickUser(username){
   if(!target){addLocal(`User "${esc(username)}" not found.`,'err');return}
   if(target.id===me.uid){addLocal("You can't kick yourself.",'err');return}
   if((ROLE_ORDER[target.role]||1)>=(ROLE_ORDER[myRole()]||1)){addLocal("Can't kick someone of equal or higher rank.",'err');return}
-  await db.collection('users').doc(target.id).update({online:false,kicked:true});
-  await db.collection('messages').add({type:'system',text:`${target.name} was kicked by ${me.name}`,ts:firebase.firestore.FieldValue.serverTimestamp()});
-  addLocal(`${target.name} has been kicked.`,'ok');
+  try{
+    await db.collection('users').doc(target.id).update({online:false,kicked:true});
+    await db.collection('messages').add({type:'system',text:`${target.name} was kicked by ${me.name}`,ts:firebase.firestore.FieldValue.serverTimestamp()});
+    addLocal(`${target.name} has been kicked.`,'ok');
+  }catch(e){addLocal(`Failed to kick: ${e.message}`,'err');console.error('kickUser error:',e)}
 }
 
 async function banUser(username){
@@ -600,24 +634,29 @@ async function banUser(username){
   if(!target){addLocal(`User "${esc(username)}" not found.`,'err');return}
   if(target.id===me.uid){addLocal("You can't ban yourself.",'err');return}
   if((ROLE_ORDER[target.role]||1)>=(ROLE_ORDER[myRole()]||1)){addLocal("Can't ban someone of equal or higher rank.",'err');return}
-  // FIX: Create ban doc FIRST so the target's ban monitor fires
-  await db.collection('bans').doc(target.nameLower).set({name:target.name,bannedBy:me.name,bannedAt:firebase.firestore.FieldValue.serverTimestamp()});
-  await db.collection('users').doc(target.id).update({online:false,kicked:true});
-  await db.collection('messages').add({type:'system',text:`${target.name} was banned by ${me.name}`,ts:firebase.firestore.FieldValue.serverTimestamp()});
-  addLocal(`${target.name} has been banned.`,'ok');
+  try{
+    await db.collection('bans').doc(target.nameLower).set({name:target.name,bannedBy:me.name,bannedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection('users').doc(target.id).update({online:false,kicked:true});
+    await db.collection('messages').add({type:'system',text:`${target.name} was banned by ${me.name}`,ts:firebase.firestore.FieldValue.serverTimestamp()});
+    addLocal(`${target.name} has been banned.`,'ok');
+  }catch(e){addLocal(`Failed to ban: ${e.message}`,'err');console.error('banUser error:',e)}
 }
 
 async function unbanUser(username){
   if(!username){addLocal('Usage: /unban <username>','err');return}
-  try{await db.collection('bans').doc(username.toLowerCase()).delete();addLocal(`${esc(username)} has been unbanned.`,'ok');
-    await db.collection('messages').add({type:'system',text:`${username} was unbanned by ${me.name}`,ts:firebase.firestore.FieldValue.serverTimestamp()})
-  }catch{addLocal('Failed to unban.','err')}
+  try{
+    await db.collection('bans').doc(username.toLowerCase()).delete();
+    await db.collection('messages').add({type:'system',text:`${username} was unbanned by ${me.name}`,ts:firebase.firestore.FieldValue.serverTimestamp()});
+    addLocal(`${esc(username)} has been unbanned.`,'ok');
+  }catch(e){addLocal(`Failed to unban: ${e.message}`,'err');console.error('unbanUser error:',e)}
 }
 
 async function showBanList(){
-  const snap=await db.collection('bans').get();
-  if(snap.empty){addLocal('No banned users.');return}
-  addLocal(`<strong>Ban list (${snap.size}):</strong>\n`+snap.docs.map(d=>`  ${d.data().name} — banned by ${d.data().bannedBy}`).join('\n'));
+  try{
+    const snap=await db.collection('bans').get();
+    if(snap.empty){addLocal('No banned users.');return}
+    addLocal(`<strong>Ban list (${snap.size}):</strong>\n`+snap.docs.map(d=>`  ${d.data().name} — banned by ${d.data().bannedBy}`).join('\n'));
+  }catch(e){addLocal(`Failed to load ban list: ${e.message}`,'err')}
 }
 
 async function setUserRole(username,role){
@@ -626,9 +665,11 @@ async function setUserRole(username,role){
   if(!target){addLocal(`User "${esc(username)}" not found.`,'err');return}
   if(target.id===me.uid){addLocal("You can't change your own role.",'err');return}
   if(target.nameLower===DEV_NAME){addLocal("Can't change the DEV's role.",'err');return}
-  await db.collection('users').doc(target.id).update({role});
-  await db.collection('messages').add({type:'system',text:`${target.name}'s role set to ${role.toUpperCase()} by ${me.name}`,ts:firebase.firestore.FieldValue.serverTimestamp()});
-  addLocal(`${target.name} is now ${role.toUpperCase()}.`,'ok');
+  try{
+    await db.collection('users').doc(target.id).update({role});
+    await db.collection('messages').add({type:'system',text:`${target.name}'s role set to ${role.toUpperCase()} by ${me.name}`,ts:firebase.firestore.FieldValue.serverTimestamp()});
+    addLocal(`${target.name} is now ${role.toUpperCase()}.`,'ok');
+  }catch(e){addLocal(`Failed to set role: ${e.message}`,'err');console.error('setUserRole error:',e)}
 }
 
 async function deleteMsg(msgId){
