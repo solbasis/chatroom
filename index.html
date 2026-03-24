@@ -109,12 +109,40 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
 .sb-u-name{font-size:.72rem;display:flex;align-items:center;gap:4px;overflow:hidden;white-space:nowrap}
 .sb-u-name span{overflow:hidden;text-overflow:ellipsis}
 .sb-u-role{font-size:.50rem;color:var(--text-mute);letter-spacing:1px;text-transform:uppercase}
-/* User context menu */
-.sb-u-actions{display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);gap:3px}
-.sb-u:hover .sb-u-actions{display:flex}
-.sb-u-act{background:0;border:1px solid var(--border);color:var(--text-mute);font-family:var(--mono);font-size:.48rem;padding:2px 5px;border-radius:3px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:.12s;white-space:nowrap}
-.sb-u-act:hover{border-color:var(--g);color:var(--g);background:var(--g06)}
-.sb-u-act.danger:hover{border-color:var(--neg);color:var(--neg);background:rgba(255,85,85,.06)}
+
+/* User popup */
+.u-popup-ov{display:none;position:fixed;inset:0;z-index:200}
+.u-popup-ov.on{display:block}
+.u-popup{
+  position:fixed;z-index:201;
+  width:220px;
+  background:var(--bg2);border:1px solid var(--border-hi);border-radius:var(--r);
+  box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 20px rgba(110,231,90,.04);
+  overflow:hidden;animation:fadeUp .15s ease;
+}
+.u-popup-head{
+  padding:14px 16px 12px;border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);
+  display:flex;align-items:center;gap:10px;
+}
+.u-popup-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.56rem;font-weight:700;color:rgba(0,0,0,.7);flex-shrink:0}
+.u-popup-info{flex:1;min-width:0}
+.u-popup-name{font-size:.76rem;font-weight:700;display:flex;align-items:center;gap:4px;overflow:hidden;white-space:nowrap}
+.u-popup-name span{overflow:hidden;text-overflow:ellipsis}
+.u-popup-role{font-size:.52rem;color:var(--text-mute);letter-spacing:1.2px;text-transform:uppercase;margin-top:1px}
+.u-popup-body{padding:8px 6px}
+.u-popup-btn{
+  display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;
+  background:0;border:0;border-radius:var(--r-sm);
+  font-family:var(--mono);font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;
+  color:var(--text-dim);cursor:pointer;transition:.12s;text-align:left;
+}
+.u-popup-btn:hover{background:var(--g06);color:var(--text)}
+.u-popup-btn.danger{color:rgba(255,85,85,.6)}
+.u-popup-btn.danger:hover{background:rgba(255,85,85,.06);color:var(--neg)}
+.u-popup-btn .p-icon{width:16px;text-align:center;font-size:.72rem;opacity:.5}
+.u-popup-sep{height:1px;background:var(--border);margin:4px 10px}
+.u-popup-empty{padding:12px 16px;font-size:.60rem;color:var(--text-mute);text-align:center;letter-spacing:1px}
 
 .sb-foot{padding:14px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
 .sb-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--border-hi);border-radius:20px;font-size:.56rem;letter-spacing:2px;text-transform:uppercase;color:var(--g55);background:var(--g06)}
@@ -209,6 +237,8 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
 
 <div class="scr" id="S_chat">
   <div class="sb-ov" id="sbOv" onclick="togSb()"></div>
+  <div class="u-popup-ov" id="popOv" onclick="closePop()"></div>
+  <div class="u-popup" id="uPop" style="display:none"></div>
   <div class="chat-wrap">
     <aside class="sb" id="sb">
       <div class="sb-logo"><div class="sb-logo-info"><div class="sb-logo-t">BASIS://CHAT</div><div class="sb-logo-s">Terminal Room</div></div><button class="sb-close" onclick="togSb()">✕</button></div>
@@ -616,7 +646,7 @@ function renderMsgs(ms){
     if(!mi&&!gr)h+=`<div class="m-au" style="color:${c}"><span>${esc(m.name)}</span>${roleBadge(mRole)}</div>`;
     h+=`<div class="m-bub ${mi?'mi':'ot'}${del?' deleted':''}" style="border-color:${mi?c+'20':'var(--border)'}">`;
     h+=del?`<div class="m-txt" style="color:var(--text-mute)">[message deleted${m.deletedBy?' by '+esc(m.deletedBy):''}]</div>`:`<div class="m-txt">${fMsg(m.text)}</div>`;
-    h+=`<div class="m-meta"><span class="m-time">${t}</span>${canDel?`<button class="m-del" onclick="deleteMsg('${m.id}')">DEL</button>`:''}</div>`;
+    h+=`<div class="m-meta"><span class="m-time">${t}</span>${canDel?`<button class="m-del" data-delid="${m.id}">DEL</button>`:''}</div>`;
     h+=`</div></div></div></div>`;
     lu=m.uid;lm=mn;
   });
@@ -632,7 +662,6 @@ function renderUsers(us){
   const n=us.length;$('uCnt').textContent=n;$('hDesc').textContent=n+' node'+(n!==1?'s':'')+' connected';
   const l=$('uList');
   if(!n){l.innerHTML='<div style="font-size:.64rem;color:var(--text-mute);padding:8px 0;font-style:italic">No connections…</div>';return}
-  // Sort: dev first, then admin, mod, user. Within same role, me first
   us.sort((a,b)=>{
     if(a.id===me?.uid)return-1;if(b.id===me?.uid)return 1;
     const ra=ROLE_ORDER[a.role]||1,rb=ROLE_ORDER[b.role]||1;
@@ -642,35 +671,104 @@ function renderUsers(us){
   l.innerHTML=us.map(u=>{
     const isMe=u.id===me?.uid;
     const uRole=u.role||'user';
-    const myR=myRole();
-    // Build action buttons
-    let acts='';
-    if(!isMe){
-      const targetRank=ROLE_ORDER[uRole]||1,myRank=ROLE_ORDER[myR]||1;
-      if(myRank>targetRank){
-        if(hasRole('mod'))acts+=u.muted?`<button class="sb-u-act" onclick="sideAction('${esc(u.name)}','unmute')">unmute</button>`:`<button class="sb-u-act" onclick="sideAction('${esc(u.name)}','mute')">mute</button>`;
-        if(hasRole('admin')){
-          acts+=`<button class="sb-u-act danger" onclick="sideAction('${esc(u.name)}','kick')">kick</button>`;
-          acts+=`<button class="sb-u-act danger" onclick="sideAction('${esc(u.name)}','ban')">ban</button>`;
-          if(uRole==='user')acts+=`<button class="sb-u-act" onclick="sideAction('${esc(u.name)}','mod')">+mod</button>`;
-          if(uRole==='mod')acts+=`<button class="sb-u-act" onclick="sideAction('${esc(u.name)}','unmod')">-mod</button>`;
-        }
-        if(hasRole('dev')){
-          if(uRole!=='admin')acts+=`<button class="sb-u-act" onclick="sideAction('${esc(u.name)}','admin')">+admin</button>`;
-          else acts+=`<button class="sb-u-act" onclick="sideAction('${esc(u.name)}','unadmin')">-admin</button>`;
-        }
-      }
-    }
-    return`<div class="sb-u ${isMe?'me':''}">
+    return`<div class="sb-u ${isMe?'me':''}" ${!isMe?`data-uname="${esc(u.name)}" data-ucolor="${esc(u.color)}" data-urole="${uRole}" data-umuted="${u.muted||false}" style="cursor:pointer"`:''}>
       <div class="av" style="background:${esc(u.color)}">${ini(u.name)}<div class="od"></div></div>
       <div class="sb-u-info">
         <div class="sb-u-name"><span style="color:${esc(u.color)};font-weight:${isMe?700:400}">${esc(u.name)}</span>${roleBadge(uRole)}${u.muted?'<span class="badge badge-muted">MUTED</span>':''}</div>
         <span class="sb-u-role">${isMe?'You':uRole!=='user'?uRole:'Online'}</span>
       </div>
-      ${acts?`<div class="sb-u-actions">${acts}</div>`:''}
     </div>`;
   }).join('');
 }
+
+// EVENT DELEGATION — click on user list
+$('uList').addEventListener('click',function(ev){
+  const row=ev.target.closest('.sb-u[data-uname]');
+  if(!row)return;
+  openPop(row);
+});
+
+// USER POPUP
+let _popTarget=null;
+function openPop(el){
+  const name=el.dataset.uname;
+  const color=el.dataset.ucolor;
+  const role=el.dataset.urole;
+  const muted=el.dataset.umuted==='true';
+  _popTarget=name;
+
+  const pop=$('uPop'),ov=$('popOv');
+  const targetRank=ROLE_ORDER[role]||1,myRank=ROLE_ORDER[myRole()]||1;
+  const canAct=myRank>targetRank;
+
+  let btns='';
+  if(canAct){
+    if(hasRole('mod')){
+      if(muted) btns+=`<button class="u-popup-btn" data-act="unmute"><span class="p-icon">◉</span>Unmute</button>`;
+      else btns+=`<button class="u-popup-btn" data-act="mute"><span class="p-icon">◎</span>Mute</button>`;
+    }
+    if(hasRole('admin')){
+      if(btns)btns+=`<div class="u-popup-sep"></div>`;
+      btns+=`<button class="u-popup-btn danger" data-act="kick"><span class="p-icon">⏏</span>Kick</button>`;
+      btns+=`<button class="u-popup-btn danger" data-act="ban"><span class="p-icon">⊘</span>Ban</button>`;
+      btns+=`<div class="u-popup-sep"></div>`;
+      if(role==='user') btns+=`<button class="u-popup-btn" data-act="mod"><span class="p-icon">↑</span>Promote to Mod</button>`;
+      if(role==='mod') btns+=`<button class="u-popup-btn" data-act="unmod"><span class="p-icon">↓</span>Remove Mod</button>`;
+    }
+    if(hasRole('dev')){
+      if(role!=='admin') btns+=`<button class="u-popup-btn" data-act="admin"><span class="p-icon">★</span>Promote to Admin</button>`;
+      else btns+=`<button class="u-popup-btn" data-act="unadmin"><span class="p-icon">☆</span>Remove Admin</button>`;
+    }
+  }
+
+  if(!btns) btns=`<div class="u-popup-empty">No actions available</div>`;
+
+  pop.innerHTML=`
+    <div class="u-popup-head">
+      <div class="u-popup-av" style="background:${color}">${ini(name)}</div>
+      <div class="u-popup-info">
+        <div class="u-popup-name"><span style="color:${color}">${esc(name)}</span>${roleBadge(role)}${muted?'<span class="badge badge-muted">MUTED</span>':''}</div>
+        <div class="u-popup-role">${role!=='user'?role:'Member'}${muted?' · Muted':''}</div>
+      </div>
+    </div>
+    <div class="u-popup-body">${btns}</div>`;
+
+  // Position near the clicked row
+  const rect=el.getBoundingClientRect();
+  let top=rect.top;
+  let left=rect.right+8;
+  if(left+230>window.innerWidth) left=rect.left-228;
+  if(left<4) left=Math.max(4,(window.innerWidth-220)/2);
+  if(top+250>window.innerHeight) top=window.innerHeight-260;
+  if(top<4) top=4;
+
+  pop.style.top=top+'px';
+  pop.style.left=left+'px';
+  pop.style.display='block';
+  ov.classList.add('on');
+}
+
+function closePop(){
+  $('uPop').style.display='none';
+  $('popOv').classList.remove('on');
+  _popTarget=null;
+}
+
+// EVENT DELEGATION — popup action buttons
+$('uPop').addEventListener('click',async function(ev){
+  const btn=ev.target.closest('.u-popup-btn[data-act]');
+  if(!btn||!_popTarget)return;
+  const action=btn.dataset.act;
+  closePop();
+  await sideAction(_popTarget,action);
+});
+
+// EVENT DELEGATION — delete message buttons
+$('msgs').addEventListener('click',async function(ev){
+  const btn=ev.target.closest('.m-del[data-delid]');
+  if(!btn)return;
+  await deleteMsg(btn.dataset.delid);
+});
 
 function toBot(){const a=$('msgs');a.scrollTop=a.scrollHeight;$('npill').classList.remove('on')}
 function togSb(){const s=$('sb'),o=$('sbOv');if(s.classList.contains('open')){s.classList.remove('open');o.classList.remove('on')}else{s.classList.add('open');o.classList.add('on')}}
