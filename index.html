@@ -499,11 +499,12 @@ async function setRole(u,role){
   try{await db.collection('users').doc(t.id).update({role});await db.collection('messages').add({type:'system',text:`${t.name} → ${role.toUpperCase()} by ${me.name}`,ts:TS()});addLocal(`${t.name} is now ${role.toUpperCase()}.`,'ok')}catch(e){addLocal(`Failed: ${e.message}`,'err')}
 }
 async function deleteMsg(id){if(!hasRole('admin'))return;try{await db.collection('messages').doc(id).update({deleted:true,deletedBy:me.name});addLocal('Deleted.','ok')}catch(e){addLocal(`Failed: ${e.message}`,'err')}}
-async function sideAction(u,a){await handleCommand('/'+a+' '+u)}
+async function sideAction(u,a){try{await handleCommand('/'+a+' '+u)}catch(e){addLocal('Action failed: '+e.message,'err')}}
 
 // ── PROFILE SYSTEM ──
 async function openProfile(username){
   if(!username)return;
+  try{
   const u=allUsers.find(x=>x.name===username)||await findUser(username);
   if(!u){addLocal(`"${esc(username)}" not found.`,'err');return}
   const isMe=u.id===me?.uid||u.name===me?.name;
@@ -531,6 +532,7 @@ async function openProfile(username){
       </div>`:''}
     </div>`;
   $('profOv').classList.add('on');
+  }catch(e){addLocal('Failed to load profile: '+e.message,'err')}
 }
 function closeProf(){$('profOv').classList.remove('on')}
 $('profOv')?.addEventListener('click',function(ev){if(ev.target===$('profOv'))closeProf()});
