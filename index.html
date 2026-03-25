@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1"/>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1"/>
   <title>BASIS://CHAT</title>
-  <meta property="og:title" content="BASIS://CHAT"><meta property="og:description" content="Encrypted terminal chatroom — real-time messaging with a retro-futuristic interface"><meta property="og:image" content="https://chat.databasis.info/preview.png"><meta property="og:url" content="https://chat.databasis.info"><meta property="og:type" content="website"><meta property="og:site_name" content="BASIS"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="BASIS://CHAT"><meta name="twitter:description" content="Encrypted terminal chatroom — real-time messaging with a retro-futuristic interface"><meta name="twitter:image" content="https://chat.databasis.info/preview.png"><meta name="description" content="Encrypted terminal chatroom — real-time messaging with a retro-futuristic interface"><meta name="theme-color" content="#040804">
+  <meta property="og:title" content="BASIS://CHAT"><meta property="og:description" content="Encrypted terminal chatroom"><meta property="og:image" content="https://chat.databasis.info/preview.png"><meta property="og:url" content="https://chat.databasis.info"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="BASIS://CHAT"><meta name="twitter:image" content="https://chat.databasis.info/preview.png"><meta name="theme-color" content="#040804">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap">
 <style>
@@ -13,198 +12,80 @@
 body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:.82rem;line-height:1.6;letter-spacing:.3px}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 1400px 550px at 20% -10%,rgba(110,231,90,.045),transparent 55%),radial-gradient(ellipse 900px 500px at 85% 105%,rgba(110,231,90,.025),transparent 50%)}
 body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent 0px,transparent 3px,rgba(0,0,0,.018) 3px,rgba(0,0,0,.018) 4px);mix-blend-mode:multiply}
-::selection{background:rgba(110,231,90,.2);color:#fff}
-::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--g15);border-radius:3px}
+::selection{background:rgba(110,231,90,.2);color:#fff}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--g15);border-radius:3px}
 @keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes msgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}@keyframes glow{0%,100%{text-shadow:0 0 20px rgba(110,231,90,.25)}50%{text-shadow:0 0 35px rgba(110,231,90,.45)}}@keyframes typeBounce{0%,60%,100%{transform:translateY(0);opacity:.25}30%{transform:translateY(-5px);opacity:1}}
-
-/* SCREENS */
 .scr{display:none;height:100%}.scr.on{display:flex}
-#S_load{align-items:center;justify-content:center;flex-direction:column;gap:10px}
-.ld-logo{font-size:1.15rem;font-weight:700;color:var(--g);letter-spacing:6px;text-transform:uppercase;animation:glow 2.5s ease-in-out infinite}
-.ld-sub{font-size:.58rem;color:var(--text-dim);letter-spacing:3px;text-transform:uppercase}
-.ld-spinner{width:22px;height:22px;border:2px solid var(--g10);border-top-color:var(--g);border-radius:50%;animation:spin .55s linear infinite;margin-top:20px}
-.ld-track{width:200px;height:2px;background:var(--g06);border-radius:1px;overflow:hidden;margin-top:6px}
-.ld-fill{height:100%;background:linear-gradient(90deg,var(--g25),var(--g));border-radius:1px;transition:width .35s}
-
-/* AUTH */
-#S_auth{align-items:center;justify-content:center;padding:24px;position:relative;z-index:1}
-.a-wrap{width:100%;max-width:440px;animation:fadeUp .45s ease}
-.a-card{border-radius:12px;background:var(--surface);border:1px solid var(--border);overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.4)}
-.a-head{padding:28px 32px 22px;text-align:center;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.035),transparent)}
-.a-logo{font-size:1.05rem;font-weight:700;color:var(--g);letter-spacing:5px;text-transform:uppercase;text-shadow:0 0 25px rgba(110,231,90,.3)}
-.a-sub{font-size:.58rem;color:var(--text-dim);letter-spacing:2.5px;text-transform:uppercase;margin-top:4px}
-.a-body{padding:28px 32px 32px}
-.tabs{display:flex;margin-bottom:24px;border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;background:rgba(0,0,0,.3)}
-.tab{flex:1;padding:11px;border:0;background:0;font-family:var(--mono);font-size:.68rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);cursor:pointer;transition:.15s;position:relative}
-.tab:hover{background:var(--g06)}.tab.on{background:var(--g10);color:var(--g)}.tab.on::after{content:"";position:absolute;bottom:0;left:15%;right:15%;height:2px;background:var(--g);border-radius:1px}
-.fld{margin-bottom:18px}.fld-lbl{display:block;font-size:.60rem;letter-spacing:2.2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;font-weight:500}
-.fld-inp{width:100%;background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--mono);font-size:.84rem;padding:12px 14px;outline:0;transition:.15s;letter-spacing:.5px}
-.fld-inp::placeholder{color:var(--text-mute)}.fld-inp:focus{border-color:var(--border-act);background:rgba(0,0,0,.65);box-shadow:0 0 0 3px rgba(110,231,90,.05)}
-.fld-ta{width:100%;background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--mono);font-size:.76rem;padding:10px 14px;outline:0;transition:.15s;resize:vertical;min-height:60px;max-height:120px;line-height:1.5;letter-spacing:.3px}
-.fld-ta::placeholder{color:var(--text-mute)}.fld-ta:focus{border-color:var(--border-act);background:rgba(0,0,0,.65)}
-.colors{display:flex;gap:10px;flex-wrap:wrap;padding:4px 0}
-.colbtn{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:.15s}
-.colbtn:hover{transform:scale(1.12)}.colbtn.on{transform:scale(1.3);border-color:rgba(255,255,255,.35)}
-.sts{padding:10px 14px;border-radius:var(--r-sm);font-size:.68rem;display:none;align-items:center;gap:8px;margin-bottom:14px;letter-spacing:.8px}
-.sts.show{display:flex}.sts.err{background:rgba(255,85,85,.07);border:1px solid rgba(255,85,85,.2);color:var(--neg)}.sts.ok{background:rgba(90,255,106,.07);border:1px solid rgba(90,255,106,.2);color:var(--pos)}
-.a-btn{width:100%;padding:14px;border:1px solid var(--g40);border-radius:var(--r-sm);background:var(--g10);color:var(--g);font-family:var(--mono);font-size:.76rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
-.a-btn:hover:not(:disabled){background:rgba(110,231,90,.18);box-shadow:0 0 30px rgba(110,231,90,.18);transform:translateY(-1px)}.a-btn:disabled{opacity:.45;cursor:not-allowed}
-.a-btn .sp{display:none;width:14px;height:14px;border:2px solid var(--g25);border-top-color:var(--g);border-radius:50%;animation:spin .5s linear infinite}.a-btn.ld .bt{opacity:0}.a-btn.ld .sp{display:inline-block;position:absolute;left:50%;top:50%;margin:-7px 0 0 -7px}
+#S_load{align-items:center;justify-content:center;flex-direction:column;gap:10px}.ld-logo{font-size:1.15rem;font-weight:700;color:var(--g);letter-spacing:6px;text-transform:uppercase;animation:glow 2.5s ease-in-out infinite}.ld-sub{font-size:.58rem;color:var(--text-dim);letter-spacing:3px;text-transform:uppercase}.ld-spinner{width:22px;height:22px;border:2px solid var(--g10);border-top-color:var(--g);border-radius:50%;animation:spin .55s linear infinite;margin-top:20px}.ld-track{width:200px;height:2px;background:var(--g06);border-radius:1px;overflow:hidden;margin-top:6px}.ld-fill{height:100%;background:linear-gradient(90deg,var(--g25),var(--g));border-radius:1px;transition:width .35s}
+#S_auth{align-items:center;justify-content:center;padding:24px;position:relative;z-index:1}.a-wrap{width:100%;max-width:440px;animation:fadeUp .45s ease}.a-card{border-radius:12px;background:var(--surface);border:1px solid var(--border);overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.4)}.a-head{padding:28px 32px 22px;text-align:center;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.035),transparent)}.a-logo{font-size:1.05rem;font-weight:700;color:var(--g);letter-spacing:5px;text-transform:uppercase;text-shadow:0 0 25px rgba(110,231,90,.3)}.a-sub{font-size:.58rem;color:var(--text-dim);letter-spacing:2.5px;text-transform:uppercase;margin-top:4px}.a-body{padding:28px 32px 32px}
+.tabs{display:flex;margin-bottom:24px;border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;background:rgba(0,0,0,.3)}.tab{flex:1;padding:11px;border:0;background:0;font-family:var(--mono);font-size:.68rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);cursor:pointer;transition:.15s;position:relative}.tab:hover{background:var(--g06)}.tab.on{background:var(--g10);color:var(--g)}.tab.on::after{content:"";position:absolute;bottom:0;left:15%;right:15%;height:2px;background:var(--g);border-radius:1px}
+.fld{margin-bottom:18px}.fld-lbl{display:block;font-size:.60rem;letter-spacing:2.2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;font-weight:500}.fld-inp{width:100%;background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--mono);font-size:.84rem;padding:12px 14px;outline:0;transition:.15s;letter-spacing:.5px}.fld-inp::placeholder{color:var(--text-mute)}.fld-inp:focus{border-color:var(--border-act);background:rgba(0,0,0,.65);box-shadow:0 0 0 3px rgba(110,231,90,.05)}.fld-ta{width:100%;background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--mono);font-size:.76rem;padding:10px 14px;outline:0;transition:.15s;resize:vertical;min-height:60px;max-height:120px;line-height:1.5}.fld-ta::placeholder{color:var(--text-mute)}.fld-ta:focus{border-color:var(--border-act);background:rgba(0,0,0,.65)}
+.colors{display:flex;gap:10px;flex-wrap:wrap;padding:4px 0}.colbtn{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:.15s}.colbtn:hover{transform:scale(1.12)}.colbtn.on{transform:scale(1.3);border-color:rgba(255,255,255,.35)}
+.sts{padding:10px 14px;border-radius:var(--r-sm);font-size:.68rem;display:none;align-items:center;gap:8px;margin-bottom:14px;letter-spacing:.8px}.sts.show{display:flex}.sts.err{background:rgba(255,85,85,.07);border:1px solid rgba(255,85,85,.2);color:var(--neg)}.sts.ok{background:rgba(90,255,106,.07);border:1px solid rgba(90,255,106,.2);color:var(--pos)}
+.a-btn{width:100%;padding:14px;border:1px solid var(--g40);border-radius:var(--r-sm);background:var(--g10);color:var(--g);font-family:var(--mono);font-size:.76rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:.15s;position:relative;overflow:hidden}.a-btn:hover:not(:disabled){background:rgba(110,231,90,.18);box-shadow:0 0 30px rgba(110,231,90,.18);transform:translateY(-1px)}.a-btn:disabled{opacity:.45;cursor:not-allowed}.a-btn .sp{display:none;width:14px;height:14px;border:2px solid var(--g25);border-top-color:var(--g);border-radius:50%;animation:spin .5s linear infinite}.a-btn.ld .bt{opacity:0}.a-btn.ld .sp{display:inline-block;position:absolute;left:50%;top:50%;margin:-7px 0 0 -7px}
 .a-foot{font-size:.54rem;color:var(--text-mute);text-align:center;margin-top:20px;letter-spacing:1.5px}
-
-/* BADGES */
-.badge{display:inline-block;padding:1px 5px;border-radius:4px;font-size:.48rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;vertical-align:middle;margin-left:4px}
-.badge-dev{background:rgba(110,231,90,.15);color:var(--g);border:1px solid var(--g40)}
-.badge-admin{background:rgba(90,180,255,.12);color:#5ab8ff;border:1px solid rgba(90,180,255,.3)}
-.badge-mod{background:rgba(255,200,68,.10);color:var(--warn);border:1px solid rgba(255,200,68,.25)}
-.badge-muted{background:rgba(255,85,85,.10);color:var(--neg);border:1px solid rgba(255,85,85,.2)}
-
-/* AVATARS (global) */
-.pfp{border-radius:50%;object-fit:cover;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;color:rgba(0,0,0,.7);position:relative;overflow:hidden}
-.pfp img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
-.pfp .od{position:absolute;bottom:0;right:0;width:8px;height:8px;border-radius:50%;background:var(--pos);border:2px solid var(--bg3)}
-
+.badge{display:inline-block;padding:1px 5px;border-radius:4px;font-size:.48rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;vertical-align:middle;margin-left:4px}.badge-dev{background:rgba(110,231,90,.15);color:var(--g);border:1px solid var(--g40)}.badge-admin{background:rgba(90,180,255,.12);color:#5ab8ff;border:1px solid rgba(90,180,255,.3)}.badge-mod{background:rgba(255,200,68,.10);color:var(--warn);border:1px solid rgba(255,200,68,.25)}.badge-muted{background:rgba(255,85,85,.10);color:var(--neg);border:1px solid rgba(255,85,85,.2)}
+.pfp{border-radius:50%;object-fit:cover;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;color:rgba(0,0,0,.7);position:relative;overflow:hidden}.pfp img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}.pfp .od{position:absolute;bottom:0;right:0;width:8px;height:8px;border-radius:50%;background:var(--pos);border:2px solid var(--bg3)}
 /* CHAT LAYOUT */
 .chat-wrap{display:flex;width:100%;height:100%;overflow:hidden}
 .sb{width:260px;min-width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:relative;z-index:100}
-.sb-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);display:flex;justify-content:space-between;align-items:flex-start}
-.sb-logo-t{font-size:.84rem;font-weight:700;color:var(--g);letter-spacing:4px;text-transform:uppercase;text-shadow:0 0 22px rgba(110,231,90,.3)}.sb-logo-s{font-size:.54rem;color:var(--text-dim);letter-spacing:2.5px;text-transform:uppercase;margin-top:3px}
-.sb-close{display:none;background:0;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:.9rem;width:32px;height:32px;border-radius:var(--r-sm);cursor:pointer;transition:.12s;flex-shrink:0;align-items:center;justify-content:center}.sb-close:hover{border-color:var(--g);color:var(--g)}
-.sb-nav{padding:8px 0;border-bottom:1px solid var(--border)}
-.sb-nav-i{display:flex;align-items:center;gap:10px;padding:11px 20px;font-size:.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--g);background:var(--g06);border-left:2px solid var(--g);cursor:pointer}
-.sb-users{flex:1;padding:16px;overflow-y:auto}
-.sb-users-h{font-size:.56rem;font-weight:700;color:var(--text-dim);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
-.sb-cnt{padding:2px 8px;border-radius:10px;background:var(--g06);border:1px solid var(--border);font-size:.50rem;color:var(--g55);font-weight:700}
-.sb-u{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:2px;border-radius:var(--r-sm);transition:.12s;cursor:pointer;position:relative}
-.sb-u:hover{background:var(--g06)}.sb-u.me{background:rgba(110,231,90,.035);border:1px solid var(--border)}
-.sb-u-info{flex:1;min-width:0}
-.sb-u-name{font-size:.72rem;display:flex;align-items:center;gap:4px;overflow:hidden;white-space:nowrap}
-.sb-u-name span{overflow:hidden;text-overflow:ellipsis}
-.sb-u-role{font-size:.50rem;color:var(--text-mute);letter-spacing:1px;text-transform:uppercase}
-.sb-foot{padding:14px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.sb-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--border-hi);border-radius:20px;font-size:.56rem;letter-spacing:2px;text-transform:uppercase;color:var(--g55);background:var(--g06)}
-.dp{width:5px;height:5px;border-radius:50%;background:var(--g);animation:pulse 2s ease-in-out infinite;display:inline-block}
-.sb-dc{background:0;border:1px solid var(--border);color:var(--text-mute);font-family:var(--mono);font-size:.54rem;cursor:pointer;letter-spacing:1.5px;transition:.12s;padding:5px 10px;border-radius:var(--r-sm);text-transform:uppercase}.sb-dc:hover{border-color:var(--neg);color:var(--neg);background:rgba(255,85,85,.05)}
+.sb-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);display:flex;justify-content:space-between;align-items:flex-start}.sb-logo-t{font-size:.84rem;font-weight:700;color:var(--g);letter-spacing:4px;text-transform:uppercase;text-shadow:0 0 22px rgba(110,231,90,.3)}.sb-logo-s{font-size:.54rem;color:var(--text-dim);letter-spacing:2.5px;text-transform:uppercase;margin-top:3px}.sb-close{display:none;background:0;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:.9rem;width:32px;height:32px;border-radius:var(--r-sm);cursor:pointer;transition:.12s;flex-shrink:0;align-items:center;justify-content:center}.sb-close:hover{border-color:var(--g);color:var(--g)}
+/* SIDEBAR NAV TABS */
+.sb-nav{display:flex;border-bottom:1px solid var(--border)}
+.sb-nav-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;font-family:var(--mono);font-size:.64rem;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);cursor:pointer;border:0;background:0;transition:.12s;position:relative;border-bottom:2px solid transparent}
+.sb-nav-tab:hover{background:var(--g06);color:var(--text)}.sb-nav-tab.on{color:var(--g);background:var(--g06);border-bottom-color:var(--g)}
+.sb-nav-tab .unread-dot{width:7px;height:7px;border-radius:50%;background:var(--g);display:none;flex-shrink:0}.sb-nav-tab .unread-dot.on{display:block}
+.sb-nav-tab .unread-num{font-size:.50rem;padding:1px 5px;border-radius:8px;background:var(--g);color:var(--bg);font-weight:700;display:none;flex-shrink:0}.sb-nav-tab .unread-num.on{display:inline}
+.sb-panel{flex:1;overflow-y:auto;display:none}.sb-panel.on{display:block}
+/* Users panel */
+.sb-users{padding:16px}
+.sb-users-h{font-size:.56rem;font-weight:700;color:var(--text-dim);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}.sb-cnt{padding:2px 8px;border-radius:10px;background:var(--g06);border:1px solid var(--border);font-size:.50rem;color:var(--g55);font-weight:700}
+.sb-u{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:2px;border-radius:var(--r-sm);transition:.12s;cursor:pointer;position:relative}.sb-u:hover{background:var(--g06)}.sb-u.me{background:rgba(110,231,90,.035);border:1px solid var(--border)}
+.sb-u-info{flex:1;min-width:0}.sb-u-name{font-size:.72rem;display:flex;align-items:center;gap:4px;overflow:hidden;white-space:nowrap}.sb-u-name span{overflow:hidden;text-overflow:ellipsis}.sb-u-role{font-size:.50rem;color:var(--text-mute);letter-spacing:1px;text-transform:uppercase}
+/* DM panel */
+.sb-dms{padding:12px}
+.dm-conv{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:3px;border-radius:var(--r-sm);cursor:pointer;transition:.12s;border:1px solid transparent}.dm-conv:hover{background:var(--g06)}.dm-conv.active{background:var(--g06);border-color:var(--border)}
+.dm-conv-info{flex:1;min-width:0}
+.dm-conv-name{font-size:.72rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dm-conv-preview{font-size:.58rem;color:var(--text-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.dm-conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.dm-conv-time{font-size:.48rem;color:var(--text-mute);letter-spacing:.5px}
+.dm-conv-unread{font-size:.46rem;padding:1px 5px;border-radius:8px;background:var(--g);color:var(--bg);font-weight:700;display:none}.dm-conv-unread.on{display:inline}
+.dm-empty{text-align:center;padding:30px 16px;color:var(--text-mute);font-size:.66rem;letter-spacing:1px}
+.dm-empty-ic{font-size:28px;opacity:.15;margin-bottom:8px}
 
+.sb-foot{padding:14px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}.sb-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--border-hi);border-radius:20px;font-size:.56rem;letter-spacing:2px;text-transform:uppercase;color:var(--g55);background:var(--g06)}.dp{width:5px;height:5px;border-radius:50%;background:var(--g);animation:pulse 2s ease-in-out infinite;display:inline-block}.sb-dc{background:0;border:1px solid var(--border);color:var(--text-mute);font-family:var(--mono);font-size:.54rem;cursor:pointer;letter-spacing:1.5px;transition:.12s;padding:5px 10px;border-radius:var(--r-sm);text-transform:uppercase}.sb-dc:hover{border-color:var(--neg);color:var(--neg);background:rgba(255,85,85,.05)}
 /* MAIN CHAT */
 .mc{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;min-width:0}
-.mc-head{display:flex;justify-content:space-between;align-items:center;padding:12px 24px;border-bottom:1px solid var(--border);background:linear-gradient(to right,var(--g06),transparent);flex-shrink:0}
-.mc-head-l{display:flex;align-items:center;gap:14px}
-.mob-btn{display:none;background:0;border:1px solid var(--border);color:var(--text-dim);font-size:1rem;padding:6px 10px;border-radius:var(--r-sm);cursor:pointer;font-family:var(--mono);transition:.12s}.mob-btn:hover{border-color:var(--g);color:var(--g)}
-.mc-h-title{font-size:.82rem;font-weight:700;color:var(--g);letter-spacing:2.5px;text-transform:uppercase;text-shadow:0 0 14px rgba(110,231,90,.15)}
-.mc-h-desc{font-size:.58rem;color:var(--text-dim);letter-spacing:1px;display:block;margin-top:1px}
-.mc-head-r{display:flex;align-items:center;gap:12px}
-.mc-h-user{display:flex;align-items:center;gap:8px;cursor:pointer}
-.mc-h-name{font-size:.70rem;font-weight:600;letter-spacing:1px}
-.mc-exit{padding:7px 14px;border-radius:var(--r-sm);border:1px solid var(--border-hi);background:0;color:var(--text-dim);font-family:var(--mono);font-size:.62rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:.12s}.mc-exit:hover{background:var(--g06);border-color:var(--g);color:var(--g)}
-
+.mc-head{display:flex;justify-content:space-between;align-items:center;padding:12px 24px;border-bottom:1px solid var(--border);background:linear-gradient(to right,var(--g06),transparent);flex-shrink:0}.mc-head-l{display:flex;align-items:center;gap:14px}.mob-btn{display:none;background:0;border:1px solid var(--border);color:var(--text-dim);font-size:1rem;padding:6px 10px;border-radius:var(--r-sm);cursor:pointer;font-family:var(--mono);transition:.12s}.mob-btn:hover{border-color:var(--g);color:var(--g)}.mc-h-title{font-size:.82rem;font-weight:700;color:var(--g);letter-spacing:2.5px;text-transform:uppercase;text-shadow:0 0 14px rgba(110,231,90,.15)}.mc-h-desc{font-size:.58rem;color:var(--text-dim);letter-spacing:1px;display:block;margin-top:1px}.mc-head-r{display:flex;align-items:center;gap:12px}.mc-h-user{display:flex;align-items:center;gap:8px;cursor:pointer}.mc-h-name{font-size:.70rem;font-weight:600;letter-spacing:1px}.mc-exit{padding:7px 14px;border-radius:var(--r-sm);border:1px solid var(--border-hi);background:0;color:var(--text-dim);font-family:var(--mono);font-size:.62rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:.12s}.mc-exit:hover{background:var(--g06);border-color:var(--g);color:var(--g)}
+/* DM HEADER (back button + user) */
+.dm-head{display:none;align-items:center;gap:12px;padding:12px 24px;border-bottom:1px solid var(--border);background:linear-gradient(to right,var(--g06),transparent);flex-shrink:0}
+.dm-head.on{display:flex}
+.dm-back{background:0;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:.78rem;padding:5px 10px;border-radius:var(--r-sm);cursor:pointer;transition:.12s;flex-shrink:0}.dm-back:hover{border-color:var(--g);color:var(--g)}
+.dm-head-info{flex:1;display:flex;align-items:center;gap:10px;cursor:pointer;min-width:0}
+.dm-head-name{font-size:.78rem;font-weight:700;color:var(--g);letter-spacing:1.5px;text-transform:uppercase}
+.dm-head-status{font-size:.54rem;color:var(--text-mute);letter-spacing:1px;text-transform:uppercase}
 /* MESSAGES */
-.msgs{flex:1;overflow-y:auto;padding:20px 28px;display:flex;flex-direction:column;gap:3px}
-.msgs-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;color:var(--text-mute)}
-.msgs-empty-ic{font-size:52px;opacity:.1}.msgs-empty-t{font-size:.80rem;letter-spacing:2.5px;text-transform:uppercase}.msgs-empty-s{font-size:.58rem;letter-spacing:1.2px}
+.msgs{flex:1;overflow-y:auto;padding:20px 28px;display:flex;flex-direction:column;gap:3px}.msgs-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;color:var(--text-mute)}.msgs-empty-ic{font-size:52px;opacity:.1}.msgs-empty-t{font-size:.80rem;letter-spacing:2.5px;text-transform:uppercase}.msgs-empty-s{font-size:.58rem;letter-spacing:1.2px}
 .d-sep{display:flex;align-items:center;gap:16px;padding:18px 0 12px}.d-sep-l{flex:1;height:1px;background:var(--border)}.d-sep-t{font-size:.52rem;color:var(--text-mute);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;padding:3px 14px;border:1px solid var(--border);border-radius:12px;background:var(--bg2)}
 .s-msg{display:flex;align-items:center;gap:14px;padding:10px 0;justify-content:center;animation:fadeIn .3s}.s-msg-l{width:40px;height:1px;background:var(--border);flex-shrink:0}.s-msg-t{font-size:.56rem;color:var(--text-mute);letter-spacing:2px;text-transform:uppercase;white-space:nowrap;text-align:center}
 .act-msg{padding:6px 0;font-size:.76rem;color:var(--text-dim);font-style:italic;animation:fadeIn .3s;letter-spacing:.3px;text-align:center}.act-msg strong{font-style:normal;font-weight:700}
-.m-row{display:flex;width:100%;animation:msgIn .2s;position:relative}.m-row.mi{justify-content:flex-end}.m-row.ot{justify-content:flex-start}
-.m-grp{display:flex;gap:10px;max-width:70%}
-.m-av{width:34px;height:34px;border-radius:50%;font-size:.50rem;flex-shrink:0;margin-top:2px}.m-av.hid{visibility:hidden;width:34px}
-.m-cnt{display:flex;flex-direction:column;gap:1px;min-width:0}
-.m-au{font-size:.56rem;font-weight:700;margin-bottom:2px;letter-spacing:1.5px;text-transform:uppercase;padding-left:2px;display:flex;align-items:center;gap:4px;cursor:pointer}.m-au:hover{text-decoration:underline}
-.m-bub{padding:10px 14px;border-radius:var(--r);font-size:.82rem;line-height:1.6;word-break:break-word;border:1px solid var(--border);position:relative}
-.m-bub.mi{background:rgba(110,231,90,.06);border-bottom-right-radius:3px}.m-bub.ot{background:rgba(0,0,0,.38);border-bottom-left-radius:3px}
-.m-bub.deleted{opacity:.4;font-style:italic}
-.m-txt{color:var(--text);letter-spacing:.3px;white-space:pre-wrap}.m-txt a{color:var(--g);text-decoration:underline;text-underline-offset:2px}.m-txt code{background:rgba(0,0,0,.45);padding:2px 6px;border-radius:3px;font-size:.74rem;color:var(--g70)}
-.m-meta{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:3px}.m-time{font-size:.50rem;color:var(--text-mute);letter-spacing:.8px}
-.m-del{display:none;background:0;border:1px solid var(--border);color:var(--text-mute);font-family:var(--mono);font-size:.46rem;padding:1px 5px;border-radius:3px;cursor:pointer;letter-spacing:.5px;transition:.12s;text-transform:uppercase}.m-row:hover .m-del{display:inline-block}.m-del:hover{border-color:var(--neg);color:var(--neg);background:rgba(255,85,85,.06)}
-.typ{display:none;align-items:center;gap:10px;padding:4px 28px 2px;font-size:.60rem;color:var(--text-mute);letter-spacing:.8px;flex-shrink:0}.typ.on{display:flex}
-.typ-d{display:flex;gap:3px}.typ-d span{width:4px;height:4px;border-radius:50%;background:var(--g40);animation:typeBounce 1.2s ease-in-out infinite}.typ-d span:nth-child(2){animation-delay:.15s}.typ-d span:nth-child(3){animation-delay:.3s}
+.m-row{display:flex;width:100%;animation:msgIn .2s;position:relative}.m-row.mi{justify-content:flex-end}.m-row.ot{justify-content:flex-start}.m-grp{display:flex;gap:10px;max-width:70%}.m-av{width:34px;height:34px;border-radius:50%;font-size:.50rem;flex-shrink:0;margin-top:2px}.m-av.hid{visibility:hidden;width:34px}.m-cnt{display:flex;flex-direction:column;gap:1px;min-width:0}.m-au{font-size:.56rem;font-weight:700;margin-bottom:2px;letter-spacing:1.5px;text-transform:uppercase;padding-left:2px;display:flex;align-items:center;gap:4px;cursor:pointer}.m-au:hover{text-decoration:underline}.m-bub{padding:10px 14px;border-radius:var(--r);font-size:.82rem;line-height:1.6;word-break:break-word;border:1px solid var(--border);position:relative}.m-bub.mi{background:rgba(110,231,90,.06);border-bottom-right-radius:3px}.m-bub.ot{background:rgba(0,0,0,.38);border-bottom-left-radius:3px}.m-bub.deleted{opacity:.4;font-style:italic}.m-txt{color:var(--text);letter-spacing:.3px;white-space:pre-wrap}.m-txt a{color:var(--g);text-decoration:underline;text-underline-offset:2px}.m-txt code{background:rgba(0,0,0,.45);padding:2px 6px;border-radius:3px;font-size:.74rem;color:var(--g70)}.m-meta{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:3px}.m-time{font-size:.50rem;color:var(--text-mute);letter-spacing:.8px}.m-del{display:none;background:0;border:1px solid var(--border);color:var(--text-mute);font-family:var(--mono);font-size:.46rem;padding:1px 5px;border-radius:3px;cursor:pointer;letter-spacing:.5px;transition:.12s;text-transform:uppercase}.m-row:hover .m-del{display:inline-block}.m-del:hover{border-color:var(--neg);color:var(--neg);background:rgba(255,85,85,.06)}
+.typ{display:none;align-items:center;gap:10px;padding:4px 28px 2px;font-size:.60rem;color:var(--text-mute);letter-spacing:.8px;flex-shrink:0}.typ.on{display:flex}.typ-d{display:flex;gap:3px}.typ-d span{width:4px;height:4px;border-radius:50%;background:var(--g40);animation:typeBounce 1.2s ease-in-out infinite}.typ-d span:nth-child(2){animation-delay:.15s}.typ-d span:nth-child(3){animation-delay:.3s}
 .cmd-res{padding:8px 14px;margin:4px 0;border-radius:var(--r-sm);font-size:.72rem;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text-dim);animation:fadeIn .2s;letter-spacing:.3px;max-width:500px}.cmd-res.cmd-err{border-color:rgba(255,85,85,.2);color:var(--neg)}.cmd-res.cmd-ok{border-color:rgba(90,255,106,.15);color:var(--pos)}
 .npill{position:absolute;bottom:100px;left:50%;transform:translateX(-50%);padding:8px 20px;border-radius:20px;background:rgba(8,16,8,.95);border:1px solid var(--g40);color:var(--g);font-size:.60rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;display:none;z-index:10;backdrop-filter:blur(10px);box-shadow:0 4px 24px rgba(0,0,0,.5);transition:.15s}.npill.on{display:block;animation:fadeUp .25s ease}.npill:hover{background:var(--g06)}
-
-/* INPUT */
-.ibar{flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);padding:14px 28px 18px}
-.ibar-row{display:flex;align-items:flex-end;gap:12px;width:100%}
-.ibar-box{flex:1;min-width:0;display:flex;align-items:flex-end;background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:10px;padding:14px 18px;transition:.15s;min-height:56px;gap:12px}
-.ibar-box:focus-within{border-color:var(--border-act);box-shadow:0 0 0 3px rgba(110,231,90,.05);background:rgba(0,0,0,.65)}
-.i-prompt{color:var(--g40);font-size:.95rem;font-weight:700;flex-shrink:0;user-select:none;line-height:1.5}
-.i-input{flex:1;min-width:0;background:0;border:0;color:var(--text);font-family:var(--mono);font-size:.86rem;padding:0;resize:none;line-height:1.5;max-height:140px;letter-spacing:.4px;outline:0;word-break:break-word}.i-input::placeholder{color:var(--text-mute)}
-.i-cc{font-size:.50rem;color:var(--text-mute);flex-shrink:0;letter-spacing:.5px;align-self:flex-end;transition:color .15s;white-space:nowrap}.i-cc.w{color:var(--warn)}.i-cc.o{color:var(--neg)}
-.i-send{padding:14px 28px;border-radius:10px;border:1px solid var(--border-hi);background:0;color:var(--text-mute);font-family:var(--mono);font-size:.74rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;transition:.15s;min-height:56px;white-space:nowrap;flex-shrink:0}
-.i-send.ok{border-color:var(--g40);background:var(--g10);color:var(--g);box-shadow:0 0 20px rgba(110,231,90,.12)}
-.i-send.ok:hover{background:rgba(110,231,90,.20);box-shadow:0 0 30px rgba(110,231,90,.2);transform:translateY(-1px)}
-.i-send:disabled{opacity:.2;cursor:not-allowed}
-
+.ibar{flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);padding:14px 28px 18px}.ibar-row{display:flex;align-items:flex-end;gap:12px;width:100%}.ibar-box{flex:1;min-width:0;display:flex;align-items:flex-end;background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:10px;padding:14px 18px;transition:.15s;min-height:56px;gap:12px}.ibar-box:focus-within{border-color:var(--border-act);box-shadow:0 0 0 3px rgba(110,231,90,.05);background:rgba(0,0,0,.65)}.i-prompt{color:var(--g40);font-size:.95rem;font-weight:700;flex-shrink:0;user-select:none;line-height:1.5}.i-input{flex:1;min-width:0;background:0;border:0;color:var(--text);font-family:var(--mono);font-size:.86rem;padding:0;resize:none;line-height:1.5;max-height:140px;letter-spacing:.4px;outline:0;word-break:break-word}.i-input::placeholder{color:var(--text-mute)}.i-cc{font-size:.50rem;color:var(--text-mute);flex-shrink:0;letter-spacing:.5px;align-self:flex-end;transition:color .15s;white-space:nowrap}.i-cc.w{color:var(--warn)}.i-cc.o{color:var(--neg)}.i-send{padding:14px 28px;border-radius:10px;border:1px solid var(--border-hi);background:0;color:var(--text-mute);font-family:var(--mono);font-size:.74rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;transition:.15s;min-height:56px;white-space:nowrap;flex-shrink:0}.i-send.ok{border-color:var(--g40);background:var(--g10);color:var(--g);box-shadow:0 0 20px rgba(110,231,90,.12)}.i-send.ok:hover{background:rgba(110,231,90,.20);box-shadow:0 0 30px rgba(110,231,90,.2);transform:translateY(-1px)}.i-send:disabled{opacity:.2;cursor:not-allowed}
 /* OVERLAYS */
 .sb-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99;backdrop-filter:blur(3px)}.sb-ov.on{display:block}
-.u-popup-ov{display:none;position:fixed;inset:0;z-index:200}.u-popup-ov.on{display:block}
-.u-popup{position:fixed;z-index:201;width:230px;background:var(--bg2);border:1px solid var(--border-hi);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 20px rgba(110,231,90,.04);overflow:hidden;animation:fadeUp .15s ease}
-.u-popup-head{padding:14px 16px 12px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);display:flex;align-items:center;gap:10px}
-.u-popup-av{width:36px;height:36px;border-radius:50%;flex-shrink:0}
-.u-popup-info{flex:1;min-width:0}
-.u-popup-name{font-size:.76rem;font-weight:700;display:flex;align-items:center;gap:4px;overflow:hidden;white-space:nowrap}
-.u-popup-name span{overflow:hidden;text-overflow:ellipsis}
-.u-popup-role{font-size:.52rem;color:var(--text-mute);letter-spacing:1.2px;text-transform:uppercase;margin-top:1px}
-.u-popup-body{padding:6px}
-.u-popup-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;background:0;border:0;border-radius:var(--r-sm);font-family:var(--mono);font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);cursor:pointer;transition:.12s;text-align:left}
-.u-popup-btn:hover{background:var(--g06);color:var(--text)}
-.u-popup-btn.danger{color:rgba(255,85,85,.6)}.u-popup-btn.danger:hover{background:rgba(255,85,85,.06);color:var(--neg)}
-.u-popup-btn .p-icon{width:16px;text-align:center;font-size:.72rem;opacity:.5}
-.u-popup-sep{height:1px;background:var(--border);margin:4px 10px}
-.u-popup-empty{padding:12px 16px;font-size:.60rem;color:var(--text-mute);text-align:center;letter-spacing:1px}
-
-/* CONFIRM MODAL */
-.confirm-ov{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);align-items:center;justify-content:center}.confirm-ov.on{display:flex}
-.confirm-box{width:320px;max-width:90vw;background:var(--bg2);border:1px solid var(--border-hi);border-radius:var(--r);box-shadow:0 12px 48px rgba(0,0,0,.7);overflow:hidden;animation:fadeUp .15s ease}
-.confirm-head{padding:16px 20px 12px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);font-size:.72rem;font-weight:700;color:var(--g);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
-.confirm-head-icon{font-size:.9rem;opacity:.6}
-.confirm-body{padding:18px 20px;font-size:.76rem;color:var(--text);line-height:1.6}.confirm-body strong{color:var(--g90)}.confirm-body .confirm-warn{font-size:.64rem;color:var(--text-dim);margin-top:8px}
-.confirm-btns{display:flex;gap:8px;padding:12px 20px 18px;justify-content:flex-end}
-.confirm-btn{padding:9px 18px;border-radius:var(--r-sm);font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:.15s}
-.confirm-btn.cancel{background:0;border:1px solid var(--border);color:var(--text-dim)}.confirm-btn.cancel:hover{border-color:var(--text);color:var(--text);background:var(--g06)}
-.confirm-btn.proceed{background:var(--g10);border:1px solid var(--g40);color:var(--g)}.confirm-btn.proceed:hover{background:rgba(110,231,90,.18)}
-.confirm-btn.proceed.danger{background:rgba(255,85,85,.08);border:1px solid rgba(255,85,85,.25);color:var(--neg)}.confirm-btn.proceed.danger:hover{background:rgba(255,85,85,.14)}
-
-/* PROFILE MODAL */
-.prof-ov{display:none;position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);align-items:center;justify-content:center}.prof-ov.on{display:flex}
-.prof-box{width:380px;max-width:92vw;max-height:85vh;overflow-y:auto;background:var(--bg2);border:1px solid var(--border-hi);border-radius:12px;box-shadow:0 12px 48px rgba(0,0,0,.7);animation:fadeUp .2s ease}
-.prof-header{padding:24px 24px 18px;text-align:center;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);position:relative}
-.prof-close{position:absolute;top:12px;right:12px;background:0;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:.8rem;width:28px;height:28px;border-radius:50%;cursor:pointer;transition:.12s;display:flex;align-items:center;justify-content:center}.prof-close:hover{border-color:var(--g);color:var(--g)}
-.prof-av{width:72px;height:72px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:rgba(0,0,0,.7);overflow:hidden;border:2px solid var(--border-hi)}
-.prof-av img{width:100%;height:100%;object-fit:cover}
-.prof-name{font-size:.88rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px}
-.prof-role-line{font-size:.54rem;color:var(--text-mute);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
-.prof-bio{font-size:.74rem;color:var(--text-dim);line-height:1.6;padding:0 8px;margin-top:10px;text-align:center;word-break:break-word;white-space:pre-wrap}
-.prof-bio.empty{font-style:italic;color:var(--text-mute)}
-.prof-body{padding:18px 24px 24px}
-.prof-stats{display:flex;gap:12px;justify-content:center;margin-bottom:16px}
-.prof-stat{text-align:center;padding:8px 16px;border:1px solid var(--border);border-radius:var(--r-sm);background:rgba(0,0,0,.25);flex:1}
-.prof-stat-v{font-size:.80rem;font-weight:700;color:var(--g)}.prof-stat-l{font-size:.50rem;color:var(--text-mute);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
-.prof-edit-section{border-top:1px solid var(--border);padding-top:16px;margin-top:8px}
-.prof-save{width:100%;padding:11px;border:1px solid var(--g40);border-radius:var(--r-sm);background:var(--g10);color:var(--g);font-family:var(--mono);font-size:.70rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:.15s;margin-top:12px}
-.prof-save:hover{background:rgba(110,231,90,.18);box-shadow:0 0 20px rgba(110,231,90,.15)}
-
-/* RESPONSIVE */
-@media(max-width:768px){
-  .sb{position:fixed;left:0;top:0;bottom:0;z-index:100;transform:translateX(-100%);transition:transform .25s ease;width:280px;min-width:280px}
-  .sb.open{transform:translateX(0)}.mob-btn{display:block}.sb-close{display:flex}
-  .m-grp{max-width:88%}.i-input{font-size:16px}.ibar{padding:10px 14px 14px}.ibar-box{padding:12px 14px}.msgs{padding:14px 16px}.mc-head{padding:10px 16px}.mc-h-name{display:none}.i-send{padding:14px 18px;font-size:.68rem;letter-spacing:1.5px}
-}
+.u-popup-ov{display:none;position:fixed;inset:0;z-index:200}.u-popup-ov.on{display:block}.u-popup{position:fixed;z-index:201;width:230px;background:var(--bg2);border:1px solid var(--border-hi);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.6);overflow:hidden;animation:fadeUp .15s ease}.u-popup-head{padding:14px 16px 12px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);display:flex;align-items:center;gap:10px}.u-popup-info{flex:1;min-width:0}.u-popup-name{font-size:.76rem;font-weight:700;display:flex;align-items:center;gap:4px;overflow:hidden;white-space:nowrap}.u-popup-name span{overflow:hidden;text-overflow:ellipsis}.u-popup-role{font-size:.52rem;color:var(--text-mute);letter-spacing:1.2px;text-transform:uppercase;margin-top:1px}.u-popup-body{padding:6px}.u-popup-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;background:0;border:0;border-radius:var(--r-sm);font-family:var(--mono);font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);cursor:pointer;transition:.12s;text-align:left}.u-popup-btn:hover{background:var(--g06);color:var(--text)}.u-popup-btn.danger{color:rgba(255,85,85,.6)}.u-popup-btn.danger:hover{background:rgba(255,85,85,.06);color:var(--neg)}.u-popup-btn .p-icon{width:16px;text-align:center;font-size:.72rem;opacity:.5}.u-popup-sep{height:1px;background:var(--border);margin:4px 10px}
+.confirm-ov{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);align-items:center;justify-content:center}.confirm-ov.on{display:flex}.confirm-box{width:320px;max-width:90vw;background:var(--bg2);border:1px solid var(--border-hi);border-radius:var(--r);box-shadow:0 12px 48px rgba(0,0,0,.7);overflow:hidden;animation:fadeUp .15s ease}.confirm-head{padding:16px 20px 12px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);font-size:.72rem;font-weight:700;color:var(--g);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px}.confirm-body{padding:18px 20px;font-size:.76rem;color:var(--text);line-height:1.6}.confirm-body strong{color:var(--g90)}.confirm-body .confirm-warn{font-size:.64rem;color:var(--text-dim);margin-top:8px}.confirm-btns{display:flex;gap:8px;padding:12px 20px 18px;justify-content:flex-end}.confirm-btn{padding:9px 18px;border-radius:var(--r-sm);font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:.15s}.confirm-btn.cancel{background:0;border:1px solid var(--border);color:var(--text-dim)}.confirm-btn.cancel:hover{border-color:var(--text);color:var(--text)}.confirm-btn.proceed{background:var(--g10);border:1px solid var(--g40);color:var(--g)}.confirm-btn.proceed:hover{background:rgba(110,231,90,.18)}.confirm-btn.proceed.danger{background:rgba(255,85,85,.08);border:1px solid rgba(255,85,85,.25);color:var(--neg)}
+.prof-ov{display:none;position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);align-items:center;justify-content:center}.prof-ov.on{display:flex}.prof-box{width:380px;max-width:92vw;max-height:85vh;overflow-y:auto;background:var(--bg2);border:1px solid var(--border-hi);border-radius:12px;box-shadow:0 12px 48px rgba(0,0,0,.7);animation:fadeUp .2s ease}.prof-header{padding:24px 24px 18px;text-align:center;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,90,.03),transparent);position:relative}.prof-close{position:absolute;top:12px;right:12px;background:0;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:.8rem;width:28px;height:28px;border-radius:50%;cursor:pointer;transition:.12s;display:flex;align-items:center;justify-content:center}.prof-close:hover{border-color:var(--g);color:var(--g)}.prof-av{width:72px;height:72px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:rgba(0,0,0,.7);overflow:hidden;border:2px solid var(--border-hi)}.prof-av img{width:100%;height:100%;object-fit:cover}.prof-name{font-size:.88rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px}.prof-role-line{font-size:.54rem;color:var(--text-mute);letter-spacing:2px;text-transform:uppercase;margin-top:4px}.prof-bio{font-size:.74rem;color:var(--text-dim);line-height:1.6;padding:0 8px;margin-top:10px;text-align:center;word-break:break-word;white-space:pre-wrap}.prof-bio.empty{font-style:italic;color:var(--text-mute)}.prof-body{padding:18px 24px 24px}.prof-stats{display:flex;gap:12px;justify-content:center;margin-bottom:16px}.prof-stat{text-align:center;padding:8px 16px;border:1px solid var(--border);border-radius:var(--r-sm);background:rgba(0,0,0,.25);flex:1}.prof-stat-v{font-size:.80rem;font-weight:700;color:var(--g)}.prof-stat-l{font-size:.50rem;color:var(--text-mute);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}.prof-edit-section{border-top:1px solid var(--border);padding-top:16px;margin-top:8px}.prof-save{width:100%;padding:11px;border:1px solid var(--g40);border-radius:var(--r-sm);background:var(--g10);color:var(--g);font-family:var(--mono);font-size:.70rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:.15s;margin-top:12px}.prof-save:hover{background:rgba(110,231,90,.18)}
+@media(max-width:768px){.sb{position:fixed;left:0;top:0;bottom:0;z-index:100;transform:translateX(-100%);transition:transform .25s ease;width:280px;min-width:280px}.sb.open{transform:translateX(0)}.mob-btn{display:block}.sb-close{display:flex}.m-grp{max-width:88%}.i-input{font-size:16px}.ibar{padding:10px 14px 14px}.ibar-box{padding:12px 14px}.msgs{padding:14px 16px}.mc-head,.dm-head{padding:10px 16px}.mc-h-name{display:none}.i-send{padding:14px 18px;font-size:.68rem;letter-spacing:1.5px}}
 @media(max-width:400px){.sb{width:85%;min-width:85%}.i-send{padding:14px;letter-spacing:1px}}
 </style>
 </head>
 <body>
 <div class="scr on" id="S_load"><div class="ld-logo">BASIS://CHAT</div><div class="ld-sub">Terminal Chatroom</div><div class="ld-spinner"></div><div class="ld-track"><div class="ld-fill" id="ldBar"></div></div></div>
-
-<div class="scr" id="S_auth"><div class="a-wrap"><div class="a-card"><div class="a-head"><div class="a-logo">BASIS://CHAT</div><div class="a-sub">Encrypted Terminal Room</div></div><div class="a-body">
-  <div class="tabs"><button class="tab on" id="tLog" onclick="swAuth('login')">Login</button><button class="tab" id="tSign" onclick="swAuth('signup')">Sign Up</button></div>
-  <div class="fld"><label class="fld-lbl">Username</label><input class="fld-inp" type="text" id="aName" placeholder="your_handle" autocomplete="off" maxlength="20"></div>
-  <div class="fld"><label class="fld-lbl">Password</label><input class="fld-inp" type="password" id="aPass" placeholder="min 6 characters" autocomplete="off"></div>
-  <div id="signF" style="display:none"><div class="fld"><label class="fld-lbl">Node Color</label><div class="colors" id="cPick"></div></div></div>
-  <div class="sts" id="aSts"></div>
-  <button class="a-btn" id="aBtn" onclick="doAuth()"><span class="bt">&gt; ENTER ROOM</span><span class="sp"></span></button>
-  <div class="a-foot">Type /help in chat for commands</div>
-</div></div></div></div>
-
+<div class="scr" id="S_auth"><div class="a-wrap"><div class="a-card"><div class="a-head"><div class="a-logo">BASIS://CHAT</div><div class="a-sub">Encrypted Terminal Room</div></div><div class="a-body"><div class="tabs"><button class="tab on" id="tLog" onclick="swAuth('login')">Login</button><button class="tab" id="tSign" onclick="swAuth('signup')">Sign Up</button></div><div class="fld"><label class="fld-lbl">Username</label><input class="fld-inp" type="text" id="aName" placeholder="your_handle" autocomplete="off" maxlength="20"></div><div class="fld"><label class="fld-lbl">Password</label><input class="fld-inp" type="password" id="aPass" placeholder="min 6 characters" autocomplete="off"></div><div id="signF" style="display:none"><div class="fld"><label class="fld-lbl">Node Color</label><div class="colors" id="cPick"></div></div></div><div class="sts" id="aSts"></div><button class="a-btn" id="aBtn" onclick="doAuth()"><span class="bt">&gt; ENTER ROOM</span><span class="sp"></span></button><div class="a-foot">Type /help in chat for commands</div></div></div></div></div>
 <div class="scr" id="S_chat">
   <div class="sb-ov" id="sbOv" onclick="togSb()"></div>
   <div class="u-popup-ov" id="popOv" onclick="closePop()"></div>
@@ -214,12 +95,24 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
   <div class="chat-wrap">
     <aside class="sb" id="sb">
       <div class="sb-logo"><div><div class="sb-logo-t">BASIS://CHAT</div><div class="sb-logo-s">Terminal Room</div></div><button class="sb-close" onclick="togSb()">✕</button></div>
-      <div class="sb-nav"><div class="sb-nav-i" onclick="if(innerWidth<=768)togSb()"><span style="font-size:.9rem;width:18px;text-align:center">◈</span> Chatroom</div></div>
-      <div class="sb-users"><div class="sb-users-h">Connected Nodes <span class="sb-cnt" id="uCnt">0</span></div><div id="uList"></div></div>
+      <div class="sb-nav">
+        <button class="sb-nav-tab on" id="navChat" onclick="switchSbTab('chat')"><span>◈</span> Chat <span class="unread-dot" id="chatDot"></span></button>
+        <button class="sb-nav-tab" id="navDms" onclick="switchSbTab('dms')"><span>✉</span> DMs <span class="unread-num" id="dmBadge"></span></button>
+      </div>
+      <div class="sb-panel on" id="panelChat">
+        <div class="sb-users"><div class="sb-users-h">Connected Nodes <span class="sb-cnt" id="uCnt">0</span></div><div id="uList"></div></div>
+      </div>
+      <div class="sb-panel" id="panelDms">
+        <div class="sb-dms" id="dmList"><div class="dm-empty"><div class="dm-empty-ic">✉</div>No conversations yet<br><span style="font-size:.56rem">Click a user → Direct Message</span></div></div>
+      </div>
       <div class="sb-foot"><div class="sb-badge"><span class="dp"></span> LIVE</div><button class="sb-dc" onclick="logout()">[DISCONNECT]</button></div>
     </aside>
     <div class="mc">
-      <div class="mc-head"><div class="mc-head-l"><button class="mob-btn" onclick="togSb()">☰</button><div><div class="mc-h-title">&gt; Chatroom</div><span class="mc-h-desc" id="hDesc">0 nodes connected</span></div></div><div class="mc-head-r"><div class="mc-h-user" onclick="openProfile(me?.name)"><div class="pfp" id="hAv" style="width:30px;height:30px;font-size:.52rem"></div><span class="mc-h-name" id="hName"></span></div><button class="mc-exit" onclick="logout()">EXIT</button></div></div>
+      <!-- Chatroom header -->
+      <div class="mc-head" id="chatHead"><div class="mc-head-l"><button class="mob-btn" onclick="togSb()">☰</button><div><div class="mc-h-title">&gt; Chatroom</div><span class="mc-h-desc" id="hDesc">0 nodes connected</span></div></div><div class="mc-head-r"><div class="mc-h-user" onclick="openProfile(me?.name)"><div class="pfp" id="hAv" style="width:30px;height:30px;font-size:.52rem"></div><span class="mc-h-name" id="hName"></span></div><button class="mc-exit" onclick="logout()">EXIT</button></div></div>
+      <!-- DM header -->
+      <div class="dm-head" id="dmHead"><button class="dm-back" onclick="closeDM()">← Back</button><div class="dm-head-info" id="dmHeadInfo"><div class="pfp" id="dmHeadAv" style="width:30px;height:30px;font-size:.52rem"></div><div><div class="dm-head-name" id="dmHeadName"></div><div class="dm-head-status" id="dmHeadStatus"></div></div></div></div>
+      <!-- Messages area (shared) -->
       <div class="msgs" id="msgs"><div class="msgs-empty"><div class="msgs-empty-ic">◈</div><div class="msgs-empty-t">Awaiting Transmissions</div><div class="msgs-empty-s">Type /help for commands</div></div></div>
       <div class="typ" id="typBar"><div class="typ-d"><span></span><span></span><span></span></div><span id="typTxt"></span></div>
       <div class="npill" id="npill" onclick="toBot()">↓ New Messages</div>
@@ -227,7 +120,6 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
     </div>
   </div>
 </div>
-
 <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore-compat.js"></script>
@@ -235,13 +127,19 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;b
 'use strict';
 const FC={apiKey:"AIzaSyDh3Xdavtn8q3w_g6kiDyWJfK5jeMD46ww",authDomain:"basis-acfec.firebaseapp.com",projectId:"basis-acfec",storageBucket:"basis-acfec.firebasestorage.app",messagingSenderId:"884887459105",appId:"1:884887459105:web:e39be97abde4afcc271a60"};
 const COLS=["#6ee75a","#5abbe7","#e75ae7","#e7a85a","#e75a5a","#5ae7c8","#e7e15a","#b05ae7","#5a8ee7","#e7e7e7"];
-const MX=1000,DEV_NAME='basis',ROLE_ORDER={dev:4,admin:3,mod:2,user:1};
+const MX=1000,DEV_NAME='basis',RO={dev:4,admin:3,mod:2,user:1};
 const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
 let mode='login',selCol=COLS[0],me=null,unM=null,unU=null,unT=null,unSelf=null,unBan=null,hbIv=null,tpTo=null,db,au,lmc=0,atBot=true,busy=false,disconnected=false;
 let allUsers=[],cmdResults=[],cachedMsgs=[];
 let _audioCtx=null;
+// DM state
+let dmView=null; // null=chatroom, {channelId,targetUid,targetName,targetColor,targetAvatar}=in DM
+let unDmMsgs=null,unDmChannels=null;
+let dmChannels=[]; // [{id, ...data}]
+let dmMsgs=[];
+let totalUnread=0;
+let sbTab='chat'; // 'chat' | 'dms'
 
-// ── HELPERS ──
 const $=id=>document.getElementById(id);
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function ini(n){return(n||'??').substring(0,2).toUpperCase()}
@@ -251,16 +149,12 @@ function fMsg(t){let s=esc(t);s=s.replace(/`([^`]+)`/g,'<code>$1</code>');s=s.re
 function ping(){try{if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();const o=_audioCtx.createOscillator(),g=_audioCtx.createGain();o.connect(g);g.connect(_audioCtx.destination);o.type='sine';o.frequency.setValueAtTime(1100,_audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(700,_audioCtx.currentTime+.12);g.gain.setValueAtTime(.06,_audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,_audioCtx.currentTime+.12);o.start(_audioCtx.currentTime);o.stop(_audioCtx.currentTime+.12)}catch{}}
 function roleBadge(r){return r==='dev'?'<span class="badge badge-dev">DEV</span>':r==='admin'?'<span class="badge badge-admin">ADMIN</span>':r==='mod'?'<span class="badge badge-mod">MOD</span>':''}
 function myRole(){return me?.role||'user'}
-function hasRole(min){return(ROLE_ORDER[myRole()]||1)>=(ROLE_ORDER[min]||1)}
+function hasRole(min){return(RO[myRole()]||1)>=(RO[min]||1)}
 function msgObj(type,text,extra){return{type,uid:me.uid,name:me.name,color:me.color,role:me.role||'user',avatarUrl:me.avatarUrl||'',text,ts:TS(),...extra}}
-// Render avatar HTML (reusable)
-function avHTML(color,name,url,size,showDot){
-  const s=`width:${size}px;height:${size}px;font-size:${Math.round(size*.38)/100}rem;`;
-  if(url)return`<div class="pfp" style="${s}background:${esc(color)};"><img src="${esc(url)}" onerror="this.parentElement.innerHTML='${ini(name)}';">${showDot?'<div class="od"></div>':''}</div>`;
-  return`<div class="pfp" style="${s}background:${esc(color)};">${ini(name)}${showDot?'<div class="od"></div>':''}</div>`;
-}
+function avHTML(color,name,url,size,showDot){const s=`width:${size}px;height:${size}px;font-size:${Math.round(size*.38)/100}rem;`;if(url)return`<div class="pfp" style="${s}background:${esc(color)};"><img src="${esc(url)}" onerror="this.parentElement.innerHTML='${ini(name)}';">${showDot?'<div class="od"></div>':''}</div>`;return`<div class="pfp" style="${s}background:${esc(color)};">${ini(name)}${showDot?'<div class="od"></div>':''}</div>`}
+function dmChannelId(uid1,uid2){return[uid1,uid2].sort().join('_')}
 
-// ── INIT ──
+// INIT
 function init(){
   firebase.initializeApp(FC);au=firebase.auth();db=firebase.firestore();
   db.enablePersistence().catch(()=>{});buildColors();
@@ -273,287 +167,237 @@ function init(){
 }
 function show(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));$('S_'+id).classList.add('on')}
 
-// ── AUTH ──
+// AUTH (same as before — compressed)
 function swAuth(m){mode=m;$('tLog').classList.toggle('on',m==='login');$('tSign').classList.toggle('on',m==='signup');$('signF').style.display=m==='signup'?'block':'none';$('aBtn').querySelector('.bt').textContent=m==='login'?'> ENTER ROOM':'> CREATE ACCOUNT';hideSts()}
 function buildColors(){const r=$('cPick');COLS.forEach(c=>{const b=document.createElement('button');b.className='colbtn'+(c===selCol?' on':'');b.style.background=c;if(c===selCol)b.style.boxShadow=`0 0 0 2px var(--bg),0 0 0 4px ${c},0 0 14px ${c}`;b.onclick=()=>{selCol=c;r.querySelectorAll('.colbtn').forEach(x=>{x.classList.remove('on');x.style.boxShadow='none'});b.classList.add('on');b.style.boxShadow=`0 0 0 2px var(--bg),0 0 0 4px ${c},0 0 14px ${c}`};r.appendChild(b)})}
-function showSts(m,t){const e=$('aSts');e.textContent=m;e.className='sts show '+t}
+function showSts(m,t){$('aSts').textContent=m;$('aSts').className='sts show '+t}
 function hideSts(){$('aSts').className='sts'}
 function setLd(on){const b=$('aBtn');if(on){b.classList.add('ld');b.disabled=true}else{b.classList.remove('ld');b.disabled=false}}
-
 async function doAuth(){
   const name=$('aName').value.trim(),pass=$('aPass').value.trim();
   if(!name||!pass){showSts('All fields required','err');return}
   if(/[\s'"@]/.test(name)){showSts('No spaces, quotes or @ allowed','err');return}
   if(pass.length<6){showSts('Password min 6 characters','err');return}
-  hideSts();setLd(true);busy=true;
-  const email=name.toLowerCase()+'@basis.chat';
+  hideSts();setLd(true);busy=true;const email=name.toLowerCase()+'@basis.chat';
   try{
     if(mode==='signup'){
       const cr=await au.createUserWithEmailAndPassword(email,pass);
       try{
-        const banDoc=await db.collection('bans').doc(name.toLowerCase()).get();
-        if(banDoc.exists){await cr.user.delete();busy=false;showSts('This username is banned','err');setLd(false);return}
-        const ex=await db.collection('users').where('nameLower','==',name.toLowerCase()).limit(1).get();
-        if(!ex.empty){await cr.user.delete();busy=false;showSts('Username already taken','err');setLd(false);return}
+        const bd=await db.collection('bans').doc(name.toLowerCase()).get();if(bd.exists){await cr.user.delete();busy=false;showSts('Username banned','err');setLd(false);return}
+        const ex=await db.collection('users').where('nameLower','==',name.toLowerCase()).limit(1).get();if(!ex.empty){await cr.user.delete();busy=false;showSts('Username taken','err');setLd(false);return}
         const role=name.toLowerCase()===DEV_NAME?'dev':'user';
         const profile={name,nameLower:name.toLowerCase(),color:selCol,role,muted:false,kicked:false,bio:'',avatarUrl:'',createdAt:TS(),lastSeen:TS(),online:true};
         await db.collection('users').doc(cr.user.uid).set(profile);
         await db.collection('messages').add({type:'system',text:name+' has entered the room',ts:TS()});
         me={uid:cr.user.uid,...profile};busy=false;enterChat();
-      }catch(e){try{await cr.user.delete()}catch{}busy=false;showSts(e.message||'Setup failed','err');setLd(false)}
+      }catch(e){try{await cr.user.delete()}catch{}busy=false;showSts(e.message||'Failed','err');setLd(false)}
     }else{
-      const cr=await au.signInWithEmailAndPassword(email,pass);
-      const d=await db.collection('users').doc(cr.user.uid).get();
+      const cr=await au.signInWithEmailAndPassword(email,pass);const d=await db.collection('users').doc(cr.user.uid).get();
       if(!d.exists){busy=false;showSts('Profile not found','err');setLd(false);return}
-      const banDoc=await db.collection('bans').doc(d.data().nameLower).get();
-      if(banDoc.exists){await au.signOut();busy=false;showSts('You are banned from this room','err');setLd(false);return}
+      const bd=await db.collection('bans').doc(d.data().nameLower).get();if(bd.exists){await au.signOut();busy=false;showSts('You are banned','err');setLd(false);return}
       me={uid:cr.user.uid,...d.data()};
       if(me.nameLower===DEV_NAME&&me.role!=='dev'){await db.collection('users').doc(cr.user.uid).update({role:'dev'});me.role='dev'}
-      await db.collection('users').doc(cr.user.uid).update({online:true,kicked:false,lastSeen:TS()});
-      me.kicked=false;busy=false;enterChat();
+      await db.collection('users').doc(cr.user.uid).update({online:true,kicked:false,lastSeen:TS()});me.kicked=false;busy=false;enterChat();
     }
-  }catch(e){
-    busy=false;let m='Authentication failed';
-    if(e.code==='auth/user-not-found'||e.code==='auth/invalid-credential')m='User not found or wrong password';
-    else if(e.code==='auth/email-already-in-use')m='Username already taken';
-    else if(e.code==='auth/weak-password')m='Password too weak';
-    else if(e.code==='auth/too-many-requests')m='Too many attempts — please wait';
-    showSts(m,'err');setLd(false);
-  }
+  }catch(e){busy=false;let m='Auth failed';if(e.code==='auth/user-not-found'||e.code==='auth/invalid-credential')m='User not found or wrong password';else if(e.code==='auth/email-already-in-use')m='Username taken';else if(e.code==='auth/weak-password')m='Password too weak';else if(e.code==='auth/too-many-requests')m='Too many attempts';showSts(m,'err');setLd(false)}
 }
 
-// ── ENTER CHAT ──
+// ENTER CHAT
 async function enterChat(){
-  show('chat');setLd(false);cmdResults=[];disconnected=false;
+  show('chat');setLd(false);cmdResults=[];disconnected=false;dmView=null;
   $('hName').textContent=me.name;$('hName').style.color=me.color;
-  $('hAv').innerHTML=me.avatarUrl?`<img src="${esc(me.avatarUrl)}" onerror="this.parentElement.textContent='${ini(me.name)}';" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:ini(me.name);
-  $('hAv').style.background=me.color;
+  $('hAv').innerHTML=me.avatarUrl?`<img src="${esc(me.avatarUrl)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:ini(me.name);$('hAv').style.background=me.color;
+  showChatView();
 
   if(unM)unM();
   unM=db.collection('messages').orderBy('ts','asc').limitToLast(200).onSnapshot(s=>{
-    const ms=s.docs.map(d=>({id:d.id,...d.data()}));
-    const isNew=ms.length>lmc&&lmc>0;const last=ms[ms.length-1];
-    renderMsgs(ms);
-    if(isNew&&last&&last.uid!==me?.uid){if(!atBot)$('npill').classList.add('on');ping()}
+    const ms=s.docs.map(d=>({id:d.id,...d.data()}));const isNew=ms.length>lmc&&lmc>0;const last=ms[ms.length-1];
+    cachedMsgs=ms;if(!dmView)renderMsgs(ms);
+    if(isNew&&last&&last.uid!==me?.uid){if(!atBot&&!dmView)$('npill').classList.add('on');if(!dmView)ping();if(dmView)$('chatDot').classList.add('on')}
     lmc=ms.length;
   });
   if(unU)unU();
   unU=db.collection('users').where('online','==',true).onSnapshot(s=>{allUsers=s.docs.map(d=>({id:d.id,...d.data()}));renderUsers(allUsers)});
   if(unT)unT();
   unT=db.collection('typing').onSnapshot(s=>{
-    const now=Date.now(),ts=s.docs.map(d=>d.data()).filter(t=>t.uid!==me?.uid&&t.ts&&(now-t.ts.toMillis())<5000);
-    const b=$('typBar');
-    if(ts.length){$('typTxt').textContent=ts.map(t=>t.name).join(', ')+(ts.length>1?' are':' is')+' typing...';b.classList.add('on')}else b.classList.remove('on');
+    if(dmView)return;const now=Date.now(),ts=s.docs.map(d=>d.data()).filter(t=>t.uid!==me?.uid&&t.ts&&(now-t.ts.toMillis())<5000);
+    const b=$('typBar');if(ts.length){$('typTxt').textContent=ts.map(t=>t.name).join(', ')+(ts.length>1?' are':' is')+' typing...';b.classList.add('on')}else b.classList.remove('on')
   });
 
-  // Heartbeat with self-check
+  // DM channels listener
+  if(unDmChannels)unDmChannels();
+  unDmChannels=db.collection('dm-channels').where('participants','array-contains',me.uid).orderBy('lastTs','desc').onSnapshot(s=>{
+    dmChannels=s.docs.map(d=>({id:d.id,...d.data()}));
+    renderDmList();updateDmBadge();
+  });
+
+  // Heartbeat
   if(hbIv)clearInterval(hbIv);
   hbIv=setInterval(async()=>{
     if(disconnected||!me)return;
-    try{
-      const snap=await db.collection('users').doc(me.uid).get();
-      if(!snap.exists)return;
-      const d=snap.data();me.muted=d.muted||false;me.role=d.role||'user';me.avatarUrl=d.avatarUrl||'';me.bio=d.bio||'';
-      if(d.kicked){clearInterval(hbIv);hbIv=null;forceDisconnect('You have been kicked from the room.');return}
-      const ban=await db.collection('bans').doc(me.nameLower).get();
-      if(ban.exists){clearInterval(hbIv);hbIv=null;forceDisconnect('You have been banned from this room.');return}
-      await db.collection('users').doc(me.uid).update({online:true,lastSeen:TS()});
-    }catch(e){console.warn('HB:',e)}
+    try{const snap=await db.collection('users').doc(me.uid).get();if(!snap.exists)return;const d=snap.data();me.muted=d.muted||false;me.role=d.role||'user';me.avatarUrl=d.avatarUrl||'';me.bio=d.bio||'';me.color=d.color||me.color;
+    if(d.kicked){clearInterval(hbIv);hbIv=null;forceDisconnect('You have been kicked.');return}
+    const ban=await db.collection('bans').doc(me.nameLower).get();if(ban.exists){clearInterval(hbIv);hbIv=null;forceDisconnect('You have been banned.');return}
+    await db.collection('users').doc(me.uid).update({online:true,lastSeen:TS()})}catch(e){console.warn('HB:',e)}
   },10000);
   updPres(true);
 
   if(unSelf)unSelf();
-  unSelf=db.collection('users').doc(me.uid).onSnapshot(snap=>{
-    if(!snap.exists||disconnected)return;
-    const d=snap.data();me.muted=d.muted||false;me.role=d.role||'user';me.avatarUrl=d.avatarUrl||'';me.bio=d.bio||'';me.color=d.color||me.color;
-    if(d.kicked){clearInterval(hbIv);hbIv=null;forceDisconnect('You have been kicked from the room.')}
-  },e=>console.warn('SM:',e));
+  unSelf=db.collection('users').doc(me.uid).onSnapshot(snap=>{if(!snap.exists||disconnected)return;const d=snap.data();me.muted=d.muted||false;me.role=d.role||'user';me.avatarUrl=d.avatarUrl||'';me.bio=d.bio||'';me.color=d.color||me.color;if(d.kicked){clearInterval(hbIv);hbIv=null;forceDisconnect('You have been kicked.')}},e=>console.warn('SM:',e));
   if(unBan)unBan();
-  unBan=db.collection('bans').doc(me.nameLower).onSnapshot(snap=>{
-    if(disconnected)return;
-    if(snap.exists){clearInterval(hbIv);hbIv=null;forceDisconnect('You have been banned from this room.')}
-  },e=>console.warn('BM:',e));
+  unBan=db.collection('bans').doc(me.nameLower).onSnapshot(snap=>{if(disconnected)return;if(snap.exists){clearInterval(hbIv);hbIv=null;forceDisconnect('You have been banned.')}},e=>console.warn('BM:',e));
 
   const inp=$('iInp');
-  inp.oninput=()=>{
-    const l=inp.value.length,ok=inp.value.trim()&&l<=MX;
-    $('iSend').disabled=!ok;$('iSend').className=ok?'i-send ok':'i-send';
-    const cc=$('iCc');if(l>MX*.75){cc.textContent=l+'/'+MX;cc.className='i-cc'+(l>MX?' o':l>MX*.9?' w':'')}else{cc.textContent='';cc.className='i-cc'}
-    inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,140)+'px';
-    setTyp();
-  };
+  inp.oninput=()=>{const l=inp.value.length,ok=inp.value.trim()&&l<=MX;$('iSend').disabled=!ok;$('iSend').className=ok?'i-send ok':'i-send';const cc=$('iCc');if(l>MX*.75){cc.textContent=l+'/'+MX;cc.className='i-cc'+(l>MX?' o':l>MX*.9?' w':'')}else{cc.textContent='';cc.className='i-cc'}inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,140)+'px';if(!dmView)setTyp()};
   inp.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend()}};
   $('msgs').onscroll=function(){atBot=this.scrollTop+this.clientHeight>=this.scrollHeight-80;if(atBot)$('npill').classList.remove('on')};
   window.onbeforeunload=()=>{updPres(false);clrTyp()};
   setTimeout(()=>inp.focus(),150);
 }
 
-// ── PRESENCE / TYPING ──
-async function setTyp(){if(!me||disconnected)return;try{await db.collection('typing').doc(me.uid).set({uid:me.uid,name:me.name,ts:TS()})}catch{}if(tpTo)clearTimeout(tpTo);tpTo=setTimeout(clrTyp,3000)}
-async function clrTyp(){if(!me||disconnected)return;try{await db.collection('typing').doc(me.uid).delete()}catch{}}
-async function updPres(on){if(!me||disconnected)return;try{await db.collection('users').doc(me.uid).update({online:on,lastSeen:TS()})}catch{}}
-
-async function amIMuted(){
-  try{const d=await db.collection('users').doc(me.uid).get({source:'server'});if(d.exists){me.muted=d.data().muted||false;if(d.data().kicked){forceDisconnect('You have been kicked.');return true}}}
-  catch{try{const d=await db.collection('users').doc(me.uid).get();if(d.exists)me.muted=d.data().muted||false}catch{}}
-  return me.muted;
+// SIDEBAR TABS
+function switchSbTab(tab){
+  sbTab=tab;
+  $('navChat').classList.toggle('on',tab==='chat');$('navDms').classList.toggle('on',tab==='dms');
+  $('panelChat').classList.toggle('on',tab==='chat');$('panelDms').classList.toggle('on',tab==='dms');
+  if(innerWidth<=768){}// don't close sidebar on tab switch
 }
 
-// ── SEND ──
+// SHOW CHATROOM / DM VIEW
+function showChatView(){
+  $('chatHead').style.display='flex';$('dmHead').classList.remove('on');
+  $('typBar').style.display='';$('iInp').placeholder='Type your message or /help...';
+  if(!dmView)renderMsgs(cachedMsgs);
+  dmView=null;if(unDmMsgs){unDmMsgs();unDmMsgs=null}
+  $('chatDot').classList.remove('on');
+}
+function showDmView(channelId,target){
+  dmView={channelId,targetUid:target.id||target.uid,targetName:target.name,targetColor:target.color,targetAvatar:target.avatarUrl||''};
+  $('chatHead').style.display='none';$('dmHead').classList.add('on');
+  $('dmHeadName').textContent=target.name;$('dmHeadAv').innerHTML=target.avatarUrl?`<img src="${esc(target.avatarUrl)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:ini(target.name);$('dmHeadAv').style.background=target.color;
+  const online=allUsers.find(u=>u.name===target.name);$('dmHeadStatus').textContent=online?'Online':'Offline';
+  $('dmHeadInfo').onclick=()=>openProfile(target.name);
+  $('typBar').classList.remove('on');$('iInp').placeholder='Type a message...';
+
+  // Listen to DM messages
+  if(unDmMsgs)unDmMsgs();
+  unDmMsgs=db.collection('dm-channels').doc(channelId).collection('messages').orderBy('ts','asc').limitToLast(100).onSnapshot(s=>{
+    dmMsgs=s.docs.map(d=>({id:d.id,...d.data()}));renderDmMsgs(dmMsgs);
+    // Mark as read
+    const chan=dmChannels.find(c=>c.id===channelId);
+    if(chan){const readKey='lastRead_'+me.uid;const lastRead=chan[readKey]||0;const lastTs=chan.lastTs?.toMillis?chan.lastTs.toMillis():0;
+    if(lastTs>lastRead)db.collection('dm-channels').doc(channelId).update({[readKey]:Date.now()}).catch(()=>{})}
+  });
+  // Close sidebar on mobile
+  if(innerWidth<=768)togSb();
+}
+function closeDM(){showChatView()}
+
+// OPEN DM (find or create channel)
+async function openDM(targetName){
+  const target=allUsers.find(u=>u.name===targetName)||await findUser(targetName);
+  if(!target){addLocal(`"${esc(targetName)}" not found.`,'err');return}
+  if((target.id||target.uid)===me.uid){addLocal("Can't DM yourself.",'err');return}
+  const channelId=dmChannelId(me.uid,target.id||target.uid);
+  // Check if channel exists, if not create it
+  const doc=await db.collection('dm-channels').doc(channelId).get();
+  if(!doc.exists){
+    await db.collection('dm-channels').doc(channelId).set({
+      participants:[me.uid,target.id||target.uid],
+      participantNames:{[me.uid]:me.name,[target.id||target.uid]:target.name},
+      participantColors:{[me.uid]:me.color,[target.id||target.uid]:target.color},
+      participantAvatars:{[me.uid]:me.avatarUrl||'',[target.id||target.uid]:target.avatarUrl||''},
+      lastMessage:'',lastSender:'',lastTs:TS(),
+      ['lastRead_'+me.uid]:Date.now(),['lastRead_'+(target.id||target.uid)]:0
+    });
+  }
+  switchSbTab('dms');
+  showDmView(channelId,target);
+}
+
+// SEND (handles both chatroom and DM)
 async function handleSend(){
-  const inp=$('iInp'),raw=inp.value.trim();
-  if(!raw||!me||disconnected)return;
-  inp.value='';inp.style.height='auto';$('iSend').disabled=true;$('iSend').className='i-send';$('iCc').textContent='';clrTyp();
+  const inp=$('iInp'),raw=inp.value.trim();if(!raw||!me||disconnected)return;
+  inp.value='';inp.style.height='auto';$('iSend').disabled=true;$('iSend').className='i-send';$('iCc').textContent='';
+
+  if(dmView){
+    // DM send
+    try{
+      await db.collection('dm-channels').doc(dmView.channelId).collection('messages').add({uid:me.uid,name:me.name,color:me.color,avatarUrl:me.avatarUrl||'',text:raw,ts:TS()});
+      await db.collection('dm-channels').doc(dmView.channelId).update({lastMessage:raw.substring(0,100),lastSender:me.name,lastTs:TS(),['lastRead_'+me.uid]:Date.now()});
+      toBot();
+    }catch(e){console.error(e);inp.value=raw}
+    inp.focus();return;
+  }
+
+  clrTyp();
   if(raw.startsWith('/')){await handleCommand(raw);inp.focus();return}
-  if(await amIMuted()){addLocal('You are muted and cannot send messages.','err');inp.focus();return}
+  if(await amIMuted()){addLocal('You are muted.','err');inp.focus();return}
   try{await db.collection('messages').add(msgObj('user',raw,{deleted:false}));toBot()}catch(e){console.error(e);inp.value=raw}
   inp.focus();
 }
 
-// ── COMMANDS ──
-function addLocal(text,type='info'){cmdResults.push({type,text,ts:Date.now()});renderMsgsFromCache()}
-function renderMsgsFromCache(){renderMsgs(cachedMsgs)}
+// PRESENCE
+async function setTyp(){if(!me||disconnected)return;try{await db.collection('typing').doc(me.uid).set({uid:me.uid,name:me.name,ts:TS()})}catch{}if(tpTo)clearTimeout(tpTo);tpTo=setTimeout(clrTyp,3000)}
+async function clrTyp(){if(!me||disconnected)return;try{await db.collection('typing').doc(me.uid).delete()}catch{}}
+async function updPres(on){if(!me||disconnected)return;try{await db.collection('users').doc(me.uid).update({online:on,lastSeen:TS()})}catch{}}
+async function amIMuted(){try{const d=await db.collection('users').doc(me.uid).get({source:'server'});if(d.exists){me.muted=d.data().muted||false;if(d.data().kicked){forceDisconnect('Kicked.');return true}}}catch{try{const d=await db.collection('users').doc(me.uid).get();if(d.exists)me.muted=d.data().muted||false}catch{}}return me.muted}
 
+// COMMANDS (all same + /dm added)
+function addLocal(text,type='info'){cmdResults.push({type,text,ts:Date.now()});if(!dmView)renderMsgs(cachedMsgs)}
 async function handleCommand(raw){
   const parts=raw.split(/\s+/),cmd=parts[0].toLowerCase(),arg1=parts[1]||'',rest=parts.slice(1).join(' ');
   switch(cmd){
-    case'/help':addLocal(`<strong>— USER COMMANDS —</strong>
-/help — show this list
-/me &lt;action&gt; — action message
-/clear — clear local view
-/users — list online users
-/profile — view your profile
-/bio &lt;text&gt; — set your bio
-/avatar &lt;url&gt; — set profile picture
-/color &lt;#hex&gt; — change your color
-/roll &lt;NdN&gt; — roll dice
-/flip — flip a coin
-/shrug — ¯\\_(ツ)_/¯
-/tableflip — (╯°□°)╯︵ ┻━┻
-
-<strong>— MOD COMMANDS —</strong>
-/mute &lt;user&gt; · /unmute &lt;user&gt;
-
-<strong>— ADMIN COMMANDS —</strong>
-/kick &lt;user&gt; · /ban &lt;user&gt; · /unban &lt;user&gt;
-/banlist · /mod &lt;user&gt; · /unmod &lt;user&gt;
-DEL button on messages (hover)
-
-<strong>— DEV COMMANDS —</strong>
-/admin &lt;user&gt; · /unadmin &lt;user&gt;`);break;
-
-    case'/me':if(!rest){addLocal('/me <action>','err');break}if(await amIMuted()){addLocal('You are muted.','err');break}
-      await db.collection('messages').add(msgObj('action',rest));break;
-    case'/clear':cmdResults=[];$('msgs').innerHTML='';addLocal('Chat cleared locally.');break;
+    case'/help':addLocal(`<strong>— USER —</strong> /help · /me · /clear · /users · /profile · /bio · /avatar · /color · /roll · /flip · /shrug · /tableflip · <strong>/dm &lt;user&gt;</strong>
+<strong>— MOD —</strong> /mute · /unmute
+<strong>— ADMIN —</strong> /kick · /ban · /unban · /banlist · /mod · /unmod · DEL button
+<strong>— DEV —</strong> /admin · /unadmin`);break;
+    case'/dm':if(!arg1){addLocal('/dm <username>','err');break}await openDM(arg1);break;
+    case'/me':if(!rest){addLocal('/me <action>','err');break}if(await amIMuted()){addLocal('Muted.','err');break}await db.collection('messages').add(msgObj('action',rest));break;
+    case'/clear':cmdResults=[];$('msgs').innerHTML='';addLocal('Cleared.');break;
     case'/users':case'/who':addLocal(`<strong>Online (${allUsers.length}):</strong>\n`+allUsers.map(u=>`  ${u.name} [${u.role||'user'}]${u.muted?' (muted)':''}`).join('\n'));break;
     case'/profile':openProfile(me.name);break;
-    case'/bio':if(!rest){addLocal('Usage: /bio <text>','err');break}
-      try{await db.collection('users').doc(me.uid).update({bio:rest.substring(0,200)});me.bio=rest.substring(0,200);addLocal('Bio updated.','ok')}catch(e){addLocal('Failed: '+e.message,'err')}break;
-    case'/avatar':if(!arg1){addLocal('Usage: /avatar <image url>','err');break}
-      try{await db.collection('users').doc(me.uid).update({avatarUrl:arg1});me.avatarUrl=arg1;$('hAv').innerHTML=`<img src="${esc(arg1)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;$('hAv').style.background=me.color;addLocal('Avatar updated.','ok')}catch(e){addLocal('Failed: '+e.message,'err')}break;
-    case'/color':if(!arg1||!/^#[0-9a-f]{3,6}$/i.test(arg1)){addLocal('Usage: /color #hex','err');break}
-      try{await db.collection('users').doc(me.uid).update({color:arg1});me.color=arg1;$('hName').style.color=arg1;$('hAv').style.background=arg1;addLocal('Color updated.','ok')}catch(e){addLocal('Failed: '+e.message,'err')}break;
-    case'/roll':{const m=arg1.match(/^(\d+)d(\d+)$/i);if(!m){addLocal('/roll <NdN>','err');break}const[,n,s]=[m[0],+m[1],+m[2]];if(s<1||s>100||n<1||n>20){addLocal('Max 20d100','err');break}const r=Array.from({length:n},()=>Math.floor(Math.random()*s)+1);await db.collection('messages').add(msgObj('action',`rolled ${arg1}: [${r.join(',')}] = ${r.reduce((a,b)=>a+b,0)}`));break}
-    case'/flip':await db.collection('messages').add(msgObj('action','flipped a coin: '+(Math.random()<.5?'heads':'tails')));break;
-    case'/shrug':if(await amIMuted()){addLocal('Muted.','err');break}await db.collection('messages').add(msgObj('user','¯\\_(ツ)_/¯',{deleted:false}));break;
-    case'/tableflip':if(await amIMuted()){addLocal('Muted.','err');break}await db.collection('messages').add(msgObj('user','(╯°□°)╯︵ ┻━┻',{deleted:false}));break;
-    case'/mute':if(!hasRole('mod')){addLocal('No permission.','err');break}if(!arg1){addLocal('/mute <user>','err');break}if(await askConfirm(arg1,'mute'))await setFlag(arg1,'muted',true,'muted');break;
-    case'/unmute':if(!hasRole('mod')){addLocal('No permission.','err');break}if(!arg1){addLocal('/unmute <user>','err');break}if(await askConfirm(arg1,'unmute'))await setFlag(arg1,'muted',false,'unmuted');break;
-    case'/kick':if(!hasRole('admin')){addLocal('No permission.','err');break}if(!arg1){addLocal('/kick <user>','err');break}if(await askConfirm(arg1,'kick'))await kickUser(arg1);break;
-    case'/ban':if(!hasRole('admin')){addLocal('No permission.','err');break}if(!arg1){addLocal('/ban <user>','err');break}if(await askConfirm(arg1,'ban'))await banUser(arg1);break;
-    case'/unban':if(!hasRole('admin')){addLocal('No permission.','err');break}await unbanUser(arg1);break;
-    case'/banlist':if(!hasRole('admin')){addLocal('No permission.','err');break}await showBanList();break;
-    case'/mod':if(!hasRole('admin')){addLocal('No permission.','err');break}if(!arg1)break;if(await askConfirm(arg1,'mod'))await setRole(arg1,'mod');break;
-    case'/unmod':if(!hasRole('admin')){addLocal('No permission.','err');break}if(!arg1)break;if(await askConfirm(arg1,'unmod'))await setRole(arg1,'user');break;
-    case'/admin':if(!hasRole('dev')){addLocal('DEV only.','err');break}if(!arg1)break;if(await askConfirm(arg1,'admin'))await setRole(arg1,'admin');break;
-    case'/unadmin':if(!hasRole('dev')){addLocal('DEV only.','err');break}if(!arg1)break;if(await askConfirm(arg1,'unadmin'))await setRole(arg1,'user');break;
-    default:addLocal(`Unknown: ${esc(cmd)}. /help`,'err');
+    case'/bio':if(!rest)break;try{await db.collection('users').doc(me.uid).update({bio:rest.substring(0,200)});me.bio=rest.substring(0,200);addLocal('Bio updated.','ok')}catch(e){addLocal('Failed: '+e.message,'err')}break;
+    case'/avatar':if(!arg1)break;try{await db.collection('users').doc(me.uid).update({avatarUrl:arg1});me.avatarUrl=arg1;addLocal('Avatar updated.','ok')}catch(e){addLocal('Failed: '+e.message,'err')}break;
+    case'/color':if(!arg1||!/^#[0-9a-f]{3,6}$/i.test(arg1))break;try{await db.collection('users').doc(me.uid).update({color:arg1});me.color=arg1;addLocal('Color updated.','ok')}catch(e){addLocal('Failed: '+e.message,'err')}break;
+    case'/roll':{const m=arg1.match(/^(\d+)d(\d+)$/i);if(!m)break;const[,n,s]=[m[0],+m[1],+m[2]];if(s<1||s>100||n<1||n>20)break;const r=Array.from({length:n},()=>Math.floor(Math.random()*s)+1);await db.collection('messages').add(msgObj('action',`rolled ${arg1}: [${r.join(',')}] = ${r.reduce((a,b)=>a+b,0)}`));break}
+    case'/flip':await db.collection('messages').add(msgObj('action','flipped: '+(Math.random()<.5?'heads':'tails')));break;
+    case'/shrug':if(await amIMuted())break;await db.collection('messages').add(msgObj('user','¯\\_(ツ)_/¯',{deleted:false}));break;
+    case'/tableflip':if(await amIMuted())break;await db.collection('messages').add(msgObj('user','(╯°□°)╯︵ ┻━┻',{deleted:false}));break;
+    case'/mute':if(!hasRole('mod'))break;if(!arg1)break;if(await askConfirm(arg1,'mute'))await setFlag(arg1,'muted',true,'muted');break;
+    case'/unmute':if(!hasRole('mod'))break;if(!arg1)break;if(await askConfirm(arg1,'unmute'))await setFlag(arg1,'muted',false,'unmuted');break;
+    case'/kick':if(!hasRole('admin'))break;if(!arg1)break;if(await askConfirm(arg1,'kick'))await kickUser(arg1);break;
+    case'/ban':if(!hasRole('admin'))break;if(!arg1)break;if(await askConfirm(arg1,'ban'))await banUser(arg1);break;
+    case'/unban':if(!hasRole('admin'))break;await unbanUser(arg1);break;
+    case'/banlist':if(!hasRole('admin'))break;await showBanList();break;
+    case'/mod':if(!hasRole('admin'))break;if(!arg1)break;if(await askConfirm(arg1,'mod'))await setRole(arg1,'mod');break;
+    case'/unmod':if(!hasRole('admin'))break;if(!arg1)break;if(await askConfirm(arg1,'unmod'))await setRole(arg1,'user');break;
+    case'/admin':if(!hasRole('dev'))break;if(!arg1)break;if(await askConfirm(arg1,'admin'))await setRole(arg1,'admin');break;
+    case'/unadmin':if(!hasRole('dev'))break;if(!arg1)break;if(await askConfirm(arg1,'unadmin'))await setRole(arg1,'user');break;
+    default:addLocal(`Unknown: ${esc(cmd)}`,'err');
   }
 }
 
-// ── MOD ACTIONS ──
+// MOD ACTIONS (compressed, same logic)
 async function findUser(u){let f=allUsers.find(x=>x.nameLower===u.toLowerCase());if(f)return f;const s=await db.collection('users').where('nameLower','==',u.toLowerCase()).limit(1).get();if(!s.empty){const d=s.docs[0];return{id:d.id,...d.data()}}return null}
-async function setFlag(username,field,value,verb){
-  const t=await findUser(username);if(!t){addLocal(`"${esc(username)}" not found.`,'err');return}
-  if(t.id===me.uid){addLocal(`Can't ${verb} yourself.`,'err');return}
-  if((ROLE_ORDER[t.role]||1)>=(ROLE_ORDER[myRole()]||1)){addLocal(`Can't ${verb} equal/higher rank.`,'err');return}
-  try{await db.collection('users').doc(t.id).update({[field]:value});await db.collection('messages').add({type:'system',text:`${t.name} was ${verb} by ${me.name}`,ts:TS()});addLocal(`${t.name} ${verb}.`,'ok')}catch(e){addLocal(`Failed: ${e.message}`,'err')}
-}
-async function kickUser(u){
-  const t=await findUser(u);if(!t){addLocal(`"${esc(u)}" not found.`,'err');return}
-  if(t.id===me.uid){addLocal("Can't kick yourself.",'err');return}
-  if((ROLE_ORDER[t.role]||1)>=(ROLE_ORDER[myRole()]||1)){addLocal("Can't kick equal/higher rank.",'err');return}
-  try{await db.collection('users').doc(t.id).update({online:false,kicked:true});await db.collection('messages').add({type:'system',text:`${t.name} was kicked by ${me.name}`,ts:TS()});addLocal(`${t.name} kicked.`,'ok')}catch(e){addLocal(`Failed: ${e.message}`,'err')}
-}
-async function banUser(u){
-  const t=await findUser(u);if(!t){addLocal(`"${esc(u)}" not found.`,'err');return}
-  if(t.id===me.uid){addLocal("Can't ban yourself.",'err');return}
-  if((ROLE_ORDER[t.role]||1)>=(ROLE_ORDER[myRole()]||1)){addLocal("Can't ban equal/higher rank.",'err');return}
-  try{await db.collection('bans').doc(t.nameLower).set({name:t.name,bannedBy:me.name,bannedAt:TS()});await db.collection('users').doc(t.id).update({online:false,kicked:true});await db.collection('messages').add({type:'system',text:`${t.name} was banned by ${me.name}`,ts:TS()});addLocal(`${t.name} banned.`,'ok')}catch(e){addLocal(`Failed: ${e.message}`,'err')}
-}
+async function setFlag(u,field,value,verb){const t=await findUser(u);if(!t){addLocal(`"${esc(u)}" not found.`,'err');return}if(t.id===me.uid||((RO[t.role]||1)>=(RO[myRole()]||1))){addLocal("Can't.",'err');return}try{await db.collection('users').doc(t.id).update({[field]:value});await db.collection('messages').add({type:'system',text:`${t.name} was ${verb} by ${me.name}`,ts:TS()});addLocal(`${t.name} ${verb}.`,'ok')}catch(e){addLocal(`Failed: ${e.message}`,'err')}}
+async function kickUser(u){const t=await findUser(u);if(!t||t.id===me.uid||((RO[t.role]||1)>=(RO[myRole()]||1))){addLocal("Can't.",'err');return}try{await db.collection('users').doc(t.id).update({online:false,kicked:true});await db.collection('messages').add({type:'system',text:`${t.name} kicked by ${me.name}`,ts:TS()});addLocal(`${t.name} kicked.`,'ok')}catch(e){addLocal(`Failed: ${e.message}`,'err')}}
+async function banUser(u){const t=await findUser(u);if(!t||t.id===me.uid||((RO[t.role]||1)>=(RO[myRole()]||1))){addLocal("Can't.",'err');return}try{await db.collection('bans').doc(t.nameLower).set({name:t.name,bannedBy:me.name,bannedAt:TS()});await db.collection('users').doc(t.id).update({online:false,kicked:true});await db.collection('messages').add({type:'system',text:`${t.name} banned by ${me.name}`,ts:TS()});addLocal(`${t.name} banned.`,'ok')}catch(e){addLocal(`Failed: ${e.message}`,'err')}}
 async function unbanUser(u){if(!u){addLocal('/unban <user>','err');return}try{await db.collection('bans').doc(u.toLowerCase()).delete();await db.collection('messages').add({type:'system',text:`${u} unbanned by ${me.name}`,ts:TS()});addLocal(`${esc(u)} unbanned.`,'ok')}catch(e){addLocal(`Failed: ${e.message}`,'err')}}
 async function showBanList(){try{const s=await db.collection('bans').get();if(s.empty){addLocal('No bans.');return}addLocal(`<strong>Bans (${s.size}):</strong>\n`+s.docs.map(d=>`  ${d.data().name} — by ${d.data().bannedBy}`).join('\n'))}catch(e){addLocal(`Failed: ${e.message}`,'err')}}
-async function setRole(u,role){
-  const t=await findUser(u);if(!t){addLocal(`"${esc(u)}" not found.`,'err');return}
-  if(t.id===me.uid||t.nameLower===DEV_NAME){addLocal("Can't change.",'err');return}
-  try{await db.collection('users').doc(t.id).update({role});await db.collection('messages').add({type:'system',text:`${t.name} → ${role.toUpperCase()} by ${me.name}`,ts:TS()});addLocal(`${t.name} is now ${role.toUpperCase()}.`,'ok')}catch(e){addLocal(`Failed: ${e.message}`,'err')}
-}
+async function setRole(u,role){const t=await findUser(u);if(!t||t.id===me.uid||t.nameLower===DEV_NAME){addLocal("Can't.",'err');return}try{await db.collection('users').doc(t.id).update({role});await db.collection('messages').add({type:'system',text:`${t.name} → ${role.toUpperCase()} by ${me.name}`,ts:TS()});addLocal(`${t.name} is now ${role.toUpperCase()}.`,'ok')}catch(e){addLocal(`Failed: ${e.message}`,'err')}}
 async function deleteMsg(id){if(!hasRole('admin'))return;try{await db.collection('messages').doc(id).update({deleted:true,deletedBy:me.name});addLocal('Deleted.','ok')}catch(e){addLocal(`Failed: ${e.message}`,'err')}}
-async function sideAction(u,a){try{await handleCommand('/'+a+' '+u)}catch(e){addLocal('Action failed: '+e.message,'err')}}
+async function sideAction(u,a){try{await handleCommand('/'+a+' '+u)}catch(e){addLocal('Failed: '+e.message,'err')}}
 
-// ── PROFILE SYSTEM ──
-async function openProfile(username){
-  if(!username)return;
-  try{
-  const u=allUsers.find(x=>x.name===username)||await findUser(username);
-  if(!u){addLocal(`"${esc(username)}" not found.`,'err');return}
-  const isMe=u.id===me?.uid||u.name===me?.name;
-  const joined=u.createdAt?.toDate?u.createdAt.toDate().toLocaleDateString([],{year:'numeric',month:'short',day:'numeric'}):'Unknown';
-  const box=$('profBox');
-  box.innerHTML=`
-    <div class="prof-header">
-      <button class="prof-close" onclick="closeProf()">✕</button>
-      <div class="prof-av" style="background:${esc(u.color)}">${u.avatarUrl?`<img src="${esc(u.avatarUrl)}" onerror="this.parentElement.textContent='${ini(u.name)}'">`:ini(u.name)}</div>
-      <div class="prof-name"><span style="color:${esc(u.color)}">${esc(u.name)}</span>${roleBadge(u.role||'user')}${u.muted?'<span class="badge badge-muted">MUTED</span>':''}</div>
-      <div class="prof-role-line">${(u.role||'user')!=='user'?(u.role||'user'):'Member'} · Joined ${joined}</div>
-      <div class="prof-bio ${u.bio?'':'empty'}">${u.bio?esc(u.bio):'No bio set'}</div>
-    </div>
-    <div class="prof-body">
-      <div class="prof-stats">
-        <div class="prof-stat"><div class="prof-stat-v" style="color:${esc(u.color)}">${u.online?'Online':'Offline'}</div><div class="prof-stat-l">Status</div></div>
-        <div class="prof-stat"><div class="prof-stat-v">${(u.role||'user').toUpperCase()}</div><div class="prof-stat-l">Role</div></div>
-      </div>
-      ${isMe?`
-      <div class="prof-edit-section">
-        <div class="fld"><label class="fld-lbl">Bio (max 200)</label><textarea class="fld-ta" id="profBioInp" maxlength="200" placeholder="Tell us about yourself...">${esc(me.bio||'')}</textarea></div>
-        <div class="fld"><label class="fld-lbl">Avatar URL</label><input class="fld-inp" id="profAvInp" placeholder="https://example.com/photo.jpg" value="${esc(me.avatarUrl||'')}" style="font-size:.74rem;padding:10px 12px"></div>
-        <div class="fld"><label class="fld-lbl">Node Color</label><input class="fld-inp" id="profColInp" type="text" value="${esc(me.color)}" placeholder="#6ee75a" style="font-size:.74rem;padding:10px 12px"></div>
-        <button class="prof-save" onclick="saveProfile()">Save Profile</button>
-      </div>`:''}
-    </div>`;
-  $('profOv').classList.add('on');
-  }catch(e){addLocal('Failed to load profile: '+e.message,'err')}
-}
+// PROFILE (compressed)
+async function openProfile(username){if(!username)return;try{const u=allUsers.find(x=>x.name===username)||await findUser(username);if(!u)return;const isMe=u.id===me?.uid||u.name===me?.name;const joined=u.createdAt?.toDate?u.createdAt.toDate().toLocaleDateString([],{year:'numeric',month:'short',day:'numeric'}):'Unknown';$('profBox').innerHTML=`<div class="prof-header"><button class="prof-close" onclick="closeProf()">✕</button><div class="prof-av" style="background:${esc(u.color)}">${u.avatarUrl?`<img src="${esc(u.avatarUrl)}">`:ini(u.name)}</div><div class="prof-name"><span style="color:${esc(u.color)}">${esc(u.name)}</span>${roleBadge(u.role||'user')}</div><div class="prof-role-line">${(u.role||'user')!=='user'?(u.role||'user'):'Member'} · Joined ${joined}</div><div class="prof-bio ${u.bio?'':'empty'}">${u.bio?esc(u.bio):'No bio set'}</div></div><div class="prof-body"><div class="prof-stats"><div class="prof-stat"><div class="prof-stat-v" style="color:${esc(u.color)}">${u.online?'Online':'Offline'}</div><div class="prof-stat-l">Status</div></div><div class="prof-stat"><div class="prof-stat-v">${(u.role||'user').toUpperCase()}</div><div class="prof-stat-l">Role</div></div></div>${isMe?`<div class="prof-edit-section"><div class="fld"><label class="fld-lbl">Bio</label><textarea class="fld-ta" id="profBio" maxlength="200">${esc(me.bio||'')}</textarea></div><div class="fld"><label class="fld-lbl">Avatar URL</label><input class="fld-inp" id="profAv" value="${esc(me.avatarUrl||'')}" style="font-size:.74rem;padding:10px 12px"></div><div class="fld"><label class="fld-lbl">Color</label><input class="fld-inp" id="profCol" value="${esc(me.color)}" style="font-size:.74rem;padding:10px 12px"></div><button class="prof-save" onclick="saveProfile()">Save Profile</button></div>`:''}</div>`;$('profOv').classList.add('on')}catch(e){addLocal('Profile error: '+e.message,'err')}}
 function closeProf(){$('profOv').classList.remove('on')}
-$('profOv')?.addEventListener('click',function(ev){if(ev.target===$('profOv'))closeProf()});
+$('profOv')?.addEventListener('click',ev=>{if(ev.target===$('profOv'))closeProf()});
+async function saveProfile(){const bio=($('profBio')?.value||'').substring(0,200),avatarUrl=$('profAv')?.value.trim()||'',color=$('profCol')?.value.trim()||me.color;if(color&&!/^#[0-9a-f]{3,6}$/i.test(color)){addLocal('Bad hex.','err');return}try{await db.collection('users').doc(me.uid).update({bio,avatarUrl,color});me.bio=bio;me.avatarUrl=avatarUrl;me.color=color;$('hName').style.color=color;$('hAv').style.background=color;$('hAv').innerHTML=avatarUrl?`<img src="${esc(avatarUrl)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:ini(me.name);closeProf();addLocal('Saved.','ok')}catch(e){addLocal('Failed: '+e.message,'err')}}
 
-async function saveProfile(){
-  const bio=($('profBioInp')?.value||'').substring(0,200);
-  const avatarUrl=$('profAvInp')?.value.trim()||'';
-  const color=$('profColInp')?.value.trim()||me.color;
-  if(color&&!/^#[0-9a-f]{3,6}$/i.test(color)){addLocal('Invalid color hex.','err');return}
-  try{
-    await db.collection('users').doc(me.uid).update({bio,avatarUrl,color});
-    me.bio=bio;me.avatarUrl=avatarUrl;me.color=color;
-    $('hName').style.color=color;$('hAv').style.background=color;
-    $('hAv').innerHTML=avatarUrl?`<img src="${esc(avatarUrl)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:ini(me.name);
-    closeProf();addLocal('Profile saved.','ok');
-  }catch(e){addLocal(`Failed: ${e.message}`,'err')}
-}
-
-// ── RENDER MESSAGES ──
+// RENDER CHATROOM MESSAGES
 function renderMsgs(ms){
-  cachedMsgs=ms;const a=$('msgs'),wb=a.scrollTop+a.clientHeight>=a.scrollHeight-80;
+  const a=$('msgs'),wb=a.scrollTop+a.clientHeight>=a.scrollHeight-80;
   if(!ms.length&&!cmdResults.length){a.innerHTML='<div class="msgs-empty"><div class="msgs-empty-ic">◈</div><div class="msgs-empty-t">Awaiting Transmissions</div><div class="msgs-empty-s">Type /help for commands</div></div>';return}
   let h='',ld='',lu='',lm='';
   ms.forEach(m=>{
@@ -574,83 +418,115 @@ function renderMsgs(ms){
   a.innerHTML=h;if(wb)a.scrollTop=a.scrollHeight;
 }
 
-// ── RENDER USERS ──
-function renderUsers(us){
-  const n=us.length;$('uCnt').textContent=n;$('hDesc').textContent=n+' node'+(n!==1?'s':'')+' connected';
-  const l=$('uList');
-  if(!n){l.innerHTML='<div style="font-size:.64rem;color:var(--text-mute);padding:8px 0;font-style:italic">No connections…</div>';return}
-  us.sort((a,b)=>{if(a.id===me?.uid)return-1;if(b.id===me?.uid)return 1;const ra=ROLE_ORDER[a.role]||1,rb=ROLE_ORDER[b.role]||1;return ra!==rb?rb-ra:(a.name||'').localeCompare(b.name||'')});
-  l.innerHTML=us.map(u=>{
-    const isMe=u.id===me?.uid,r=u.role||'user';
-    return`<div class="sb-u ${isMe?'me':''}" data-uname="${esc(u.name)}" data-ucolor="${esc(u.color)}" data-urole="${r}" data-umuted="${u.muted||false}" data-uavatar="${esc(u.avatarUrl||'')}">
-      ${avHTML(u.color,u.name,u.avatarUrl,32,true)}
-      <div class="sb-u-info"><div class="sb-u-name"><span style="color:${esc(u.color)};font-weight:${isMe?700:400}">${esc(u.name)}</span>${roleBadge(r)}${u.muted?'<span class="badge badge-muted">MUTED</span>':''}</div><span class="sb-u-role">${isMe?'You':r!=='user'?r:'Online'}</span></div>
-    </div>`}).join('');
+// RENDER DM MESSAGES (simpler — no system msgs, no delete, no roles)
+function renderDmMsgs(ms){
+  const a=$('msgs'),wb=a.scrollTop+a.clientHeight>=a.scrollHeight-80;
+  if(!ms.length){a.innerHTML='<div class="msgs-empty"><div class="msgs-empty-ic">✉</div><div class="msgs-empty-t">Start of conversation</div><div class="msgs-empty-s">Say hello!</div></div>';return}
+  let h='',ld='',lu='',lm='';
+  ms.forEach(m=>{
+    if(m.ts?.toDate){const ds=fDate(m.ts.toDate());if(ds!==ld){h+=`<div class="d-sep"><span class="d-sep-l"></span><span class="d-sep-t">${ds}</span><span class="d-sep-l"></span></div>`;ld=ds;lu=''}}
+    const mi=m.uid===me?.uid,t=m.ts?.toDate?fTime(m.ts.toDate()):'',mn=m.ts?.toDate?m.ts.toDate().getHours()+':'+m.ts.toDate().getMinutes():'',gr=m.uid===lu&&mn===lm,c=esc(m.color||'#6ee75a');
+    h+=`<div class="m-row ${mi?'mi':'ot'}"><div class="m-grp" ${mi?'style="flex-direction:row-reverse"':''}>`;
+    if(!mi)h+=`<div class="m-av pfp ${gr?'hid':''}" style="background:${c}">${m.avatarUrl?`<img src="${esc(m.avatarUrl)}" onerror="this.parentElement.textContent='${ini(m.name)}'">`:ini(m.name)}</div>`;
+    h+=`<div class="m-cnt" ${mi?'style="align-items:flex-end"':''}>`;
+    if(!mi&&!gr)h+=`<div class="m-au" style="color:${c}"><span>${esc(m.name)}</span></div>`;
+    h+=`<div class="m-bub ${mi?'mi':'ot'}" style="border-color:${mi?c+'20':'var(--border)'}"><div class="m-txt">${fMsg(m.text)}</div><div class="m-meta"><span class="m-time">${t}</span></div></div></div></div></div>`;
+    lu=m.uid;lm=mn;
+  });
+  a.innerHTML=h;if(wb)a.scrollTop=a.scrollHeight;
 }
 
-// ── EVENT DELEGATION ──
-$('uList').addEventListener('click',function(ev){const row=ev.target.closest('.sb-u[data-uname]');if(row)openPop(row)});
-$('msgs').addEventListener('click',function(ev){
+// RENDER DM LIST
+function renderDmList(){
+  const l=$('dmList');
+  if(!dmChannels.length){l.innerHTML='<div class="dm-empty"><div class="dm-empty-ic">✉</div>No conversations yet<br><span style="font-size:.56rem">Click a user → Direct Message</span></div>';return}
+  l.innerHTML=dmChannels.map(ch=>{
+    const otherUid=ch.participants.find(p=>p!==me.uid);
+    const name=ch.participantNames?.[otherUid]||'Unknown';
+    const color=ch.participantColors?.[otherUid]||'#6ee75a';
+    const avatar=ch.participantAvatars?.[otherUid]||'';
+    const preview=ch.lastMessage?((ch.lastSender===me.name?'You: ':'')+ch.lastMessage):'No messages yet';
+    const time=ch.lastTs?.toDate?fTime(ch.lastTs.toDate()):'';
+    const readKey='lastRead_'+me.uid;
+    const lastRead=ch[readKey]||0;
+    const lastTs=ch.lastTs?.toMillis?ch.lastTs.toMillis():0;
+    const unread=lastTs>lastRead&&ch.lastSender!==me.name;
+    const isActive=dmView&&dmView.channelId===ch.id;
+    return`<div class="dm-conv ${isActive?'active':''}" data-dmid="${ch.id}" data-dmuid="${otherUid}" data-dmname="${esc(name)}" data-dmcolor="${esc(color)}" data-dmavatar="${esc(avatar)}">
+      ${avHTML(color,name,avatar,34,false)}
+      <div class="dm-conv-info"><div class="dm-conv-name" style="color:${esc(color)}">${esc(name)}</div><div class="dm-conv-preview">${esc(preview)}</div></div>
+      <div class="dm-conv-meta"><span class="dm-conv-time">${time}</span><span class="dm-conv-unread ${unread?'on':''}">${unread?'NEW':''}</span></div>
+    </div>`;
+  }).join('');
+}
+function updateDmBadge(){
+  let count=0;
+  dmChannels.forEach(ch=>{const rk='lastRead_'+me.uid;const lr=ch[rk]||0;const lt=ch.lastTs?.toMillis?ch.lastTs.toMillis():0;if(lt>lr&&ch.lastSender!==me.name)count++});
+  totalUnread=count;const badge=$('dmBadge');
+  if(count>0){badge.textContent=count;badge.classList.add('on')}else badge.classList.remove('on');
+}
+
+// RENDER USERS
+function renderUsers(us){
+  const n=us.length;$('uCnt').textContent=n;$('hDesc').textContent=n+' node'+(n!==1?'s':'')+' connected';const l=$('uList');
+  if(!n){l.innerHTML='<div style="font-size:.64rem;color:var(--text-mute);padding:8px 0;font-style:italic">No connections…</div>';return}
+  us.sort((a,b)=>{if(a.id===me?.uid)return-1;if(b.id===me?.uid)return 1;const ra=RO[a.role]||1,rb=RO[b.role]||1;return ra!==rb?rb-ra:(a.name||'').localeCompare(b.name||'')});
+  l.innerHTML=us.map(u=>{const isMe=u.id===me?.uid,r=u.role||'user';return`<div class="sb-u ${isMe?'me':''}" data-uname="${esc(u.name)}" data-ucolor="${esc(u.color)}" data-urole="${r}" data-umuted="${u.muted||false}" data-uavatar="${esc(u.avatarUrl||'')}">${avHTML(u.color,u.name,u.avatarUrl,32,true)}<div class="sb-u-info"><div class="sb-u-name"><span style="color:${esc(u.color)};font-weight:${isMe?700:400}">${esc(u.name)}</span>${roleBadge(r)}${u.muted?'<span class="badge badge-muted">MUTED</span>':''}</div><span class="sb-u-role">${isMe?'You':r!=='user'?r:'Online'}</span></div></div>`}).join('');
+}
+
+// EVENT DELEGATION
+$('uList').addEventListener('click',ev=>{const row=ev.target.closest('.sb-u[data-uname]');if(row)openPop(row)});
+$('dmList').addEventListener('click',ev=>{
+  const conv=ev.target.closest('.dm-conv[data-dmid]');if(!conv)return;
+  const target={id:conv.dataset.dmuid,name:conv.dataset.dmname,color:conv.dataset.dmcolor,avatarUrl:conv.dataset.dmavatar};
+  showDmView(conv.dataset.dmid,target);
+});
+$('msgs').addEventListener('click',ev=>{
   const del=ev.target.closest('.m-del[data-delid]');if(del){showConfirm(null,'delete',del.dataset.delid);return}
   const prof=ev.target.closest('[data-profname]');if(prof)openProfile(prof.dataset.profname);
 });
 
-// ── USER POPUP ──
+// USER POPUP (with DM button)
 let _popTarget=null;
 function openPop(el){
   const name=el.dataset.uname,color=el.dataset.ucolor,role=el.dataset.urole,muted=el.dataset.umuted==='true',avatar=el.dataset.uavatar;
   _popTarget=name;const pop=$('uPop'),ov=$('popOv');
-  const tR=ROLE_ORDER[role]||1,mR=ROLE_ORDER[myRole()]||1,can=mR>tR,isMe=name===me?.name;
+  const tR=RO[role]||1,mR=RO[myRole()]||1,can=mR>tR,isMe=name===me?.name;
   let btns=`<button class="u-popup-btn" data-act="viewprofile"><span class="p-icon">◈</span>View Profile</button>`;
+  if(!isMe)btns+=`<button class="u-popup-btn" data-act="dm"><span class="p-icon">✉</span>Direct Message</button>`;
   if(can&&!isMe){
     btns+=`<div class="u-popup-sep"></div>`;
     if(hasRole('mod'))btns+=muted?`<button class="u-popup-btn" data-act="unmute"><span class="p-icon">◉</span>Unmute</button>`:`<button class="u-popup-btn" data-act="mute"><span class="p-icon">◎</span>Mute</button>`;
     if(hasRole('admin')){btns+=`<button class="u-popup-btn danger" data-act="kick"><span class="p-icon">⏏</span>Kick</button><button class="u-popup-btn danger" data-act="ban"><span class="p-icon">⊘</span>Ban</button>`;btns+=`<div class="u-popup-sep"></div>`;if(role==='user')btns+=`<button class="u-popup-btn" data-act="mod"><span class="p-icon">↑</span>Promote Mod</button>`;if(role==='mod')btns+=`<button class="u-popup-btn" data-act="unmod"><span class="p-icon">↓</span>Remove Mod</button>`}
     if(hasRole('dev')){if(role!=='admin')btns+=`<button class="u-popup-btn" data-act="admin"><span class="p-icon">★</span>Promote Admin</button>`;else btns+=`<button class="u-popup-btn" data-act="unadmin"><span class="p-icon">☆</span>Remove Admin</button>`}
   }
-  pop.innerHTML=`<div class="u-popup-head">${avHTML(color,name,avatar,36,false)}<div class="u-popup-info"><div class="u-popup-name"><span style="color:${color}">${esc(name)}</span>${roleBadge(role)}${muted?'<span class="badge badge-muted">MUTED</span>':''}</div><div class="u-popup-role">${role!=='user'?role:'Member'}</div></div></div><div class="u-popup-body">${btns}</div>`;
-  const rect=el.getBoundingClientRect();let top=rect.top,left=rect.right+8;
-  if(left+240>innerWidth)left=rect.left-238;if(left<4)left=Math.max(4,(innerWidth-230)/2);if(top+300>innerHeight)top=innerHeight-310;if(top<4)top=4;
+  pop.innerHTML=`<div class="u-popup-head">${avHTML(color,name,avatar,36,false)}<div class="u-popup-info"><div class="u-popup-name"><span style="color:${color}">${esc(name)}</span>${roleBadge(role)}</div><div class="u-popup-role">${role!=='user'?role:'Member'}</div></div></div><div class="u-popup-body">${btns}</div>`;
+  const rect=el.getBoundingClientRect();let top=rect.top,left=rect.right+8;if(left+240>innerWidth)left=rect.left-238;if(left<4)left=Math.max(4,(innerWidth-230)/2);if(top+300>innerHeight)top=innerHeight-310;if(top<4)top=4;
   pop.style.top=top+'px';pop.style.left=left+'px';pop.style.display='block';ov.classList.add('on');
 }
 function closePop(){$('uPop').style.display='none';$('popOv').classList.remove('on');_popTarget=null}
-$('uPop').addEventListener('click',function(ev){
+$('uPop').addEventListener('click',ev=>{
   const btn=ev.target.closest('.u-popup-btn[data-act]');if(!btn||!_popTarget)return;
   const act=btn.dataset.act,name=_popTarget;closePop();
   if(act==='viewprofile'){openProfile(name);return}
+  if(act==='dm'){openDM(name);return}
   showConfirm(name,act);
 });
 
-// ── CONFIRM MODAL ──
-const AM={mute:{icon:'◎',label:'Mute',verb:'mute',desc:'They can\'t send messages.',danger:false},unmute:{icon:'◉',label:'Unmute',verb:'unmute',desc:'They can send messages again.',danger:false},kick:{icon:'⏏',label:'Kick',verb:'kick',desc:'Disconnected from room.',danger:true},ban:{icon:'⊘',label:'Ban',verb:'ban',desc:'Permanently banned.',danger:true},mod:{icon:'↑',label:'Promote Mod',verb:'promote to MOD',desc:'Can mute/unmute.',danger:false},unmod:{icon:'↓',label:'Remove Mod',verb:'remove MOD from',desc:'Regular user.',danger:false},admin:{icon:'★',label:'Promote Admin',verb:'promote to ADMIN',desc:'Full mod powers.',danger:false},unadmin:{icon:'☆',label:'Remove Admin',verb:'remove ADMIN from',desc:'Regular user.',danger:true},delete:{icon:'✕',label:'Delete',verb:'delete this message',desc:'Deleted for everyone.',danger:true}};
-function askConfirm(u,a){return new Promise(r=>{const m=AM[a]||{icon:'?',label:a,verb:a,desc:'',danger:false};$('confirmBox').innerHTML=`<div class="confirm-head"><span class="confirm-head-icon">${m.icon}</span>${m.label}</div><div class="confirm-body">Are you sure you want to ${m.verb} <strong>${esc(u)}</strong>?<div class="confirm-warn">${m.desc}</div></div><div class="confirm-btns"><button class="confirm-btn cancel" id="cfC">Cancel</button><button class="confirm-btn proceed ${m.danger?'danger':''}" id="cfP">${m.label}</button></div>`;$('confirmOv').classList.add('on');$('cfC').onclick=()=>{closeConfirm();r(false)};$('cfP').onclick=()=>{closeConfirm();r(true)}})}
-function showConfirm(u,a,mid){const m=AM[a]||{icon:'?',label:a,verb:a,desc:'',danger:false};const isDel=a==='delete';$('confirmBox').innerHTML=`<div class="confirm-head"><span class="confirm-head-icon">${m.icon}</span>${m.label}</div><div class="confirm-body">Are you sure you want to ${m.verb}${isDel?'':' <strong>'+esc(u)+'</strong>'}?<div class="confirm-warn">${m.desc}</div></div><div class="confirm-btns"><button class="confirm-btn cancel" id="cfC">Cancel</button><button class="confirm-btn proceed ${m.danger?'danger':''}" id="cfP">${m.label}</button></div>`;$('confirmOv').classList.add('on');$('cfC').onclick=()=>closeConfirm();$('cfP').onclick=async()=>{closeConfirm();if(isDel&&mid)await deleteMsg(mid);else if(u&&a)await sideAction(u,a)}}
+// CONFIRM
+const AM={mute:{icon:'◎',label:'Mute',verb:'mute',desc:'Can\'t send messages.',danger:false},unmute:{icon:'◉',label:'Unmute',verb:'unmute',desc:'Can send again.',danger:false},kick:{icon:'⏏',label:'Kick',verb:'kick',desc:'Disconnected.',danger:true},ban:{icon:'⊘',label:'Ban',verb:'ban',desc:'Permanently banned.',danger:true},mod:{icon:'↑',label:'Promote Mod',verb:'promote to MOD',desc:'',danger:false},unmod:{icon:'↓',label:'Remove Mod',verb:'remove MOD from',desc:'',danger:false},admin:{icon:'★',label:'Promote Admin',verb:'promote to ADMIN',desc:'',danger:false},unadmin:{icon:'☆',label:'Remove Admin',verb:'remove ADMIN from',desc:'',danger:true},delete:{icon:'✕',label:'Delete',verb:'delete this message',desc:'Deleted for everyone.',danger:true}};
+function askConfirm(u,a){return new Promise(r=>{const m=AM[a]||{icon:'?',label:a,verb:a,desc:'',danger:false};$('confirmBox').innerHTML=`<div class="confirm-head"><span>${m.icon}</span>${m.label}</div><div class="confirm-body">Are you sure you want to ${m.verb} <strong>${esc(u)}</strong>?${m.desc?`<div class="confirm-warn">${m.desc}</div>`:''}</div><div class="confirm-btns"><button class="confirm-btn cancel" id="cfC">Cancel</button><button class="confirm-btn proceed ${m.danger?'danger':''}" id="cfP">${m.label}</button></div>`;$('confirmOv').classList.add('on');$('cfC').onclick=()=>{closeConfirm();r(false)};$('cfP').onclick=()=>{closeConfirm();r(true)}})}
+function showConfirm(u,a,mid){const m=AM[a]||{icon:'?',label:a,verb:a,desc:'',danger:false};const isDel=a==='delete';$('confirmBox').innerHTML=`<div class="confirm-head"><span>${m.icon}</span>${m.label}</div><div class="confirm-body">Are you sure you want to ${m.verb}${isDel?'':' <strong>'+esc(u)+'</strong>'}?${m.desc?`<div class="confirm-warn">${m.desc}</div>`:''}</div><div class="confirm-btns"><button class="confirm-btn cancel" id="cfC">Cancel</button><button class="confirm-btn proceed ${m.danger?'danger':''}" id="cfP">${m.label}</button></div>`;$('confirmOv').classList.add('on');$('cfC').onclick=()=>closeConfirm();$('cfP').onclick=async()=>{closeConfirm();if(isDel&&mid)await deleteMsg(mid);else if(u&&a)await sideAction(u,a)}}
 function closeConfirm(){$('confirmOv').classList.remove('on')}
-$('confirmOv').addEventListener('click',function(ev){if(ev.target===$('confirmOv'))closeConfirm()});
-document.addEventListener('keydown',function(ev){if(ev.key==='Escape'){if($('confirmOv').classList.contains('on'))closeConfirm();else if($('profOv').classList.contains('on'))closeProf();else if($('uPop').style.display==='block')closePop()}});
+$('confirmOv').addEventListener('click',ev=>{if(ev.target===$('confirmOv'))closeConfirm()});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'){if($('confirmOv').classList.contains('on'))closeConfirm();else if($('profOv').classList.contains('on'))closeProf();else if($('uPop').style.display==='block')closePop();else if(dmView)closeDM()}});
 
-// ── NAV ──
 function toBot(){$('msgs').scrollTop=$('msgs').scrollHeight;$('npill').classList.remove('on')}
 function togSb(){const s=$('sb'),o=$('sbOv');s.classList.contains('open')?(s.classList.remove('open'),o.classList.remove('on')):(s.classList.add('open'),o.classList.add('on'))}
 
-// ── FORCE DISCONNECT ──
-async function forceDisconnect(reason){
-  if(disconnected)return;disconnected=true;
-  if(hbIv){clearInterval(hbIv);hbIv=null}if(tpTo){clearTimeout(tpTo);tpTo=null}
-  if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}if(unSelf){unSelf();unSelf=null}if(unBan){unBan();unBan=null}
-  const uid=me?.uid;if(uid)try{await db.collection('users').doc(uid).update({kicked:false,online:false})}catch{}
-  try{await au.signOut()}catch{}
-  me=null;lmc=0;cmdResults=[];allUsers=[];
-  show('auth');setLd(false);swAuth('login');$('aName').value='';$('aPass').value='';showSts(reason,'err');
-}
-async function logout(){
-  if(hbIv){clearInterval(hbIv);hbIv=null}if(tpTo){clearTimeout(tpTo);tpTo=null}
-  try{await updPres(false)}catch{}try{await clrTyp()}catch{}
-  disconnected=true;
-  if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}if(unSelf){unSelf();unSelf=null}if(unBan){unBan();unBan=null}
-  await au.signOut();disconnected=false;
-  me=null;lmc=0;cmdResults=[];allUsers=[];$('aName').value='';$('aPass').value='';hideSts();setLd(false);swAuth('login');show('auth');
-}
+// FORCE DISCONNECT
+async function forceDisconnect(reason){if(disconnected)return;disconnected=true;if(hbIv){clearInterval(hbIv);hbIv=null}if(tpTo){clearTimeout(tpTo);tpTo=null}if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}if(unSelf){unSelf();unSelf=null}if(unBan){unBan();unBan=null}if(unDmChannels){unDmChannels();unDmChannels=null}if(unDmMsgs){unDmMsgs();unDmMsgs=null}const uid=me?.uid;if(uid)try{await db.collection('users').doc(uid).update({kicked:false,online:false})}catch{}try{await au.signOut()}catch{}me=null;lmc=0;cmdResults=[];allUsers=[];dmChannels=[];dmView=null;show('auth');setLd(false);swAuth('login');$('aName').value='';$('aPass').value='';showSts(reason,'err')}
+async function logout(){if(hbIv){clearInterval(hbIv);hbIv=null}if(tpTo){clearTimeout(tpTo);tpTo=null}try{await updPres(false)}catch{}try{await clrTyp()}catch{}disconnected=true;if(unM){unM();unM=null}if(unU){unU();unU=null}if(unT){unT();unT=null}if(unSelf){unSelf();unSelf=null}if(unBan){unBan();unBan=null}if(unDmChannels){unDmChannels();unDmChannels=null}if(unDmMsgs){unDmMsgs();unDmMsgs=null}await au.signOut();disconnected=false;me=null;lmc=0;cmdResults=[];allUsers=[];dmChannels=[];dmView=null;$('aName').value='';$('aPass').value='';hideSts();setLd(false);swAuth('login');show('auth')}
 
 $('aPass')?.addEventListener('keydown',e=>{if(e.key==='Enter')doAuth()});
 $('aName')?.addEventListener('keydown',e=>{if(e.key==='Enter')$('aPass').focus()});
