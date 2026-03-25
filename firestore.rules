@@ -36,14 +36,14 @@ service cloud.firestore {
       allow read: if authed();
 
       allow create: if authed() && (
-        // ① Regular user/action messages — uid must match, user must not be muted
+        // ① Regular user/action messages — uid must match, not muted
         (
           request.resource.data.type in ['user', 'action']
           && request.resource.data.uid == request.auth.uid
           && callerProfile().get('muted', false) == false
         )
         ||
-        // ② System messages (join, kick, ban announcements) — no uid required
+        // ② System messages (join, kick, ban announcements)
         (
           request.resource.data.type == 'system'
           && request.resource.data.keys().hasAll(['type', 'text', 'ts'])
@@ -138,6 +138,19 @@ service cloud.firestore {
 
         allow update, delete: if false;
       }
+    }
+
+    // ── BOT LOCKS (prevents duplicate bot responses from multiple clients) ───
+    match /bot-locks/{lockId} {
+      allow read, write: if authed();
+    }
+
+    // ── BOT STATE (tracks last-seen buy transaction for GitHub Actions) ──────
+    match /bot-state/{doc} {
+      allow read: if authed();
+      // Only GitHub Actions (via Admin SDK) writes here — Admin SDK bypasses rules.
+      // Client-side reads are allowed so the bot engine can check state.
+      allow write: if false;
     }
   }
 }

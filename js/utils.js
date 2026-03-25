@@ -44,6 +44,7 @@ export function roleBadge(role) {
   if (role === 'dev')   return '<span class="badge badge-dev">DEV</span>';
   if (role === 'admin') return '<span class="badge badge-admin">ADMIN</span>';
   if (role === 'mod')   return '<span class="badge badge-mod">MOD</span>';
+  if (role === 'bot')   return '<span class="badge badge-bot">BOT</span>';
   return '';
 }
 

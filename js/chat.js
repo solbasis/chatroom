@@ -11,6 +11,7 @@ import {
 import { handleCommand, addLocalMessage } from './commands.js';
 import { showChatView, sendDmMessage } from './dm.js';
 import { checkMuted } from './moderation.js';
+import { handleBotSystemMessage, handleBotCommand } from './botengine.js';
 
 // ─── Enter chat (after auth) ───────────────────────────────────────────────
 export async function enterChat() {
@@ -49,6 +50,11 @@ export async function enterChat() {
       }
 
       state.lastMsgCount = msgs.length;
+
+      // Bot: handle new system messages (welcome / goodbye)
+      if (isNew && last && last.type === 'system' && last.uid !== 'bot-databasis') {
+        handleBotSystemMessage(last.text);
+      }
 
       if (!state.initialLoadDone) {
         state.initialLoadDone = true;
@@ -250,7 +256,13 @@ export async function handleSend() {
   // Clear typing
   clearTyping();
 
-  // Slash commands
+  // Bot commands (handles /price, /ca, /mcap, ca, price, etc.)
+  if (await handleBotCommand(raw)) {
+    inp.focus();
+    return;
+  }
+
+  // Slash commands (user commands like /help, /me, /mute, etc.)
   if (raw.startsWith('/')) {
     await handleCommand(raw);
     inp.focus();
