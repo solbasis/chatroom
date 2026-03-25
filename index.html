@@ -229,6 +229,15 @@ async function enterChat(){
   unDmChannels=db.collection('dm-channels').where('participants','array-contains',me.uid).orderBy('lastTs','desc').onSnapshot(s=>{
     dmChannels=s.docs.map(d=>({id:d.id,...d.data()}));
     renderDmList();updateDmBadge();
+  },e=>{console.warn('DM channels listener error:',e);
+    // Fallback: try without orderBy (avoids needing composite index)
+    if(e.code==='failed-precondition'||e.message?.includes('index')){
+      unDmChannels=db.collection('dm-channels').where('participants','array-contains',me.uid).onSnapshot(s=>{
+        dmChannels=s.docs.map(d=>({id:d.id,...d.data()}));
+        dmChannels.sort((a,b)=>{const at=a.lastTs?.toMillis?a.lastTs.toMillis():0;const bt=b.lastTs?.toMillis?b.lastTs.toMillis():0;return bt-at});
+        renderDmList();updateDmBadge();
+      },e2=>console.warn('DM fallback error:',e2));
+    }
   });
 
   // Heartbeat
@@ -287,7 +296,7 @@ function showDmView(channelId,target){
     const chan=dmChannels.find(c=>c.id===channelId);
     if(chan){const readKey='lastRead_'+me.uid;const lastRead=chan[readKey]||0;const lastTs=chan.lastTs?.toMillis?chan.lastTs.toMillis():0;
     if(lastTs>lastRead)db.collection('dm-channels').doc(channelId).update({[readKey]:Date.now()}).catch(()=>{})}
-  });
+  },e=>console.warn('DM msgs listener error:',e));
   // Close sidebar on mobile
   if(innerWidth<=768)togSb();
 }
@@ -295,6 +304,7 @@ function closeDM(){showChatView()}
 
 // OPEN DM (find or create channel)
 async function openDM(targetName){
+  try{
   const target=allUsers.find(u=>u.name===targetName)||await findUser(targetName);
   if(!target){addLocal(`"${esc(targetName)}" not found.`,'err');return}
   if((target.id||target.uid)===me.uid){addLocal("Can't DM yourself.",'err');return}
@@ -313,6 +323,7 @@ async function openDM(targetName){
   }
   switchSbTab('dms');
   showDmView(channelId,target);
+  }catch(e){console.error('openDM error:',e);addLocal('Failed to open DM: '+e.message,'err')}
 }
 
 // SEND (handles both chatroom and DM)
@@ -326,7 +337,7 @@ async function handleSend(){
       await db.collection('dm-channels').doc(dmView.channelId).collection('messages').add({uid:me.uid,name:me.name,color:me.color,avatarUrl:me.avatarUrl||'',text:raw,ts:TS()});
       await db.collection('dm-channels').doc(dmView.channelId).update({lastMessage:raw.substring(0,100),lastSender:me.name,lastTs:TS(),['lastRead_'+me.uid]:Date.now()});
       toBot();
-    }catch(e){console.error(e);inp.value=raw}
+    }catch(e){console.error('DM send error:',e);inp.value=raw;addLocal('Failed to send DM: '+e.message,'err')}
     inp.focus();return;
   }
 
