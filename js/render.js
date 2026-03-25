@@ -1,0 +1,178 @@
+// ─── Message Rendering ──────────────────────────────────────────────────────
+import { state, $ } from './state.js';
+import {
+  esc, escAttr, initials, avatarHTML, roleBadge,
+  formatTime, formatDate, msgGroupKey, formatMessage, hasRole
+} from './utils.js';
+
+// ─── Render chatroom messages ───────────────────────────────────────────────
+export function renderChatMessages(msgs) {
+  const container = $('msgs');
+  const wasAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 80;
+
+  if (!msgs.length && !state.cmdResults.length) {
+    container.innerHTML =
+      '<div class="msgs-empty">' +
+        '<div class="msgs-empty-ic">◈</div>' +
+        '<div class="msgs-empty-t">Awaiting Transmissions</div>' +
+        '<div class="msgs-empty-s">Type /help for commands</div>' +
+      '</div>';
+    return;
+  }
+
+  let html = '';
+  let lastDate = '', lastUid = '', lastMinute = '';
+
+  msgs.forEach(m => {
+    // Date separator
+    if (m.ts?.toDate) {
+      const dateStr = formatDate(m.ts.toDate());
+      if (dateStr !== lastDate) {
+        html += `<div class="d-sep"><span class="d-sep-l"></span><span class="d-sep-t">${dateStr}</span><span class="d-sep-l"></span></div>`;
+        lastDate = dateStr;
+        lastUid = '';
+      }
+    }
+
+    // System messages
+    if (m.type === 'system') {
+      lastUid = '';
+      html += `<div class="s-msg"><span class="s-msg-l"></span><span class="s-msg-t">${esc(m.text)}</span><span class="s-msg-l"></span></div>`;
+      return;
+    }
+
+    // Action messages (/me)
+    if (m.type === 'action') {
+      lastUid = '';
+      html += `<div class="act-msg"><strong style="color:${esc(m.color || '#6ee75a')}" class="clickable-name" data-profname="${esc(m.name)}">${esc(m.name)}</strong> ${esc(m.text)}</div>`;
+      return;
+    }
+
+    // User messages
+    const isMine = m.uid === state.me?.uid;
+    const time = m.ts?.toDate ? formatTime(m.ts.toDate()) : '';
+    const minute = m.ts?.toDate ? msgGroupKey(m.ts.toDate()) : '';
+    const isGrouped = m.uid === lastUid && minute === lastMinute;
+    const color = esc(m.color || '#6ee75a');
+    const isDeleted = m.deleted;
+    const canDelete = hasRole('admin') && !isDeleted;
+
+    html += `<div class="m-row ${isMine ? 'mi' : 'ot'}">`;
+    html += `<div class="m-grp"${isMine ? ' style="flex-direction:row-reverse"' : ''}>`;
+
+    // Avatar (other users only)
+    if (!isMine) {
+      const safeIni = escAttr(initials(m.name));
+      html += `<div class="m-av pfp ${isGrouped ? 'hid' : ''}" style="background:${color};cursor:pointer" data-profname="${esc(m.name)}">`;
+      if (m.avatarUrl) {
+        html += `<img src="${esc(m.avatarUrl)}" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent='${safeIni}';">`;
+      } else {
+        html += initials(m.name);
+      }
+      html += `</div>`;
+    }
+
+    html += `<div class="m-cnt"${isMine ? ' style="align-items:flex-end"' : ''}>`;
+
+    // Author line (other users, not grouped)
+    if (!isMine && !isGrouped) {
+      html += `<div class="m-au clickable-name" style="color:${color}" data-profname="${esc(m.name)}"><span>${esc(m.name)}</span>${roleBadge(m.role || 'user')}</div>`;
+    }
+
+    // Bubble
+    html += `<div class="m-bub ${isMine ? 'mi' : 'ot'}${isDeleted ? ' deleted' : ''}" style="border-color:${isMine ? color + '20' : 'var(--border)'}">`;
+
+    if (isDeleted) {
+      html += `<div class="m-txt" style="color:var(--text-mute)">[deleted${m.deletedBy ? ' by ' + esc(m.deletedBy) : ''}]</div>`;
+    } else {
+      html += `<div class="m-txt">${formatMessage(m.text)}</div>`;
+    }
+
+    html += `<div class="m-meta"><span class="m-time">${time}</span>`;
+    if (canDelete) {
+      html += `<button class="m-del" data-delid="${esc(m.id)}">DEL</button>`;
+    }
+    html += `</div></div></div></div></div>`;
+
+    lastUid = m.uid;
+    lastMinute = minute;
+  });
+
+  // Append command results
+  state.cmdResults.forEach(cr => {
+    const cls = cr.type === 'err' ? 'cmd-err' : cr.type === 'ok' ? 'cmd-ok' : '';
+    html += `<div class="cmd-res ${cls}">${cr.text}</div>`;
+  });
+
+  container.innerHTML = html;
+  if (wasAtBottom) container.scrollTop = container.scrollHeight;
+}
+
+// ─── Render DM messages ─────────────────────────────────────────────────────
+export function renderDmMessages(msgs) {
+  const container = $('msgs');
+  const wasAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 80;
+
+  if (!msgs.length) {
+    container.innerHTML =
+      '<div class="msgs-empty">' +
+        '<div class="msgs-empty-ic">✉</div>' +
+        '<div class="msgs-empty-t">Start of conversation</div>' +
+        '<div class="msgs-empty-s">Say hello!</div>' +
+      '</div>';
+    return;
+  }
+
+  let html = '';
+  let lastDate = '', lastUid = '', lastMinute = '';
+
+  msgs.forEach(m => {
+    // Date separator
+    if (m.ts?.toDate) {
+      const dateStr = formatDate(m.ts.toDate());
+      if (dateStr !== lastDate) {
+        html += `<div class="d-sep"><span class="d-sep-l"></span><span class="d-sep-t">${dateStr}</span><span class="d-sep-l"></span></div>`;
+        lastDate = dateStr;
+        lastUid = '';
+      }
+    }
+
+    const isMine = m.uid === state.me?.uid;
+    const time = m.ts?.toDate ? formatTime(m.ts.toDate()) : '';
+    const minute = m.ts?.toDate ? msgGroupKey(m.ts.toDate()) : '';
+    const isGrouped = m.uid === lastUid && minute === lastMinute;
+    const color = esc(m.color || '#6ee75a');
+
+    html += `<div class="m-row ${isMine ? 'mi' : 'ot'}">`;
+    html += `<div class="m-grp"${isMine ? ' style="flex-direction:row-reverse"' : ''}>`;
+
+    // Avatar
+    if (!isMine) {
+      const safeIni = escAttr(initials(m.name));
+      html += `<div class="m-av pfp ${isGrouped ? 'hid' : ''}" style="background:${color}">`;
+      if (m.avatarUrl) {
+        html += `<img src="${esc(m.avatarUrl)}" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent='${safeIni}';">`;
+      } else {
+        html += initials(m.name);
+      }
+      html += `</div>`;
+    }
+
+    html += `<div class="m-cnt"${isMine ? ' style="align-items:flex-end"' : ''}>`;
+
+    if (!isMine && !isGrouped) {
+      html += `<div class="m-au" style="color:${color}"><span>${esc(m.name)}</span></div>`;
+    }
+
+    html += `<div class="m-bub ${isMine ? 'mi' : 'ot'}" style="border-color:${isMine ? color + '20' : 'var(--border)'}">`;
+    html += `<div class="m-txt">${formatMessage(m.text)}</div>`;
+    html += `<div class="m-meta"><span class="m-time">${time}</span></div>`;
+    html += `</div></div></div></div>`;
+
+    lastUid = m.uid;
+    lastMinute = minute;
+  });
+
+  container.innerHTML = html;
+  if (wasAtBottom) container.scrollTop = container.scrollHeight;
+}
