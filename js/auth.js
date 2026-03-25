@@ -196,6 +196,13 @@ async function doLogin(au, db, email, name, pass) {
     lastSeen: serverTimestamp()
   });
 
+  // Post "entered the room" so the bot welcomes returning users too
+  await db.collection('messages').add({
+    type: 'system',
+    text: userDoc.data().name + ' has entered the room',
+    ts: serverTimestamp()
+  });
+
   state.me.kicked = false;
   state.busy = false;
   enterChat();

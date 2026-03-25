@@ -1,27 +1,122 @@
 // ─── Bot Engine (Client-Side) ───────────────────────────────────────────────
-// Runs in the browser — no server needed. Handles welcome messages,
-// goodbye messages, and slash commands like /price, /ca, /mcap.
-// Responses appear as system-style messages posted to Firestore.
+// Uses the same DexScreener → Jupiter → Helius DAS waterfall as databasis.info
 
-import { state, $ } from './state.js';
+import { state } from './state.js';
 import { getDb, serverTimestamp } from './utils.js';
 
-// ─── Token Info ─────────────────────────────────────────────────────────────
+// ─── Token / API Config (same as databasis.info) ────────────────────────────
+const BASIS_MINT   = 'A5BJBQUTR5sTzkM89hRDuApWyvgjdXpR7B7rW1r9pump';
+const SOL_MINT     = 'So11111111111111111111111111111111111111112';
+const BASIS_SUPPLY = 1_000_000_000;
+const HELIUS_KEY   = 'c417718c-6576-4e1b-9f59-557124378a12';
+const HELIUS_URL   = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
+const DEX_URL      = `https://api.dexscreener.com/tokens/v1/solana/${BASIS_MINT},${SOL_MINT}`;
+const JUP_URL      = `https://lite-api.jup.ag/price/v2?ids=${BASIS_MINT},${SOL_MINT}`;
+
 const TOKEN = {
-  ca:       'A5BJBQUTR5sTzkM89hRDuApWyvgjdXpR7B7rW1r9pump',
+  ca:       BASIS_MINT,
   dex:      'https://dexscreener.com/solana/cf8bkjprah98nxyuttx9o2r8edxfbvjw7t1f55xv5fpi',
   twitter:  'https://x.com/solbasis',
   telegram: 'https://t.me/solbasis',
   website:  'https://databasis.info/',
 };
 
-const HELIUS_KEY = 'c417718c-6576-4e1b-9f59-557124378a12';
-const WSOL = 'So11111111111111111111111111111111111111112';
-const JUPITER_PRICE = 'https://api.jup.ag/price/v2';
-
 const pick = a => a[Math.floor(Math.random() * a.length)];
 
-// ─── Welcome Messages (30 greetings × 40 bullish × 6 info = 7200+ combos) ──
+// ═══════════════════════════════════════════════════════════════════════════════
+// PRICE FETCHING — exact same waterfall as databasis.info
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Source 1: DexScreener (free, no key, pump.fun native)
+async function fetchDexScreener() {
+  const r = await fetch(DEX_URL);
+  if (!r.ok) throw new Error(`DexScreener HTTP ${r.status}`);
+  const data = await r.json();
+  const pairs = Array.isArray(data) ? data : (data.pairs ?? []);
+
+  let solPrice = null, basisPrice = null;
+
+  for (const pair of pairs) {
+    const base = pair.baseToken?.address ?? '';
+    const price = parseFloat(pair.priceUsd);
+    if (!price || isNaN(price)) continue;
+    const vol = pair.volume?.h24 ?? 0;
+
+    if (base === BASIS_MINT) {
+      if (!basisPrice || vol > (basisPrice._v || 0)) { basisPrice = price; basisPrice._v = vol; }
+    }
+    if (base === SOL_MINT) {
+      if (!solPrice || vol > (solPrice._v || 0)) { solPrice = price; solPrice._v = vol; }
+    }
+  }
+
+  return { sol: solPrice ? parseFloat(solPrice) : null, basis: basisPrice ? parseFloat(basisPrice) : null };
+}
+
+// Source 2: Jupiter lite API (fallback)
+async function fetchJupiter() {
+  const r = await fetch(JUP_URL);
+  if (!r.ok) throw new Error(`Jupiter HTTP ${r.status}`);
+  const d = await r.json();
+  return {
+    sol:   parseFloat(d?.data?.[SOL_MINT]?.price) || null,
+    basis: parseFloat(d?.data?.[BASIS_MINT]?.price) || null,
+  };
+}
+
+// Source 3: Helius DAS (second fallback)
+async function fetchHeliusDAS(mint) {
+  const r = await fetch(HELIUS_URL, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0', id: 'p', method: 'getAsset',
+      params: { id: mint, displayOptions: { showFungible: true } },
+    }),
+  });
+  if (!r.ok) throw new Error(`Helius DAS HTTP ${r.status}`);
+  const d = await r.json();
+  return d?.result?.token_info?.price_info?.price_per_token ?? null;
+}
+
+// Waterfall: DexScreener → Jupiter → Helius DAS
+async function getPrices() {
+  let sol = null, basis = null;
+
+  // Try DexScreener first
+  try {
+    const dex = await fetchDexScreener();
+    sol = dex.sol; basis = dex.basis;
+  } catch (e) { console.warn('[bot] DexScreener failed:', e.message); }
+
+  // Fill gaps with Jupiter
+  if (sol === null || basis === null) {
+    try {
+      const jup = await fetchJupiter();
+      if (sol === null) sol = jup.sol;
+      if (basis === null) basis = jup.basis;
+    } catch (e) { console.warn('[bot] Jupiter failed:', e.message); }
+  }
+
+  // Fill gaps with Helius DAS
+  if (sol === null || basis === null) {
+    try {
+      const [s, b] = await Promise.all([
+        sol === null ? fetchHeliusDAS(SOL_MINT) : Promise.resolve(null),
+        basis === null ? fetchHeliusDAS(BASIS_MINT) : Promise.resolve(null),
+      ]);
+      if (sol === null) sol = s;
+      if (basis === null) basis = b;
+    } catch (e) { console.warn('[bot] Helius DAS failed:', e.message); }
+  }
+
+  const mcap = basis ? basis * BASIS_SUPPLY : 0;
+  return { sol, basis, mcap };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WELCOME / GOODBYE MESSAGES
+// ═══════════════════════════════════════════════════════════════════════════════
+
 const GREETINGS = [
   n => `Welcome to the terminal, ${n}.`,
   n => `${n} just connected to the BASIS network.`,
@@ -79,23 +174,18 @@ const BULLISH = [
   `Real builders don't need hype. $BASIS.`,
   `$BASIS moves in silence. Then it moves in price.`,
   `If you know, you know. $BASIS.`,
-  `The fundamentals are clear. $BASIS is undervalued.`,
   `$BASIS — Solana's best kept secret.`,
   `Community, code, conviction. That's $BASIS.`,
-  `Buy the infrastructure, not the narrative. $BASIS.`,
   `$BASIS is the foundation. Everything else is noise.`,
   `When the dust settles, $BASIS will still be here.`,
-  `$BASIS doesn't need a bull market. But it'll love one.`,
   `One terminal to rule them all. $BASIS.`,
-  `The alpha is in the room. The room is $BASIS.`,
   `We build in bear. We thrive in bull. $BASIS.`,
   `$BASIS — where degens become believers.`,
   `Keep it simple. Keep it $BASIS.`,
   `Every dip is a gift. $BASIS builders know.`,
   `$BASIS — when the market zigs, we zag.`,
   `The next 100x isn't on your timeline. It's on $BASIS.`,
-  `Forget the charts for a second. Look at what $BASIS is building.`,
-  `$BASIS: the data layer will be worth more than the hype layer.`,
+  `Forget the charts. Look at what $BASIS is building.`,
 ];
 
 const INFO_BLOCKS = [
@@ -129,7 +219,10 @@ const GOODBYES = [
   n => `${n} has left the chat. Keep stacking $BASIS.`,
 ];
 
-// ─── Lock mechanism (prevents duplicate responses from multiple clients) ────
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOCK (prevents duplicate bot responses from multiple clients)
+// ═══════════════════════════════════════════════════════════════════════════════
+
 async function tryLock(lockId, ttlMs = 10000) {
   const db = getDb();
   const ref = db.collection('bot-locks').doc(lockId);
@@ -137,23 +230,24 @@ async function tryLock(lockId, ttlMs = 10000) {
     const doc = await ref.get();
     if (doc.exists) {
       const age = Date.now() - (doc.data().ts?.toMillis?.() || 0);
-      if (age < ttlMs) return false; // another client already handling
+      if (age < ttlMs) return false;
     }
     await ref.set({ ts: serverTimestamp(), by: state.me?.uid || 'unknown' });
     return true;
   } catch { return false; }
 }
 
-// ─── Post a bot response ────────────────────────────────────────────────────
-// Uses the current user's uid so Firestore rules allow the write.
-// Displays as "databasis" via the name/color/role fields.
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST BOT MESSAGE
+// ═══════════════════════════════════════════════════════════════════════════════
+
 async function botPost(text) {
   if (!state.me) return;
   const db = getDb();
   await db.collection('messages').add({
     type: 'user',
-    uid: state.me.uid,        // must match auth uid for rules
-    name: 'databasis',        // displayed as bot name
+    uid: state.me.uid,
+    name: 'databasis',
     color: '#6ee75a',
     role: 'bot',
     avatarUrl: '',
@@ -163,16 +257,19 @@ async function botPost(text) {
   });
 }
 
-// ─── System message handler (join / kick / ban) ─────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// SYSTEM MESSAGE HANDLER (join / kick / ban)
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export async function handleBotSystemMessage(text) {
   if (!state.me) return;
 
-  // New user joined
+  // New user joined OR returning user logged in
   const joinMatch = text.match(/^(.+) has entered the room$/);
   if (joinMatch) {
     const name = joinMatch[1];
     if (name.toLowerCase() === 'databasis') return;
-    if (name === state.me?.name) return; // don't welcome yourself
+    if (name === state.me?.name) return;
 
     const lockId = `welcome-${name}-${Date.now().toString(36).slice(-4)}`;
     if (!(await tryLock(lockId))) return;
@@ -200,20 +297,43 @@ export async function handleBotSystemMessage(text) {
   }
 }
 
-// ─── Command handler (called from chat.js when a user types a message) ──────
-// Returns true if the message was a bot command (so chat.js skips normal send)
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMMAND HANDLER
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export async function handleBotCommand(text) {
   const t = text.trim().toLowerCase();
 
   // ── Price ─────────────────────────────────────────────────────────────
   if (['/price', '/basis', 'price', 'price?', '$basis'].includes(t)) {
-    await cmdPrice();
+    try {
+      const p = await getPrices();
+      const fmt = (n, d) => Number(n).toLocaleString('en-US', { maximumFractionDigits: d });
+      const fmtUsd = n => {
+        if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+        if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+        if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+        return '$' + n.toFixed(4);
+      };
+
+      let msg = '';
+      if (p.basis) msg += `$BASIS: $${p.basis < 0.001 ? p.basis.toFixed(8) : fmt(p.basis, 6)}`;
+      else msg += `$BASIS: N/A`;
+      if (p.mcap > 0) msg += `\nMarket Cap: ${fmtUsd(p.mcap)}`;
+      if (p.sol) msg += `\n\nSOL: $${fmt(p.sol, 2)}`;
+      msg += `\n\nChart: ${TOKEN.dex}`;
+      await botPost(msg);
+    } catch { await botPost('⚠ Unable to fetch price data. Try again shortly.'); }
     return true;
   }
 
   // ── SOL price ─────────────────────────────────────────────────────────
   if (['/sol', 'sol price', 'sol price?', 'sol?'].includes(t)) {
-    await cmdSol();
+    try {
+      const p = await getPrices();
+      if (p.sol) await botPost(`SOL: $${Number(p.sol).toLocaleString('en-US', { maximumFractionDigits: 2 })} USD`);
+      else await botPost('⚠ Unable to fetch SOL price.');
+    } catch { await botPost('⚠ Unable to fetch SOL price.'); }
     return true;
   }
 
@@ -232,124 +352,32 @@ export async function handleBotCommand(text) {
 
   // ── Market cap ────────────────────────────────────────────────────────
   if (['/mcap', 'mcap', 'market cap', 'marketcap', 'mc', 'mc?'].includes(t)) {
-    await cmdMcap();
+    try {
+      const p = await getPrices();
+      if (p.mcap > 0) {
+        const fmtUsd = n => {
+          if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+          if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+          if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+          return '$' + n.toFixed(2);
+        };
+        await botPost(`$BASIS Market Cap: ${fmtUsd(p.mcap)}\n\nChart: ${TOKEN.dex}`);
+      } else { await botPost('⚠ Unable to fetch market cap data.'); }
+    } catch { await botPost('⚠ Unable to fetch market cap data.'); }
     return true;
   }
 
   // ── Website ───────────────────────────────────────────────────────────
-  if (['/website', 'website', 'site', '/site'].includes(t)) {
-    await botPost(`BASIS Website: ${TOKEN.website}`);
-    return true;
-  }
+  if (['/website', 'website', 'site', '/site'].includes(t)) { await botPost(`BASIS Website: ${TOKEN.website}`); return true; }
 
   // ── Chart / DEX ───────────────────────────────────────────────────────
-  if (['/chart', '/dex', 'chart', 'dex', 'chart?'].includes(t)) {
-    await botPost(`$BASIS Chart: ${TOKEN.dex}`);
-    return true;
-  }
+  if (['/chart', '/dex', 'chart', 'dex', 'chart?'].includes(t)) { await botPost(`$BASIS Chart: ${TOKEN.dex}`); return true; }
 
   // ── Twitter ───────────────────────────────────────────────────────────
-  if (['/twitter', '/x', 'twitter', 'x?'].includes(t)) {
-    await botPost(`Follow $BASIS on X: ${TOKEN.twitter}`);
-    return true;
-  }
+  if (['/twitter', '/x', 'twitter', 'x?'].includes(t)) { await botPost(`Follow $BASIS on X: ${TOKEN.twitter}`); return true; }
 
   // ── Telegram ──────────────────────────────────────────────────────────
-  if (['/tg', '/telegram', 'telegram', 'tg', 'tg?'].includes(t)) {
-    await botPost(`Join the $BASIS Telegram: ${TOKEN.telegram}`);
-    return true;
-  }
+  if (['/tg', '/telegram', 'telegram', 'tg', 'tg?'].includes(t)) { await botPost(`Join the $BASIS Telegram: ${TOKEN.telegram}`); return true; }
 
-  return false; // not a bot command
-}
-
-// ─── Price command ──────────────────────────────────────────────────────────
-async function cmdPrice() {
-  try {
-    // Fetch from Jupiter (SOL + BASIS prices)
-    const jupRes = await fetch(`${JUPITER_PRICE}?ids=${WSOL},${TOKEN.ca}`);
-    const jupData = await jupRes.json();
-    const solUsd   = parseFloat(jupData?.data?.[WSOL]?.price || 0);
-    const basisUsd = parseFloat(jupData?.data?.[TOKEN.ca]?.price || 0);
-
-    // Fetch supply from Helius DAS
-    let mcap = 0;
-    try {
-      const dasRes = await fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0', id: 'bp',
-          method: 'getAsset',
-          params: { id: TOKEN.ca, displayOptions: { showFungible: true } },
-        }),
-      });
-      const dasData = await dasRes.json();
-      const info = dasData?.result?.token_info;
-      if (info?.supply && basisUsd) {
-        const supply = info.supply / Math.pow(10, info.decimals || 6);
-        mcap = basisUsd * supply;
-      }
-    } catch {}
-
-    const fmt = (n, d = 2) => Number(n).toLocaleString('en-US', { maximumFractionDigits: d });
-
-    let msg = `$BASIS: $${fmt(basisUsd, 10)}`;
-    if (mcap > 0) msg += `\nMarket Cap: $${fmt(mcap, 0)}`;
-    if (solUsd > 0) msg += `\n\nSOL: $${fmt(solUsd)}`;
-    msg += `\n\nChart: ${TOKEN.dex}`;
-
-    await botPost(msg);
-  } catch (e) {
-    await botPost('⚠ Unable to fetch price data. Try again shortly.');
-  }
-}
-
-// ─── SOL price command ──────────────────────────────────────────────────────
-async function cmdSol() {
-  try {
-    const res = await fetch(`${JUPITER_PRICE}?ids=${WSOL}`);
-    const data = await res.json();
-    const price = parseFloat(data?.data?.[WSOL]?.price || 0);
-    if (price > 0) {
-      await botPost(`SOL: $${Number(price).toLocaleString('en-US', { maximumFractionDigits: 2 })} USD`);
-    } else {
-      await botPost('⚠ Unable to fetch SOL price.');
-    }
-  } catch {
-    await botPost('⚠ Unable to fetch SOL price.');
-  }
-}
-
-// ─── Market cap command ─────────────────────────────────────────────────────
-async function cmdMcap() {
-  try {
-    const [jupRes, dasRes] = await Promise.all([
-      fetch(`${JUPITER_PRICE}?ids=${TOKEN.ca}`),
-      fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0', id: 'mc',
-          method: 'getAsset',
-          params: { id: TOKEN.ca, displayOptions: { showFungible: true } },
-        }),
-      }),
-    ]);
-
-    const jupData = await jupRes.json();
-    const dasData = await dasRes.json();
-    const price  = parseFloat(jupData?.data?.[TOKEN.ca]?.price || 0);
-    const info   = dasData?.result?.token_info;
-    const supply = info?.supply ? info.supply / Math.pow(10, info.decimals || 6) : 0;
-    const mcap   = price * supply;
-
-    if (mcap > 0) {
-      await botPost(`$BASIS Market Cap: $${Number(mcap).toLocaleString('en-US', { maximumFractionDigits: 0 })}\n\nChart: ${TOKEN.dex}`);
-    } else {
-      await botPost('⚠ Unable to fetch market cap data.');
-    }
-  } catch {
-    await botPost('⚠ Unable to fetch market cap data.');
-  }
+  return false;
 }

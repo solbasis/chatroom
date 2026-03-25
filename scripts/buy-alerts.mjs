@@ -6,7 +6,9 @@
 const TOKEN_CA    = 'A5BJBQUTR5sTzkM89hRDuApWyvgjdXpR7B7rW1r9pump';
 const DEX_LINK    = 'https://dexscreener.com/solana/cf8bkjprah98nxyuttx9o2r8edxfbvjw7t1f55xv5fpi';
 const WSOL        = 'So11111111111111111111111111111111111111112';
-const JUP_PRICE   = 'https://api.jup.ag/price/v2';
+const JUP_PRICE   = 'https://lite-api.jup.ag/price/v2';
+const DEX_TOKENS  = `https://api.dexscreener.com/tokens/v1/solana/${TOKEN_CA}`;
+const BASIS_SUPPLY = 1_000_000_000;
 const MIN_SOL     = 0.5;
 
 async function main() {
@@ -75,26 +77,31 @@ async function main() {
 
   // ── 6. Fetch current market cap for alerts ────────────────────────────
   let mcap = 0;
+  // Try DexScreener first for price
   try {
-    const [jupRes, dasRes] = await Promise.all([
-      fetch(`${JUP_PRICE}?ids=${TOKEN_CA}`),
-      fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0', id: 'mc',
-          method: 'getAsset',
-          params: { id: TOKEN_CA, displayOptions: { showFungible: true } },
-        }),
-      }),
-    ]);
-    const jupData = await jupRes.json();
-    const dasData = await dasRes.json();
-    const price  = parseFloat(jupData?.data?.[TOKEN_CA]?.price || 0);
-    const info   = dasData?.result?.token_info;
-    const supply = info?.supply ? info.supply / Math.pow(10, info.decimals || 6) : 0;
-    mcap = price * supply;
-  } catch (e) { console.warn('Mcap fetch failed:', e.message); }
+    const dexRes = await fetch(DEX_TOKENS);
+    if (dexRes.ok) {
+      const dexData = await dexRes.json();
+      const pairs = Array.isArray(dexData) ? dexData : (dexData.pairs ?? []);
+      for (const pair of pairs) {
+        const price = parseFloat(pair.priceUsd);
+        if (pair.baseToken?.address === TOKEN_CA && price > 0) {
+          mcap = price * BASIS_SUPPLY;
+          break;
+        }
+      }
+    }
+  } catch (e) { console.warn('DexScreener mcap failed:', e.message); }
+
+  // Fallback to Jupiter
+  if (mcap === 0) {
+    try {
+      const jupRes = await fetch(`${JUP_PRICE}?ids=${TOKEN_CA}`);
+      const jupData = await jupRes.json();
+      const price = parseFloat(jupData?.data?.[TOKEN_CA]?.price || 0);
+      if (price > 0) mcap = price * BASIS_SUPPLY;
+    } catch (e) { console.warn('Jupiter mcap failed:', e.message); }
+  }
 
   const mcapStr = mcap > 0
     ? '$' + Number(mcap).toLocaleString('en-US', { maximumFractionDigits: 0 })
