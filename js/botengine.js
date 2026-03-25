@@ -11,7 +11,7 @@ const BASIS_SUPPLY = 1_000_000_000;
 const HELIUS_KEY   = 'c417718c-6576-4e1b-9f59-557124378a12';
 const HELIUS_URL   = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 const DEX_URL      = `https://api.dexscreener.com/tokens/v1/solana/${BASIS_MINT},${SOL_MINT}`;
-const JUP_URL      = `https://lite-api.jup.ag/price/v2?ids=${BASIS_MINT},${SOL_MINT}`;
+const JUP_URL      = `https://api.jup.ag/price/v2?ids=${BASIS_MINT},${SOL_MINT}`;
 
 const TOKEN = {
   ca:       BASIS_MINT,
@@ -34,8 +34,8 @@ async function fetchDexScreener() {
   const data = await r.json();
   const pairs = Array.isArray(data) ? data : (data.pairs ?? []);
 
-  let solPrice   = null;
-  let basisPrice = null;
+  let solPrice = null, solVol = 0;
+  let basisPrice = null, basisVol = 0;
 
   for (const pair of pairs) {
     const base  = pair.baseToken?.address ?? '';
@@ -46,24 +46,21 @@ async function fetchDexScreener() {
 
     if (base === BASIS_MINT || quote === BASIS_MINT) {
       const p = base === BASIS_MINT ? price : 1 / price;
-      if (!basisPrice || vol > (basisPrice._vol ?? 0)) {
+      if (basisPrice === null || vol > basisVol) {
         basisPrice = p;
-        basisPrice._vol = vol;
+        basisVol = vol;
       }
     }
     if (base === SOL_MINT || quote === SOL_MINT) {
       const p = base === SOL_MINT ? price : 1 / price;
-      if (!solPrice || vol > (solPrice._vol ?? 0)) {
+      if (solPrice === null || vol > solVol) {
         solPrice = p;
-        solPrice._vol = vol;
+        solVol = vol;
       }
     }
   }
 
-  return {
-    sol:   solPrice   ? parseFloat(solPrice)   : null,
-    basis: basisPrice ? parseFloat(basisPrice) : null,
-  };
+  return { sol: solPrice, basis: basisPrice };
 }
 
 // Source 2: Jupiter Price API v2 (fallback)
