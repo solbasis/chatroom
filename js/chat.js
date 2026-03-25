@@ -11,7 +11,7 @@ import {
 import { handleCommand, addLocalMessage } from './commands.js';
 import { showChatView, sendDmMessage } from './dm.js';
 import { checkMuted } from './moderation.js';
-import { handleBotSystemMessage, handleBotCommand } from './botengine.js';
+import { handleBotSystemMessage, handleBotCommand, isBotCommand } from './botengine.js';
 
 // ─── Enter chat (after auth) ───────────────────────────────────────────────
 export async function enterChat() {
@@ -257,7 +257,16 @@ export async function handleSend() {
   clearTyping();
 
   // Bot commands (handles /price, /ca, /mcap, ca, price, etc.)
-  if (await handleBotCommand(raw)) {
+  // 1. Check if it's a bot command (sync, no side effects)
+  // 2. Post user's message to chat so everyone sees the question
+  // 3. Bot responds — both messages visible to all users
+  if (isBotCommand(raw)) {
+    const db = getDb();
+    try {
+      await db.collection('messages').add(buildMsgObj('user', raw, { deleted: false }));
+    } catch {}
+    await handleBotCommand(raw);
+    scrollToBottom();
     inp.focus();
     return;
   }

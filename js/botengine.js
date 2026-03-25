@@ -301,6 +301,26 @@ export async function handleBotSystemMessage(text) {
 // COMMAND HANDLER
 // ═══════════════════════════════════════════════════════════════════════════════
 
+const BOT_TRIGGERS = [
+  '/price', '/basis', 'price', 'price?', '$basis',
+  '/sol', 'sol price', 'sol price?', 'sol?',
+  '/ca', 'ca', 'ca?', '/links', 'links', '/contract', 'contract',
+  'what is the ca', 'whats the ca', "what's the ca",
+  'send ca', 'drop the ca', 'ca pls', 'contract address',
+  'drop ca', 'give ca', 'where to buy', 'how to buy',
+  '/mcap', 'mcap', 'market cap', 'marketcap', 'mc', 'mc?',
+  '/website', 'website', 'site', '/site',
+  '/chart', '/dex', 'chart', 'dex', 'chart?',
+  '/twitter', '/x', 'twitter', 'x?',
+  '/tg', '/telegram', 'telegram', 'tg', 'tg?',
+];
+
+// Quick synchronous check — does NOT execute anything
+export function isBotCommand(text) {
+  return BOT_TRIGGERS.includes(text.trim().toLowerCase());
+}
+
+// Execute the bot command (posts bot response to Firestore)
 export async function handleBotCommand(text) {
   const t = text.trim().toLowerCase();
 
