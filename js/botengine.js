@@ -1,10 +1,10 @@
 // ─── Bot Engine (Client-Side) ───────────────────────────────────────────────
-// Uses the same DexScreener → Jupiter → Helius DAS waterfall as databasis.info
+// Price fetching copied VERBATIM from the working databasis.info live prices page.
 
 import { state } from './state.js';
 import { getDb, serverTimestamp } from './utils.js';
 
-// ─── Token / API Config (same as databasis.info) ────────────────────────────
+// ─── Config (identical to databasis.info) ───────────────────────────────────
 const BASIS_MINT   = 'A5BJBQUTR5sTzkM89hRDuApWyvgjdXpR7B7rW1r9pump';
 const SOL_MINT     = 'So11111111111111111111111111111111111111112';
 const BASIS_SUPPLY = 1_000_000_000;
@@ -24,7 +24,7 @@ const TOKEN = {
 const pick = a => a[Math.floor(Math.random() * a.length)];
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PRICE FETCHING — exact same waterfall as databasis.info
+// PRICE FETCHING — EXACT COPY from databasis.info/index.html
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Source 1: DexScreener (free, no key, pump.fun native)
@@ -34,40 +34,54 @@ async function fetchDexScreener() {
   const data = await r.json();
   const pairs = Array.isArray(data) ? data : (data.pairs ?? []);
 
-  let solPrice = null, basisPrice = null;
+  let solPrice   = null;
+  let basisPrice = null;
 
   for (const pair of pairs) {
-    const base = pair.baseToken?.address ?? '';
+    const base  = pair.baseToken?.address ?? '';
+    const quote = pair.quoteToken?.address ?? '';
     const price = parseFloat(pair.priceUsd);
     if (!price || isNaN(price)) continue;
     const vol = pair.volume?.h24 ?? 0;
 
-    if (base === BASIS_MINT) {
-      if (!basisPrice || vol > (basisPrice._v || 0)) { basisPrice = price; basisPrice._v = vol; }
+    if (base === BASIS_MINT || quote === BASIS_MINT) {
+      const p = base === BASIS_MINT ? price : 1 / price;
+      if (!basisPrice || vol > (basisPrice._vol ?? 0)) {
+        basisPrice = p;
+        basisPrice._vol = vol;
+      }
     }
-    if (base === SOL_MINT) {
-      if (!solPrice || vol > (solPrice._v || 0)) { solPrice = price; solPrice._v = vol; }
+    if (base === SOL_MINT || quote === SOL_MINT) {
+      const p = base === SOL_MINT ? price : 1 / price;
+      if (!solPrice || vol > (solPrice._vol ?? 0)) {
+        solPrice = p;
+        solPrice._vol = vol;
+      }
     }
   }
 
-  return { sol: solPrice ? parseFloat(solPrice) : null, basis: basisPrice ? parseFloat(basisPrice) : null };
+  return {
+    sol:   solPrice   ? parseFloat(solPrice)   : null,
+    basis: basisPrice ? parseFloat(basisPrice) : null,
+  };
 }
 
-// Source 2: Jupiter lite API (fallback)
+// Source 2: Jupiter Price API v2 (fallback)
 async function fetchJupiter() {
   const r = await fetch(JUP_URL);
   if (!r.ok) throw new Error(`Jupiter HTTP ${r.status}`);
   const d = await r.json();
   return {
-    sol:   parseFloat(d?.data?.[SOL_MINT]?.price) || null,
-    basis: parseFloat(d?.data?.[BASIS_MINT]?.price) || null,
+    sol:   parseFloat(d?.data?.[SOL_MINT]?.price)   || null,
+    basis: parseFloat(d?.data?.[BASIS_MINT]?.price)  || null,
   };
 }
 
 // Source 3: Helius DAS (second fallback)
 async function fetchHeliusDAS(mint) {
   const r = await fetch(HELIUS_URL, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       jsonrpc: '2.0', id: 'p', method: 'getAsset',
       params: { id: mint, displayOptions: { showFungible: true } },
@@ -78,39 +92,57 @@ async function fetchHeliusDAS(mint) {
   return d?.result?.token_info?.price_info?.price_per_token ?? null;
 }
 
-// Waterfall: DexScreener → Jupiter → Helius DAS
+// Waterfall: DexScreener → Jupiter → Helius DAS (SAME as databasis.info)
 async function getPrices() {
-  let sol = null, basis = null;
+  let solPrice   = null;
+  let basisPrice = null;
 
-  // Try DexScreener first
+  // Try Source 1: DexScreener
   try {
     const dex = await fetchDexScreener();
-    sol = dex.sol; basis = dex.basis;
+    solPrice   = dex.sol;
+    basisPrice = dex.basis;
   } catch (e) { console.warn('[bot] DexScreener failed:', e.message); }
 
-  // Fill gaps with Jupiter
-  if (sol === null || basis === null) {
+  // Try Source 2: Jupiter (fill any still-null values)
+  if (solPrice === null || basisPrice === null) {
     try {
       const jup = await fetchJupiter();
-      if (sol === null) sol = jup.sol;
-      if (basis === null) basis = jup.basis;
+      if (solPrice   === null) solPrice   = jup.sol;
+      if (basisPrice === null) basisPrice = jup.basis;
     } catch (e) { console.warn('[bot] Jupiter failed:', e.message); }
   }
 
-  // Fill gaps with Helius DAS
-  if (sol === null || basis === null) {
+  // Try Source 3: Helius DAS (fill any still-null values)
+  if (solPrice === null || basisPrice === null) {
     try {
       const [s, b] = await Promise.all([
-        sol === null ? fetchHeliusDAS(SOL_MINT) : Promise.resolve(null),
-        basis === null ? fetchHeliusDAS(BASIS_MINT) : Promise.resolve(null),
+        solPrice   === null ? fetchHeliusDAS(SOL_MINT)   : Promise.resolve(null),
+        basisPrice === null ? fetchHeliusDAS(BASIS_MINT) : Promise.resolve(null),
       ]);
-      if (sol === null) sol = s;
-      if (basis === null) basis = b;
+      if (solPrice   === null) solPrice   = s;
+      if (basisPrice === null) basisPrice = b;
     } catch (e) { console.warn('[bot] Helius DAS failed:', e.message); }
   }
 
-  const mcap = basis ? basis * BASIS_SUPPLY : 0;
-  return { sol, basis, mcap };
+  return { sol: solPrice, basis: basisPrice };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FORMATTERS (same as databasis.info)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function fmtNum(n, d = 2) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
+function fmtUSD(n) {
+  if (!n || isNaN(n)) return '$—';
+  if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+  return '$' + n.toFixed(4);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -264,7 +296,6 @@ async function botPost(text) {
 export async function handleBotSystemMessage(text) {
   if (!state.me) return;
 
-  // New user joined OR returning user logged in
   const joinMatch = text.match(/^(.+) has entered the room$/);
   if (joinMatch) {
     const name = joinMatch[1];
@@ -284,7 +315,6 @@ export async function handleBotSystemMessage(text) {
     return;
   }
 
-  // Kicked or banned
   const kickMatch = text.match(/^(.+) (kicked|banned) by/);
   if (kickMatch) {
     const name = kickMatch[1];
@@ -315,12 +345,10 @@ const BOT_TRIGGERS = [
   '/tg', '/telegram', 'telegram', 'tg', 'tg?',
 ];
 
-// Quick synchronous check — does NOT execute anything
 export function isBotCommand(text) {
   return BOT_TRIGGERS.includes(text.trim().toLowerCase());
 }
 
-// Execute the bot command (posts bot response to Firestore)
 export async function handleBotCommand(text) {
   const t = text.trim().toLowerCase();
 
@@ -328,19 +356,14 @@ export async function handleBotCommand(text) {
   if (['/price', '/basis', 'price', 'price?', '$basis'].includes(t)) {
     try {
       const p = await getPrices();
-      const fmt = (n, d) => Number(n).toLocaleString('en-US', { maximumFractionDigits: d });
-      const fmtUsd = n => {
-        if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
-        if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
-        if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
-        return '$' + n.toFixed(4);
-      };
-
       let msg = '';
-      if (p.basis) msg += `$BASIS: $${p.basis < 0.001 ? p.basis.toFixed(8) : fmt(p.basis, 6)}`;
-      else msg += `$BASIS: N/A`;
-      if (p.mcap > 0) msg += `\nMarket Cap: ${fmtUsd(p.mcap)}`;
-      if (p.sol) msg += `\n\nSOL: $${fmt(p.sol, 2)}`;
+      if (p.basis) {
+        msg += `$BASIS: $${p.basis < 0.001 ? p.basis.toFixed(8) : fmtNum(p.basis, 6)}`;
+        msg += `\nMarket Cap: ${fmtUSD(p.basis * BASIS_SUPPLY)}`;
+      } else {
+        msg += `$BASIS: N/A`;
+      }
+      if (p.sol) msg += `\n\nSOL: $${fmtNum(p.sol, 2)}`;
       msg += `\n\nChart: ${TOKEN.dex}`;
       await botPost(msg);
     } catch { await botPost('⚠ Unable to fetch price data. Try again shortly.'); }
@@ -351,7 +374,7 @@ export async function handleBotCommand(text) {
   if (['/sol', 'sol price', 'sol price?', 'sol?'].includes(t)) {
     try {
       const p = await getPrices();
-      if (p.sol) await botPost(`SOL: $${Number(p.sol).toLocaleString('en-US', { maximumFractionDigits: 2 })} USD`);
+      if (p.sol) await botPost(`SOL: $${fmtNum(p.sol, 2)} USD`);
       else await botPost('⚠ Unable to fetch SOL price.');
     } catch { await botPost('⚠ Unable to fetch SOL price.'); }
     return true;
@@ -374,15 +397,12 @@ export async function handleBotCommand(text) {
   if (['/mcap', 'mcap', 'market cap', 'marketcap', 'mc', 'mc?'].includes(t)) {
     try {
       const p = await getPrices();
-      if (p.mcap > 0) {
-        const fmtUsd = n => {
-          if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
-          if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
-          if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
-          return '$' + n.toFixed(2);
-        };
-        await botPost(`$BASIS Market Cap: ${fmtUsd(p.mcap)}\n\nChart: ${TOKEN.dex}`);
-      } else { await botPost('⚠ Unable to fetch market cap data.'); }
+      if (p.basis) {
+        const mcap = p.basis * BASIS_SUPPLY;
+        await botPost(`$BASIS Market Cap: ${fmtUSD(mcap)}\n\nChart: ${TOKEN.dex}`);
+      } else {
+        await botPost('⚠ Unable to fetch market cap data.');
+      }
     } catch { await botPost('⚠ Unable to fetch market cap data.'); }
     return true;
   }

@@ -30,7 +30,7 @@ async function main() {
   console.log('Last seen sig:', lastSig ? lastSig.slice(0, 12) + '...' : 'none (first run)');
 
   // ── 3. Fetch recent swaps from Helius ─────────────────────────────────
-  const url = `https://api.helius.xyz/v0/addresses/${TOKEN_CA}/transactions?api-key=${HELIUS_KEY}&limit=20&type=SWAP`;
+  const url = `https://api.helius.xyz/v0/addresses/${TOKEN_CA}/transactions?api-key=${HELIUS_KEY}&limit=20`;
   const res = await fetch(url);
   if (!res.ok) { console.error('Helius error:', res.status); process.exit(1); }
 
@@ -64,8 +64,21 @@ async function main() {
   // ── 5. Parse buys ────────────────────────────────────────────────────
   const buys = [];
   for (const tx of fresh) {
+    const txType = tx.type || 'UNKNOWN';
+    const sig = tx.signature?.slice(0, 12) || '?';
+    console.log(`  Tx ${sig}... type=${txType} hasSwap=${!!tx.events?.swap} transfers=${tx.tokenTransfers?.length || 0}`);
+
     const buy = parseBuy(tx);
-    if (buy && buy.solAmt >= MIN_SOL) buys.push(buy);
+    if (buy) {
+      if (buy.solAmt >= MIN_SOL) {
+        buys.push(buy);
+        console.log(`    → BUY: ${buy.solAmt.toFixed(4)} SOL → ${buy.basisAmt.toFixed(0)} BASIS`);
+      } else {
+        console.log(`    → Skip: ${buy.solAmt.toFixed(4)} SOL < ${MIN_SOL} min`);
+      }
+    } else {
+      console.log(`    → Not a buy (sell or other)`);
+    }
   }
 
   if (!buys.length) {
@@ -84,9 +97,13 @@ async function main() {
       const dexData = await dexRes.json();
       const pairs = Array.isArray(dexData) ? dexData : (dexData.pairs ?? []);
       for (const pair of pairs) {
+        const base  = pair.baseToken?.address ?? '';
+        const quote = pair.quoteToken?.address ?? '';
         const price = parseFloat(pair.priceUsd);
-        if (pair.baseToken?.address === TOKEN_CA && price > 0) {
-          mcap = price * BASIS_SUPPLY;
+        if (!price || isNaN(price)) continue;
+        if (base === TOKEN_CA || quote === TOKEN_CA) {
+          const p = base === TOKEN_CA ? price : 1 / price;
+          mcap = p * BASIS_SUPPLY;
           break;
         }
       }
@@ -145,7 +162,7 @@ function parseBuy(tx) {
     const buyer = tx.feePayer || '';
     let solAmt = 0, basisAmt = 0;
 
-    // Swap events (Helius enhanced format)
+    // Method 1: Check swap events (standard DEX swaps)
     if (tx.events?.swap) {
       const swap = tx.events.swap;
       if (swap.nativeInput) solAmt = (swap.nativeInput.amount || 0) / 1e9;
@@ -161,16 +178,29 @@ function parseBuy(tx) {
       }
     }
 
-    // Fallback: token transfers
+    // Method 2: Always check tokenTransfers (pump.fun swaps may not have events.swap)
     if (basisAmt === 0) {
       for (const t of tx.tokenTransfers || []) {
-        if (t.mint === TOKEN_CA && t.toUserAccount === buyer) basisAmt += t.tokenAmount || 0;
-      }
-      for (const t of tx.nativeTransfers || []) {
-        if (t.fromUserAccount === buyer) solAmt += (t.amount || 0) / 1e9;
+        if (t.mint === TOKEN_CA) {
+          // Buyer receives $BASIS — could be feePayer or any user in the tx
+          basisAmt += t.tokenAmount || 0;
+        }
+        if (t.mint === WSOL && t.fromUserAccount === buyer) {
+          solAmt += t.tokenAmount || 0;
+        }
       }
     }
 
+    // Method 3: Check native SOL transfers if still missing SOL amount
+    if (solAmt === 0) {
+      for (const t of tx.nativeTransfers || []) {
+        if (t.fromUserAccount === buyer && t.amount > 10_000_000) { // > 0.01 SOL (skip tiny fees)
+          solAmt += (t.amount || 0) / 1e9;
+        }
+      }
+    }
+
+    // Only count as a buy if we see both SOL spent and BASIS received
     if (basisAmt <= 0 || solAmt <= 0) return null;
     return { sig: tx.signature, buyer, solAmt, basisAmt };
   } catch { return null; }
