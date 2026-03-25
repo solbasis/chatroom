@@ -51,18 +51,18 @@
           </div>
 
           <div class="fld">
-            <label class="fld-lbl">Username</label>
+            <label class="fld-lbl" for="aName">Username</label>
             <input class="fld-inp" type="text" id="aName" placeholder="your_handle" autocomplete="off" maxlength="20">
           </div>
           <div class="fld">
-            <label class="fld-lbl">Password</label>
+            <label class="fld-lbl" for="aPass">Password</label>
             <input class="fld-inp" type="password" id="aPass" placeholder="min 6 characters" autocomplete="off">
           </div>
 
           <div id="signF" style="display:none">
             <div class="fld">
-              <label class="fld-lbl">Node Color</label>
-              <div class="colors" id="cPick"></div>
+              <span class="fld-lbl" id="colorLabel">Node Color</span>
+              <div class="colors" id="cPick" role="group" aria-labelledby="colorLabel"></div>
             </div>
           </div>
 
