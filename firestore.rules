@@ -32,7 +32,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // FIX #5: Validate a hex color string (#rgb or #rrggbb)
+    // Validate a hex color string (#rgb or #rrggbb)
     function validHex(s) {
       return s.matches('^#[0-9a-fA-F]{3}$') || s.matches('^#[0-9a-fA-F]{6}$');
     }
@@ -41,7 +41,7 @@ service cloud.firestore {
     match /messages/{doc} {
       allow read: if authed();
 
-      // FIX #3: Enforce that uid in the written doc matches the authenticated uid.
+      // Enforce that uid in the written doc matches the authenticated uid.
       // This prevents a user from impersonating another user's messages.
       allow create: if authed()
         && !callerProfile().muted
@@ -66,7 +66,7 @@ service cloud.firestore {
         (request.auth.uid == userId
           && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['bio', 'avatarUrl', 'color', 'online', 'lastSeen'])
-          // FIX #5: color must be a valid hex if provided
+          // color must be a valid hex if provided
           && (!('color' in request.resource.data.diff(resource.data).affectedKeys())
               || validHex(request.resource.data.color))
         )
@@ -94,7 +94,7 @@ service cloud.firestore {
         (request.auth.uid != userId && isAtLeast('admin')
           && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['role'])
-          // FIX #2: Can only grant up to (but not exceeding) your own role rank
+          // Can only grant up to (but not exceeding) your own role rank
           && roleRank(request.resource.data.role) < roleRank(callerRole())
         )
         ||
@@ -120,8 +120,7 @@ service cloud.firestore {
     // ── DM CHANNELS ───────────────────────────────────────────────────────────
     match /dm-channels/{channelId} {
 
-      // FIX #1: Read restricted to participants only.
-      // Previously `allow read: if authed()` leaked all DM metadata to everyone.
+      // Read restricted to participants only.
       allow read: if authed()
         && request.auth.uid in resource.data.participants;
 
@@ -142,7 +141,7 @@ service cloud.firestore {
         allow read: if authed()
           && request.auth.uid in get(/databases/$(database)/documents/dm-channels/$(channelId)).data.participants;
 
-        // FIX #3: Participants can create messages, but uid must match caller
+        // Participants can create messages, but uid must match caller
         allow create: if authed()
           && request.auth.uid in get(/databases/$(database)/documents/dm-channels/$(channelId)).data.participants
           && request.resource.data.uid == request.auth.uid;
