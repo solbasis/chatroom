@@ -299,10 +299,20 @@ export async function handleSend() {
     return;
   }
 
+  // Build reply fields if replying
+  const extra = { deleted: false };
+  if (state.replyTo) {
+    extra.replyToId = state.replyTo.id;
+    extra.replyToName = state.replyTo.name;
+    extra.replyToSnippet = state.replyTo.snippet;
+    extra.replyToColor = state.replyTo.color;
+  }
+  clearReplyTo();
+
   // Send message
   const db = getDb();
   try {
-    await db.collection('messages').add(buildMsgObj('user', raw, { deleted: false }));
+    await db.collection('messages').add(buildMsgObj('user', raw, extra));
     scrollToBottom();
   } catch (e) {
     console.error('Send error:', e);

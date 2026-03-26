@@ -134,15 +134,28 @@ export async function sendDmMessage(text) {
   const db = getDb();
   const channelId = state.dmView.channelId;
 
+  // Build message with optional reply
+  const msg = {
+    uid: state.me.uid,
+    name: state.me.name,
+    color: state.me.color,
+    avatarUrl: state.me.avatarUrl || '',
+    text,
+    ts: serverTimestamp()
+  };
+  if (state.replyTo) {
+    msg.replyToId = state.replyTo.id;
+    msg.replyToName = state.replyTo.name;
+    msg.replyToSnippet = state.replyTo.snippet;
+    msg.replyToColor = state.replyTo.color;
+  }
+
+  // Import clearReplyTo lazily to avoid circular deps
+  const { clearReplyTo } = await import('./ui.js');
+  clearReplyTo();
+
   try {
-    await db.collection('dm-channels').doc(channelId).collection('messages').add({
-      uid: state.me.uid,
-      name: state.me.name,
-      color: state.me.color,
-      avatarUrl: state.me.avatarUrl || '',
-      text,
-      ts: serverTimestamp()
-    });
+    await db.collection('dm-channels').doc(channelId).collection('messages').add(msg);
 
     await db.collection('dm-channels').doc(channelId).update({
       lastMessage: text.substring(0, 100),
