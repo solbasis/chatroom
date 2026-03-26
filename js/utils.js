@@ -89,6 +89,11 @@ export function formatMessage(text) {
     /(https?:\/\/[^\s<]+)/g,
     '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
   );
+  // @mentions
+  s = s.replace(/@(\w{1,20})\b/g, (match, name) => {
+    const isMe = state.me?.name && name.toLowerCase() === state.me.name.toLowerCase();
+    return `<span class="mention${isMe ? ' mention-me' : ''}" data-mention="${name}">@${name}</span>`;
+  });
   return s;
 }
 

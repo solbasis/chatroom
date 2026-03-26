@@ -1,6 +1,99 @@
 // ─── UI Components ──────────────────────────────────────────────────────────
 import { state, $ } from './state.js';
-import { esc, avatarHTML, roleBadge, lastSeenLabel, initials, hasRole } from './utils.js';
+import { esc, escAttr, avatarHTML, roleBadge, lastSeenLabel, initials, hasRole } from './utils.js';
+
+// ─── Theme toggle ─────────────────────────────────────────────────────────
+export function loadTheme() {
+  const saved = localStorage.getItem('basis-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeIcon(saved);
+}
+
+export function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('basis-theme', next);
+  updateThemeIcon(next);
+}
+
+function updateThemeIcon(theme) {
+  const icon = $('themeIcon');
+  if (icon) icon.textContent = theme === 'dark' ? '☀' : '☽';
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = theme === 'dark' ? '#040804' : '#e8e8e0';
+}
+
+// ─── Reply bar ────────────────────────────────────────────────────────────
+export function setReplyTo(msg) {
+  state.replyTo = {
+    id: msg.id,
+    name: msg.name,
+    snippet: (msg.text || '').substring(0, 80),
+    color: msg.color || '#78b15a'
+  };
+  const bar = $('replyBar');
+  $('replyName').textContent = msg.name;
+  $('replyName').style.color = msg.color || 'var(--g)';
+  $('replySnippet').textContent = state.replyTo.snippet;
+  bar.classList.add('on');
+  $('iInp')?.focus();
+}
+
+export function clearReplyTo() {
+  state.replyTo = null;
+  $('replyBar')?.classList.remove('on');
+}
+
+// ─── Mention autocomplete ─────────────────────────────────────────────────
+export function showMentionDropdown(query) {
+  const drop = $('mentionDrop');
+  if (!drop) return;
+
+  const q = query.toLowerCase();
+  const matches = state.allUsers
+    .filter(u => u.name.toLowerCase().startsWith(q) && u.id !== state.me?.uid)
+    .slice(0, 6);
+
+  if (!matches.length) { hideMentionDropdown(); return; }
+
+  let html = '';
+  matches.forEach(u => {
+    const ini = (u.name || '??').substring(0, 2).toUpperCase();
+    html += `<div class="mention-item" data-mention="${esc(u.name)}">` +
+      `<div class="mention-item-av" style="background:${esc(u.color)}">` +
+        (u.avatarUrl ? `<img src="${esc(u.avatarUrl)}" alt="">` : ini) +
+      `</div>` +
+      `<span style="color:${esc(u.color)}">${esc(u.name)}</span>` +
+    `</div>`;
+  });
+
+  drop.innerHTML = html;
+  drop.classList.add('on');
+}
+
+export function hideMentionDropdown() {
+  $('mentionDrop')?.classList.remove('on');
+}
+
+export function insertMention(username) {
+  const inp = $('iInp');
+  if (!inp) return;
+  const val = inp.value;
+  const pos = inp.selectionStart;
+  // Find the @ before cursor
+  const before = val.substring(0, pos);
+  const atIdx = before.lastIndexOf('@');
+  if (atIdx === -1) return;
+  const after = val.substring(pos);
+  inp.value = before.substring(0, atIdx) + '@' + username + ' ' + after;
+  const newPos = atIdx + username.length + 2;
+  inp.selectionStart = inp.selectionEnd = newPos;
+  hideMentionDropdown();
+  inp.focus();
+  // Trigger input event for send button state
+  inp.dispatchEvent(new Event('input'));
+}
 
 // ─── Sidebar toggle (mobile) ───────────────────────────────────────────────
 export function toggleSidebar() {

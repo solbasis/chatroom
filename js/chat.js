@@ -6,7 +6,8 @@ import { showScreen } from './auth.js';
 import { renderChatMessages } from './render.js';
 import {
   updateHeader, renderUsers, renderDmList, updateDmBadge,
-  scrollToBottom, forceDisconnect, toggleSidebar
+  scrollToBottom, forceDisconnect, toggleSidebar,
+  clearReplyTo, showMentionDropdown, hideMentionDropdown
 } from './ui.js';
 import { handleCommand, addLocalMessage } from './commands.js';
 import { showChatView, sendDmMessage } from './dm.js';
@@ -44,8 +45,11 @@ export async function enterChat() {
 
       // Ping + pill for new messages (skip initial load)
       if (isNew && last && last.uid !== state.me?.uid) {
+        const mentionsMe = last.text && state.me?.name &&
+          last.text.toLowerCase().includes('@' + state.me.name.toLowerCase());
         if (!state.atBottom && !state.dmView) $('npill').classList.add('on');
         if (!state.dmView) playPing();
+        if (state.dmView && mentionsMe) playPing();
         if (state.dmView) $('chatDot').classList.add('on');
       }
 
@@ -218,6 +222,16 @@ function setupInput() {
     inp.style.height = 'auto';
     inp.style.height = Math.min(inp.scrollHeight, 140) + 'px';
 
+    // @mention autocomplete
+    const pos = inp.selectionStart;
+    const before = inp.value.substring(0, pos);
+    const atMatch = before.match(/@(\w{0,20})$/);
+    if (atMatch && atMatch[1].length > 0) {
+      showMentionDropdown(atMatch[1]);
+    } else {
+      hideMentionDropdown();
+    }
+
     // Typing indicator (chatroom only)
     if (!state.dmView) setTyping();
   };
@@ -285,10 +299,20 @@ export async function handleSend() {
     return;
   }
 
+  // Build reply fields if replying
+  const extra = { deleted: false };
+  if (state.replyTo) {
+    extra.replyToId = state.replyTo.id;
+    extra.replyToName = state.replyTo.name;
+    extra.replyToSnippet = state.replyTo.snippet;
+    extra.replyToColor = state.replyTo.color;
+  }
+  clearReplyTo();
+
   // Send message
   const db = getDb();
   try {
-    await db.collection('messages').add(buildMsgObj('user', raw, { deleted: false }));
+    await db.collection('messages').add(buildMsgObj('user', raw, extra));
     scrollToBottom();
   } catch (e) {
     console.error('Send error:', e);
