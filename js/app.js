@@ -3,7 +3,10 @@ import { FIREBASE_CONFIG } from './config.js';
 import { state, $ } from './state.js';
 import { initAuth, doAuth, switchAuthMode, doPasswordReset, buildColorPicker, logout } from './auth.js';
 import { handleSend } from './chat.js';
-import { toggleSidebar, switchSbTab, scrollToBottom, closePopup, showUserPopup } from './ui.js';
+import {
+  toggleSidebar, switchSbTab, scrollToBottom, closePopup, showUserPopup,
+  loadTheme, toggleTheme, setReplyTo, clearReplyTo, hideMentionDropdown, insertMention
+} from './ui.js';
 import { openProfile, closeProfile } from './profile.js';
 import { openDM, closeDM, showDmView } from './dm.js';
 import { deleteMessage } from './moderation.js';
@@ -12,6 +15,9 @@ import { handleCommand } from './commands.js';
 // ─── Firebase init ──────────────────────────────────────────────────────────
 firebase.initializeApp(FIREBASE_CONFIG);
 firebase.firestore().enablePersistence().catch(() => {});
+
+// ─── Theme ───────────────────────────────────────────────────────────────────
+loadTheme();
 
 // ─── Build UI ───────────────────────────────────────────────────────────────
 buildColorPicker();
@@ -28,8 +34,9 @@ window.doReset   = doPasswordReset;
 window.handleSend = handleSend;
 window.togSb     = toggleSidebar;
 window.logout    = logout;
-window.closeDM   = closeDM;
-window.openProfile = openProfile;
+window.closeDM      = closeDM;
+window.openProfile  = openProfile;
+window.toggleTheme  = toggleTheme;
 
 // ─── Event Delegation ───────────────────────────────────────────────────────
 // Instead of inline onclick handlers in dynamic HTML, we delegate events
@@ -38,6 +45,34 @@ window.openProfile = openProfile;
 
 document.addEventListener('click', e => {
   const target = e.target;
+
+  // ── Reply button ─────────────────────────────────────────────────
+  const replyBtn = target.closest('.m-reply-btn');
+  if (replyBtn) {
+    e.preventDefault();
+    setReplyTo({
+      id: replyBtn.dataset.replyid,
+      name: replyBtn.dataset.replyname,
+      text: replyBtn.dataset.replytext,
+      color: replyBtn.dataset.replycolor
+    });
+    return;
+  }
+
+  // ── Reply bar close ─────────────────────────────────────────────
+  if (target === $('replyClose') || target.closest('#replyClose')) {
+    e.preventDefault();
+    clearReplyTo();
+    return;
+  }
+
+  // ── Mention dropdown item ───────────────────────────────────────
+  const mentionItem = target.closest('.mention-item');
+  if (mentionItem) {
+    e.preventDefault();
+    insertMention(mentionItem.dataset.mention);
+    return;
+  }
 
   // ── DEL button (message deletion) ────────────────────────────────
   const delBtn = target.closest('[data-delid]');
@@ -129,9 +164,12 @@ document.addEventListener('click', e => {
 // ─── Keyboard shortcut: Escape to close modals ─────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    clearReplyTo();
+    hideMentionDropdown();
     closePopup();
     closeProfile();
     $('confirmOv')?.classList.remove('on');
+    $('cropOv')?.classList.remove('on');
   }
   // Enter key on auth inputs submits the form
   if (e.key === 'Enter' && (e.target === $('aName') || e.target === $('aPass'))) {

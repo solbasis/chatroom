@@ -39,6 +39,9 @@ export const state = {
   dmMsgs:      [],         // Current DM conversation messages
   totalUnread: 0,          // Total unread DM count
 
+  // Reply
+  replyTo: null,            // { id, name, snippet, color }
+
   // Sidebar
   sbTab: 'chat',           // 'chat' | 'dms'
 

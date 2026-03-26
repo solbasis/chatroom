@@ -82,6 +82,14 @@ export function renderChatMessages(msgs) {
     // Bubble
     html += `<div class="m-bub ${isMine ? 'mi' : 'ot'}${isDeleted ? ' deleted' : ''}" style="border-color:${isMine ? color + '20' : 'var(--border)'}">`;
 
+    // Reply quote
+    if (m.replyToId && !isDeleted) {
+      html += `<div class="m-reply" data-scrollto="${esc(m.replyToId)}">` +
+        `<div class="m-reply-name" style="color:${esc(m.replyToColor || '#78b15a')}">${esc(m.replyToName)}</div>` +
+        `<div class="m-reply-text">${esc(m.replyToSnippet)}</div>` +
+      `</div>`;
+    }
+
     if (isDeleted) {
       html += `<div class="m-txt" style="color:var(--text-mute)">[deleted${m.deletedBy ? ' by ' + esc(m.deletedBy) : ''}]</div>`;
     } else {
@@ -89,6 +97,9 @@ export function renderChatMessages(msgs) {
     }
 
     html += `<div class="m-meta"><span class="m-time">${time}</span>`;
+    if (!isDeleted) {
+      html += `<button class="m-reply-btn" data-replyid="${esc(m.id)}" data-replyname="${esc(m.name)}" data-replytext="${escAttr(m.text.substring(0, 80))}" data-replycolor="${esc(m.color)}">REPLY</button>`;
+    }
     if (canDelete) {
       html += `<button class="m-del" data-delid="${esc(m.id)}">DEL</button>`;
     }
@@ -165,9 +176,19 @@ export function renderDmMessages(msgs) {
     }
 
     html += `<div class="m-bub ${isMine ? 'mi' : 'ot'}" style="border-color:${isMine ? color + '20' : 'var(--border)'}">`;
+
+    // Reply quote
+    if (m.replyToId) {
+      html += `<div class="m-reply" data-scrollto="${esc(m.replyToId)}">` +
+        `<div class="m-reply-name" style="color:${esc(m.replyToColor || '#78b15a')}">${esc(m.replyToName)}</div>` +
+        `<div class="m-reply-text">${esc(m.replyToSnippet)}</div>` +
+      `</div>`;
+    }
+
     html += `<div class="m-txt">${formatMessage(m.text)}</div>`;
-    html += `<div class="m-meta"><span class="m-time">${time}</span></div>`;
-    html += `</div></div></div></div>`;
+    html += `<div class="m-meta"><span class="m-time">${time}</span>`;
+    html += `<button class="m-reply-btn" data-replyid="${esc(m.id)}" data-replyname="${esc(m.name)}" data-replytext="${escAttr(m.text.substring(0, 80))}" data-replycolor="${esc(m.color)}">REPLY</button>`;
+    html += `</div></div></div></div></div>`;
 
     lastUid = m.uid;
     lastMinute = minute;
