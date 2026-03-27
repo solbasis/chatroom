@@ -48,6 +48,13 @@ service cloud.firestore {
           request.resource.data.type == 'system'
           && request.resource.data.keys().hasAll(['type', 'text', 'ts'])
         )
+        ||
+        // ③ Bot messages — client-side bot engine posts as 'bot-databasis'
+        (
+          request.resource.data.uid == 'bot-databasis'
+          && request.resource.data.role == 'bot'
+          && request.resource.data.type == 'user'
+        )
       );
 
       // Admin+ can soft-delete; any authed user can toggle reactions on non-deleted messages
