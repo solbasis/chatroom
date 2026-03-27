@@ -161,6 +161,43 @@ export function lastSeenLabel(u) {
   return Math.floor(diff / 86400000) + 'd ago';
 }
 
+// ─── Theme-aware color adjustment ───────────────────────────────────────────
+// User-chosen colors are designed for dark backgrounds. In light mode,
+// bright greens/yellows become invisible. This darkens them for contrast.
+export function themeColor(hex) {
+  if (!hex) return hex;
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if (!isLight) return hex;
+
+  // Parse hex to RGB
+  let r, g, b;
+  const h = hex.replace('#', '');
+  if (h.length === 3) {
+    r = parseInt(h[0] + h[0], 16);
+    g = parseInt(h[1] + h[1], 16);
+    b = parseInt(h[2] + h[2], 16);
+  } else if (h.length === 6) {
+    r = parseInt(h.substring(0, 2), 16);
+    g = parseInt(h.substring(2, 4), 16);
+    b = parseInt(h.substring(4, 6), 16);
+  } else {
+    return hex;
+  }
+
+  // Calculate perceived brightness
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+  // If color is too bright for light bg, darken it
+  if (lum > 0.45) {
+    const factor = 0.55;
+    r = Math.round(r * factor);
+    g = Math.round(g * factor);
+    b = Math.round(b * factor);
+  }
+
+  return '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
+}
+
 // ─── URL validation ─────────────────────────────────────────────────────────
 export function isValidUrl(str) {
   return /^https?:\/\/.+/.test(str);

@@ -11,6 +11,7 @@ import { openProfile, closeProfile } from './profile.js';
 import { openDM, closeDM, showDmView } from './dm.js';
 import { deleteMessage } from './moderation.js';
 import { handleCommand } from './commands.js';
+import { renderChatMessages, renderDmMessages } from './render.js';
 
 // ─── Firebase init ──────────────────────────────────────────────────────────
 firebase.initializeApp(FIREBASE_CONFIG);
@@ -175,6 +176,16 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && (e.target === $('aName') || e.target === $('aPass'))) {
     e.preventDefault();
     doAuth();
+  }
+});
+
+// ─── Theme change → re-render messages with adjusted colors ─────────────
+document.addEventListener('theme-changed', () => {
+  if (!state.me) return;
+  if (state.dmView) {
+    renderDmMessages(state.dmMsgs);
+  } else {
+    renderChatMessages(state.cachedMsgs);
   }
 });
 

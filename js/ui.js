@@ -1,6 +1,6 @@
 // ─── UI Components ──────────────────────────────────────────────────────────
 import { state, $ } from './state.js';
-import { esc, escAttr, avatarHTML, roleBadge, lastSeenLabel, initials, hasRole } from './utils.js';
+import { esc, escAttr, avatarHTML, roleBadge, lastSeenLabel, initials, hasRole, themeColor } from './utils.js';
 
 // ─── Theme toggle ─────────────────────────────────────────────────────────
 export function loadTheme() {
@@ -15,6 +15,15 @@ export function toggleTheme() {
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('basis-theme', next);
   updateThemeIcon(next);
+
+  // Re-render UI with adjusted colors for new theme
+  if (state.me) {
+    updateHeader();
+    renderUsers(state.allUsers);
+    renderDmList();
+  }
+  // Dispatch event so chat/dm modules can re-render messages
+  document.dispatchEvent(new CustomEvent('theme-changed'));
 }
 
 function updateThemeIcon(theme) {
@@ -64,7 +73,7 @@ export function showMentionDropdown(query) {
       `<div class="mention-item-av" style="background:${esc(u.color)}">` +
         (u.avatarUrl ? `<img src="${esc(u.avatarUrl)}" alt="">` : ini) +
       `</div>` +
-      `<span style="color:${esc(u.color)}">${esc(u.name)}</span>` +
+      `<span style="color:${esc(themeColor(u.color))}">${esc(u.name)}</span>` +
     `</div>`;
   });
 
@@ -153,7 +162,7 @@ export function renderUsers(users) {
     html += `<div class="sb-u${isMe ? ' me' : ''}" data-username="${esc(u.name)}" data-uid="${esc(u.id)}">` +
       avatarHTML(u.color, u.name, u.avatarUrl, 32, presence === 'Online') +
       `<div class="sb-u-info">` +
-        `<div class="sb-u-name"><span style="color:${esc(u.color)}">${esc(u.name)}</span>${roleBadge(u.role || 'user')}</div>` +
+        `<div class="sb-u-name"><span style="color:${esc(themeColor(u.color))}">${esc(u.name)}</span>${roleBadge(u.role || 'user')}</div>` +
         `<div class="sb-u-role">${presence}</div>` +
       `</div></div>`;
   });
@@ -192,7 +201,7 @@ export function renderDmList() {
       `data-target-color="${esc(color)}" data-target-avatar="${esc(avatar)}">` +
       avatarHTML(color, name, avatar, 34) +
       `<div class="dm-conv-info">` +
-        `<div class="dm-conv-name" style="color:${esc(color)}">${esc(name)}</div>` +
+        `<div class="dm-conv-name" style="color:${esc(themeColor(color))}">${esc(name)}</div>` +
         `<div class="dm-conv-preview">${esc(preview)}</div>` +
       `</div>` +
       `<div class="dm-conv-meta">` +
@@ -257,7 +266,7 @@ export function showUserPopup(username, anchorEl) {
     `<div class="u-popup-head">` +
       avatarHTML(user.color, user.name, user.avatarUrl, 36) +
       `<div class="u-popup-info">` +
-        `<div class="u-popup-name"><span style="color:${esc(user.color)}">${esc(user.name)}</span>${roleBadge(user.role)}</div>` +
+        `<div class="u-popup-name"><span style="color:${esc(themeColor(user.color))}">${esc(user.name)}</span>${roleBadge(user.role)}</div>` +
         `<div class="u-popup-role">${presence}</div>` +
       `</div>` +
     `</div>` +
@@ -333,7 +342,7 @@ export function forceDisconnect(reason) {
 export function updateHeader() {
   if (!state.me) return;
   $('hName').textContent = state.me.name;
-  $('hName').style.color = state.me.color;
+  $('hName').style.color = themeColor(state.me.color);
   $('hAv').style.background = state.me.color;
 
   if (state.me.avatarUrl) {
