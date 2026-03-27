@@ -149,8 +149,8 @@ document.addEventListener('click', e => {
     return;
   }
 
-  // ── Close user popup overlay ─────────────────────────────────────
-  if (target === $('popOv')) {
+  // ── Close user popup overlay or close button ─────────────────────
+  if (target === $('popOv') || target === $('popClose') || target.closest('#popClose')) {
     closePopup();
     return;
   }
