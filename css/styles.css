@@ -934,7 +934,6 @@ body::before, body::after { display: none; }
 .sb-ov {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,.65); z-index: 99;
-  backdrop-filter: blur(3px);
 }
 .sb-ov.on { display: block; }
 
