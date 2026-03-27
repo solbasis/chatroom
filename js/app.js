@@ -47,6 +47,15 @@ window.toggleTheme  = toggleTheme;
 document.addEventListener('click', e => {
   const target = e.target;
 
+  // ── Image lightbox ────────────────────────────────────────────────
+  const lbImg = target.closest('[data-lightbox]');
+  if (lbImg) {
+    e.preventDefault();
+    $('lightboxImg').src = lbImg.src;
+    $('lightboxOv').classList.add('on');
+    return;
+  }
+
   // ── Reply button ─────────────────────────────────────────────────
   const replyBtn = target.closest('.m-reply-btn');
   if (replyBtn) {
@@ -146,6 +155,13 @@ document.addEventListener('click', e => {
     return;
   }
 
+  // ── Close lightbox (click backdrop or close button) ──────────────
+  if (target === $('lightboxOv') || target === $('lightboxClose')) {
+    $('lightboxOv').classList.remove('on');
+    $('lightboxImg').src = '';
+    return;
+  }
+
   // ── New message pill ─────────────────────────────────────────────
   if (target === $('npill') || target.closest('#npill')) {
     scrollToBottom();
@@ -165,6 +181,12 @@ document.addEventListener('click', e => {
 // ─── Keyboard shortcut: Escape to close modals ─────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    // Close lightbox first if open
+    if ($('lightboxOv')?.classList.contains('on')) {
+      $('lightboxOv').classList.remove('on');
+      $('lightboxImg').src = '';
+      return;
+    }
     clearReplyTo();
     hideMentionDropdown();
     closePopup();

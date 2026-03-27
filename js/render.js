@@ -106,7 +106,7 @@ export function renderChatMessages(msgs) {
       html += `<div class="m-txt" style="color:var(--text-mute)">[deleted${m.deletedBy ? ' by ' + esc(m.deletedBy) : ''}]</div>`;
     } else {
       if (m.imageUrl) {
-        html += `<div class="m-img"><img src="${esc(m.imageUrl)}" alt="shared image" loading="lazy" onclick="window.open(this.src,'_blank')"></div>`;
+        html += `<div class="m-img"><img src="${esc(m.imageUrl)}" alt="shared image" loading="lazy" data-lightbox></div>`;
       }
       if (m.text) html += `<div class="m-txt">${formatMessage(m.text)}</div>`;
     }
@@ -203,7 +203,7 @@ export function renderDmMessages(msgs) {
     }
 
     if (m.imageUrl) {
-      html += `<div class="m-img"><img src="${esc(m.imageUrl)}" alt="shared image" loading="lazy" onclick="window.open(this.src,'_blank')"></div>`;
+      html += `<div class="m-img"><img src="${esc(m.imageUrl)}" alt="shared image" loading="lazy" data-lightbox></div>`;
     }
     if (m.text) html += `<div class="m-txt">${formatMessage(m.text)}</div>`;
     html += `<div class="m-meta"><span class="m-time">${time}</span>`;
