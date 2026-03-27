@@ -857,6 +857,55 @@ body::before, body::after { display: none; }
 .i-send.ok:active { transform: translateY(0) scale(.985); }
 .i-send:disabled { opacity: .2; cursor: not-allowed; }
 
+/* ─── Attach button ─────────────────────────────────────────────────────── */
+.i-attach {
+  background: 0; border: 1px dashed var(--border);
+  color: var(--text-dim); font-size: 1.1rem;
+  width: 50px; min-height: 50px; border-radius: var(--r-sm);
+  cursor: pointer; transition: .16s; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.i-attach:hover { border-color: var(--g); color: var(--g); box-shadow: var(--glow); }
+
+/* ─── Image preview (pending attachment) ────────────────────────────────── */
+.img-preview {
+  display: none; position: relative;
+  padding: 8px 12px; margin-bottom: 4px;
+}
+.img-preview.on { display: flex; align-items: flex-start; gap: 8px; }
+.img-preview img {
+  max-width: 200px; max-height: 120px; border-radius: var(--r-sm);
+  border: 1px dashed var(--border-hi); object-fit: contain;
+}
+.img-preview-close {
+  background: var(--bg2); border: 1px dashed var(--border);
+  color: var(--text-dim); font-size: .7rem;
+  width: 22px; height: 22px; border-radius: 50%;
+  cursor: pointer; transition: .16s;
+  display: flex; align-items: center; justify-content: center;
+  position: absolute; top: 4px; right: 8px;
+}
+.img-preview-close:hover { border-color: var(--neg); color: var(--neg); }
+
+/* ─── Inline images in messages ─────────────────────────────────────────── */
+.m-img {
+  margin: 4px 0;
+}
+.m-img img {
+  max-width: 320px; max-height: 280px;
+  border-radius: var(--r-sm); cursor: pointer;
+  border: 1px solid var(--border);
+  object-fit: contain; display: block;
+  transition: .15s;
+}
+.m-img img:hover { border-color: var(--g); box-shadow: var(--glow); }
+@media (max-width: 768px) {
+  .m-img img { max-width: 220px; max-height: 200px; }
+}
+
+/* ─── Drag over indicator ───────────────────────────────────────────────── */
+.ibar.drag-over { outline: 2px dashed var(--g); outline-offset: -2px; }
+
 /* ─── Overlays ───────────────────────────────────────────────────────────── */
 .sb-ov {
   display: none; position: fixed; inset: 0;

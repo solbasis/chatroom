@@ -239,7 +239,14 @@
           </div>
           <!-- Mention autocomplete -->
           <div class="mention-drop" id="mentionDrop"></div>
+          <!-- Image preview -->
+          <div class="img-preview" id="imgPreview">
+            <img id="imgPreviewImg" src="" alt="preview">
+            <button class="img-preview-close" id="imgPreviewClose">✕</button>
+          </div>
           <div class="ibar-row">
+            <input type="file" id="imgFileInput" accept="image/*" style="display:none">
+            <button class="i-attach" id="iAttach" title="Attach image">📎</button>
             <div class="ibar-box">
               <span class="i-prompt">&gt;</span>
               <textarea class="i-input" id="iInp" rows="1" placeholder="Type your message or /help..." maxlength="1000"></textarea>

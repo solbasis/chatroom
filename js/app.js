@@ -2,7 +2,7 @@
 import { FIREBASE_CONFIG } from './config.js';
 import { state, $ } from './state.js';
 import { initAuth, doAuth, switchAuthMode, doPasswordReset, buildColorPicker, logout } from './auth.js';
-import { handleSend } from './chat.js';
+import { handleSend, setPendingImage, clearPendingImage } from './chat.js';
 import {
   toggleSidebar, switchSbTab, scrollToBottom, closePopup, showUserPopup,
   loadTheme, toggleTheme, setReplyTo, clearReplyTo, hideMentionDropdown, insertMention
@@ -188,6 +188,40 @@ document.addEventListener('theme-changed', () => {
     renderChatMessages(state.cachedMsgs);
   }
 });
+
+// ─── Image attach button + paste handler ──────────────────────────────────
+$('iAttach').addEventListener('click', () => $('imgFileInput').click());
+$('imgFileInput').addEventListener('change', e => {
+  if (e.target.files[0]) setPendingImage(e.target.files[0]);
+  e.target.value = '';
+});
+$('imgPreviewClose').addEventListener('click', () => clearPendingImage());
+
+// Paste image from clipboard
+document.addEventListener('paste', e => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      setPendingImage(item.getAsFile());
+      return;
+    }
+  }
+});
+
+// Drag and drop image
+const ibar = document.querySelector('.ibar');
+if (ibar) {
+  ibar.addEventListener('dragover', e => { e.preventDefault(); ibar.classList.add('drag-over'); });
+  ibar.addEventListener('dragleave', () => ibar.classList.remove('drag-over'));
+  ibar.addEventListener('drop', e => {
+    e.preventDefault();
+    ibar.classList.remove('drag-over');
+    const file = e.dataTransfer?.files[0];
+    if (file && file.type.startsWith('image/')) setPendingImage(file);
+  });
+}
 
 console.log('%c BASIS://CHAT ', 'background:#040804;color:#6ee75a;font-size:14px;font-weight:bold;padding:4px 12px;border:1px solid #6ee75a;border-radius:4px;');
 console.log('%c Modular build — github.com/solbasis/chatroom ', 'color:#6ee75a80;font-size:10px;');
