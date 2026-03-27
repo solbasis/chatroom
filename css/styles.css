@@ -139,7 +139,7 @@
 /* Light mode: green-tinted background with thermal particles */
 [data-theme="light"] body { background: #e4ebe0; }
 [data-theme="light"] #S_chat::before {
-  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background:
     radial-gradient(ellipse 120px 120px at 15% 25%, rgba(58, 122, 40, .06) 0%, transparent 70%),
     radial-gradient(ellipse 90px 90px at 75% 15%, rgba(58, 122, 40, .05) 0%, transparent 70%),
@@ -149,7 +149,7 @@
     radial-gradient(ellipse 110px 110px at 45% 40%, rgba(58, 122, 40, .04) 0%, transparent 70%);
   animation: thermalDrift 20s ease-in-out infinite alternate;
 }
-[data-theme="light"] .chat-wrap { position: relative; z-index: 1; }
+[data-theme="light"] .chat-wrap { position: relative; }
 
 @keyframes thermalDrift {
   0%   { opacity: .6; transform: scale(1) translate(0, 0); }
