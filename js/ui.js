@@ -278,6 +278,7 @@ export function showUserPopup(username, anchorEl) {
         `<div class="u-popup-name"><span style="color:${esc(themeColor(user.color))}">${esc(user.name)}</span>${roleBadge(user.role)}</div>` +
         `<div class="u-popup-role">${presence}</div>` +
       `</div>` +
+      `<button class="u-popup-close" id="popClose">✕</button>` +
     `</div>` +
     `<div class="u-popup-body">` +
       `<button class="u-popup-btn" data-action="profile" data-target="${esc(user.name)}"><span class="p-icon">◈</span> View Profile</button>` +

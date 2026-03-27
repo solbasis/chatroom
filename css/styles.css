@@ -939,19 +939,29 @@ body::before, body::after { display: none; }
 .sb-ov.on { display: block; }
 
 /* User popup */
-.u-popup-ov { display: none; position: fixed; inset: 0; z-index: 200; }
+.u-popup-ov { display: none; position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,.5); }
 .u-popup-ov.on { display: block; }
 .u-popup {
-  position: fixed; z-index: 201; width: 230px;
+  position: fixed; z-index: 501; width: 230px;
   background: var(--bg2); border: 1px dashed var(--border-hi);
   border-radius: var(--r);
   box-shadow: var(--shadow), 0 8px 32px rgba(0,0,0,.6);
   overflow: hidden; animation: fadeUp .15s ease;
 }
+.u-popup-close {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  background: 0; border: 1px dashed var(--border);
+  color: var(--text-dim); font-size: .7rem;
+  width: 24px; height: 24px; border-radius: 50%;
+  cursor: pointer; transition: .16s;
+  display: flex; align-items: center; justify-content: center;
+}
+.u-popup-close:hover { border-color: var(--neg); color: var(--neg); }
 .u-popup-head {
   padding: 12px 14px 10px; border-bottom: 1px dashed var(--border);
   background: linear-gradient(to right, var(--head-bg), transparent);
   display: flex; align-items: center; gap: 10px;
+  position: relative;
 }
 .u-popup-info { flex: 1; min-width: 0; }
 .u-popup-name {
@@ -1130,6 +1140,12 @@ body::before, body::after { display: none; }
   .mc-head, .dm-head { padding: 10px 14px; }
   .mc-h-name { display: none; }
   .i-send { padding: 12px 16px; font-size: .66rem; letter-spacing: 1px; }
+  /* Center popup on mobile instead of anchoring to element */
+  .u-popup {
+    top: 50% !important; left: 50% !important;
+    transform: translate(-50%, -50%);
+    width: 260px;
+  }
 }
 
 @media (max-width: 400px) {
