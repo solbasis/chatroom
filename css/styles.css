@@ -139,7 +139,7 @@
 /* Light mode: green-tinted background with thermal particles */
 [data-theme="light"] body { background: #e4ebe0; }
 [data-theme="light"] #S_chat::before {
-  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
   background:
     radial-gradient(ellipse 120px 120px at 15% 25%, rgba(58, 122, 40, .06) 0%, transparent 70%),
     radial-gradient(ellipse 90px 90px at 75% 15%, rgba(58, 122, 40, .05) 0%, transparent 70%),
@@ -1498,7 +1498,7 @@ mark {
 }
 
 /* ─── Chat screen structure with ticker ──────────────────────────────────── */
-#S_chat { flex-direction: column; }
+#S_chat { flex-direction: column; position: relative; overflow: hidden; }
 .chat-wrap { flex: 1; overflow: hidden; display: flex; min-height: 0; }
 
 /* ─── Profile wallet copy/link area ─────────────────────────────────────── */
