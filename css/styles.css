@@ -906,6 +906,30 @@ body::before, body::after { display: none; }
 /* ─── Drag over indicator ───────────────────────────────────────────────── */
 .ibar.drag-over { outline: 2px dashed var(--g); outline-offset: -2px; }
 
+/* ─── Image lightbox ────────────────────────────────────────────────────── */
+.lightbox-ov {
+  display: none; position: fixed; inset: 0; z-index: 400;
+  background: rgba(0,0,0,.85); backdrop-filter: blur(8px);
+  align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.lightbox-ov.on { display: flex; }
+.lightbox-img {
+  max-width: 90vw; max-height: 85vh;
+  border-radius: var(--r); border: 1px solid var(--border-hi);
+  object-fit: contain; cursor: default;
+  box-shadow: 0 8px 48px rgba(0,0,0,.6);
+}
+.lightbox-close {
+  position: fixed; top: 16px; right: 20px; z-index: 401;
+  background: rgba(0,0,0,.6); border: 1px dashed var(--border);
+  color: var(--text-dim); font-size: 1.1rem;
+  width: 36px; height: 36px; border-radius: 50%;
+  cursor: pointer; transition: .16s;
+  display: flex; align-items: center; justify-content: center;
+}
+.lightbox-close:hover { border-color: var(--neg); color: var(--neg); }
+
 /* ─── Overlays ───────────────────────────────────────────────────────────── */
 .sb-ov {
   display: none; position: fixed; inset: 0;
