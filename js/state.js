@@ -42,6 +42,9 @@ export const state = {
   // Reply
   replyTo: null,            // { id, name, snippet, color }
 
+  // Image attachment
+  pendingImage: null,       // File object waiting to be sent
+
   // Sidebar
   sbTab: 'chat',           // 'chat' | 'dms'
 

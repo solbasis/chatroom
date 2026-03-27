@@ -1,6 +1,6 @@
 // ─── Direct Messages ────────────────────────────────────────────────────────
 import { state, $ } from './state.js';
-import { esc, initials, getDb, serverTimestamp, dmChannelId, lastSeenLabel } from './utils.js';
+import { esc, initials, getDb, serverTimestamp, dmChannelId, lastSeenLabel, uploadChatImage } from './utils.js';
 import { addLocalMessage } from './commands.js';
 import { renderDmMessages, renderChatMessages } from './render.js';
 import { renderDmList, updateDmBadge, switchSbTab, scrollToBottom, toggleSidebar } from './ui.js';
@@ -128,11 +128,23 @@ export function showChatView() {
 }
 
 // ─── Send DM message ────────────────────────────────────────────────────────
-export async function sendDmMessage(text) {
+export async function sendDmMessage(text, imageFile) {
   if (!state.dmView) return;
 
   const db = getDb();
   const channelId = state.dmView.channelId;
+
+  // Upload image if provided
+  let imageUrl = '';
+  if (imageFile) {
+    try {
+      imageUrl = await uploadChatImage(imageFile);
+    } catch (e) {
+      console.error('DM image upload error:', e);
+      addLocalMessage('Failed to upload image.', 'err');
+      return;
+    }
+  }
 
   // Build message with optional reply
   const msg = {
@@ -140,9 +152,10 @@ export async function sendDmMessage(text) {
     name: state.me.name,
     color: state.me.color,
     avatarUrl: state.me.avatarUrl || '',
-    text,
+    text: text || '',
     ts: serverTimestamp()
   };
+  if (imageUrl) msg.imageUrl = imageUrl;
   if (state.replyTo) {
     msg.replyToId = state.replyTo.id;
     msg.replyToName = state.replyTo.name;
@@ -158,7 +171,7 @@ export async function sendDmMessage(text) {
     await db.collection('dm-channels').doc(channelId).collection('messages').add(msg);
 
     await db.collection('dm-channels').doc(channelId).update({
-      lastMessage: text.substring(0, 100),
+      lastMessage: imageUrl ? (text || '📷 Image') : text.substring(0, 100),
       lastSender: state.me.name,
       lastTs: serverTimestamp(),
       ['lastRead_' + state.me.uid]: firebase.firestore.FieldValue.serverTimestamp()

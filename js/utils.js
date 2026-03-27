@@ -198,6 +198,16 @@ export function themeColor(hex) {
   return '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
 }
 
+// ─── Image upload to Firebase Storage ────────────────────────────────────────
+export async function uploadChatImage(file) {
+  const uid = state.me.uid;
+  const ext = file.name?.split('.').pop() || 'png';
+  const fileName = uid + '_' + Date.now() + '.' + ext;
+  const ref = firebase.storage().ref('chat-images/' + fileName);
+  await ref.put(file, { contentType: file.type });
+  return ref.getDownloadURL();
+}
+
 // ─── URL validation ─────────────────────────────────────────────────────────
 export function isValidUrl(str) {
   return /^https?:\/\/.+/.test(str);

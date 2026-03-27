@@ -1,7 +1,7 @@
 // ─── Chat Controller ────────────────────────────────────────────────────────
 import { HEARTBEAT_MS, TYPING_TIMEOUT_MS, TYPING_STALE_MS, MSG_QUERY_LIMIT } from './config.js';
 import { state, $ } from './state.js';
-import { getDb, serverTimestamp, buildMsgObj, playPing } from './utils.js';
+import { getDb, serverTimestamp, buildMsgObj, playPing, uploadChatImage } from './utils.js';
 import { showScreen } from './auth.js';
 import { renderChatMessages } from './render.js';
 import {
@@ -256,8 +256,9 @@ function setupInput() {
 export async function handleSend() {
   const inp = $('iInp');
   const raw = inp.value.trim();
+  const hasImage = !!state.pendingImage;
 
-  if (!raw || !state.me || state.disconnected) return;
+  if ((!raw && !hasImage) || !state.me || state.disconnected) return;
 
   // Clear input
   inp.value = '';
@@ -266,9 +267,13 @@ export async function handleSend() {
   $('iSend').className = 'i-send';
   $('iCc').textContent = '';
 
+  // Grab and clear pending image
+  const imageFile = state.pendingImage;
+  clearPendingImage();
+
   // DM mode
   if (state.dmView) {
-    await sendDmMessage(raw);
+    await sendDmMessage(raw, imageFile);
     inp.focus();
     return;
   }
@@ -277,10 +282,7 @@ export async function handleSend() {
   clearTyping();
 
   // Bot commands (handles /price, /ca, /mcap, ca, price, etc.)
-  // 1. Check if it's a bot command (sync, no side effects)
-  // 2. Post user's message to chat so everyone sees the question
-  // 3. Bot responds — both messages visible to all users
-  if (isBotCommand(raw)) {
+  if (raw && isBotCommand(raw)) {
     const db = getDb();
     try {
       await db.collection('messages').add(buildMsgObj('user', raw, { deleted: false }));
@@ -292,7 +294,7 @@ export async function handleSend() {
   }
 
   // Slash commands (user commands like /help, /me, /mute, etc.)
-  if (raw.startsWith('/')) {
+  if (raw && raw.startsWith('/')) {
     await handleCommand(raw);
     inp.focus();
     return;
@@ -305,8 +307,22 @@ export async function handleSend() {
     return;
   }
 
+  // Upload image if attached
+  let imageUrl = '';
+  if (imageFile) {
+    try {
+      imageUrl = await uploadChatImage(imageFile);
+    } catch (e) {
+      console.error('Image upload error:', e);
+      addLocalMessage('Failed to upload image.', 'err');
+      inp.focus();
+      return;
+    }
+  }
+
   // Build reply fields if replying
   const extra = { deleted: false };
+  if (imageUrl) extra.imageUrl = imageUrl;
   if (state.replyTo) {
     extra.replyToId = state.replyTo.id;
     extra.replyToName = state.replyTo.name;
@@ -318,13 +334,43 @@ export async function handleSend() {
   // Send message
   const db = getDb();
   try {
-    await db.collection('messages').add(buildMsgObj('user', raw, extra));
+    await db.collection('messages').add(buildMsgObj('user', raw || '', extra));
     scrollToBottom();
   } catch (e) {
     console.error('Send error:', e);
     inp.value = raw; // Restore on failure
   }
   inp.focus();
+}
+
+// ─── Image attachment helpers ────────────────────────────────────────────────
+export function setPendingImage(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  if (file.size > 5 * 1024 * 1024) {
+    addLocalMessage('Image must be under 5MB.', 'err');
+    return;
+  }
+  state.pendingImage = file;
+  const preview = $('imgPreview');
+  const img = $('imgPreviewImg');
+  img.src = URL.createObjectURL(file);
+  preview.classList.add('on');
+  $('iSend').disabled = false;
+  $('iSend').className = 'i-send ok';
+}
+
+export function clearPendingImage() {
+  state.pendingImage = null;
+  const preview = $('imgPreview');
+  const img = $('imgPreviewImg');
+  if (img.src) URL.revokeObjectURL(img.src);
+  img.src = '';
+  preview.classList.remove('on');
+  // Re-check if send should be enabled
+  const inp = $('iInp');
+  const ok = inp && inp.value.trim();
+  $('iSend').disabled = !ok;
+  $('iSend').className = ok ? 'i-send ok' : 'i-send';
 }
 
 // ─── Typing presence ────────────────────────────────────────────────────────

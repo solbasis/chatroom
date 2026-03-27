@@ -105,12 +105,15 @@ export function renderChatMessages(msgs) {
     if (isDeleted) {
       html += `<div class="m-txt" style="color:var(--text-mute)">[deleted${m.deletedBy ? ' by ' + esc(m.deletedBy) : ''}]</div>`;
     } else {
-      html += `<div class="m-txt">${formatMessage(m.text)}</div>`;
+      if (m.imageUrl) {
+        html += `<div class="m-img"><img src="${esc(m.imageUrl)}" alt="shared image" loading="lazy" onclick="window.open(this.src,'_blank')"></div>`;
+      }
+      if (m.text) html += `<div class="m-txt">${formatMessage(m.text)}</div>`;
     }
 
     html += `<div class="m-meta"><span class="m-time">${time}</span>`;
     if (!isDeleted) {
-      html += `<button class="m-reply-btn" data-replyid="${esc(m.id)}" data-replyname="${esc(m.name)}" data-replytext="${escAttr(m.text.substring(0, 80))}" data-replycolor="${esc(m.color)}">REPLY</button>`;
+      html += `<button class="m-reply-btn" data-replyid="${esc(m.id)}" data-replyname="${esc(m.name)}" data-replytext="${escAttr((m.text || (m.imageUrl ? '📷 Image' : '')).substring(0, 80))}" data-replycolor="${esc(m.color)}">REPLY</button>`;
     }
     if (canDelete) {
       html += `<button class="m-del" data-delid="${esc(m.id)}">DEL</button>`;
@@ -199,9 +202,12 @@ export function renderDmMessages(msgs) {
       `</div>`;
     }
 
-    html += `<div class="m-txt">${formatMessage(m.text)}</div>`;
+    if (m.imageUrl) {
+      html += `<div class="m-img"><img src="${esc(m.imageUrl)}" alt="shared image" loading="lazy" onclick="window.open(this.src,'_blank')"></div>`;
+    }
+    if (m.text) html += `<div class="m-txt">${formatMessage(m.text)}</div>`;
     html += `<div class="m-meta"><span class="m-time">${time}</span>`;
-    html += `<button class="m-reply-btn" data-replyid="${esc(m.id)}" data-replyname="${esc(m.name)}" data-replytext="${escAttr(m.text.substring(0, 80))}" data-replycolor="${esc(m.color)}">REPLY</button>`;
+    html += `<button class="m-reply-btn" data-replyid="${esc(m.id)}" data-replyname="${esc(m.name)}" data-replytext="${escAttr((m.text || '').substring(0, 80))}" data-replycolor="${esc(m.color)}">REPLY</button>`;
     html += `</div></div></div></div></div>`;
 
     lastUid = m.uid;
