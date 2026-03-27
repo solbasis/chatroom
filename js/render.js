@@ -7,11 +7,15 @@ import {
 
 // ─── Lookup current user profile for live avatar/color ─────────────────────
 function liveProfile(m) {
+  // Bot always uses its own fixed identity — never override from allUsers
+  if (m.uid === 'bot-databasis' || m.name === 'databasis') {
+    return { avatarUrl: '', color: '#6ee75a', role: 'bot' };
+  }
   const user = state.allUsers.find(u => u.id === m.uid);
   return {
     avatarUrl: user?.avatarUrl || m.avatarUrl || '',
-    color: user?.color || m.color || '#6ee75a',
-    role: user?.role || m.role || 'user'
+    color:     user?.color    || m.color    || '#6ee75a',
+    role:      user?.role     || m.role     || 'user'
   };
 }
 
