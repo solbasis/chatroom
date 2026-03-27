@@ -46,8 +46,6 @@ window.logout    = logout;
 window.closeDM      = closeDM;
 window.openProfile  = openProfile;
 window.toggleTheme  = toggleTheme;
-window.switchSbTabGlobal = switchSbTab;
-
 // ─── Event Delegation ───────────────────────────────────────────────────────
 // Instead of inline onclick handlers in dynamic HTML, we delegate events
 // from stable parent elements. This is more robust and prevents XSS via

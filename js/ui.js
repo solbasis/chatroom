@@ -129,31 +129,14 @@ export function switchSbTab(tab) {
     updateAlertBadge();
   }
 
-  // Update bottom nav active state
-  updateBotNavActive(tab);
-}
-
-export function updateBotNavActive(tab) {
-  ['botNavChat', 'botNavDms', 'botNavAlerts'].forEach(id => {
-    const el = $(id);
-    if (el) el.classList.remove('active');
-  });
-  if (tab === 'chat' && $('botNavChat')) $('botNavChat').classList.add('active');
-  if (tab === 'dms'  && $('botNavDms'))  $('botNavDms').classList.add('active');
-  if (tab === 'alerts' && $('botNavAlerts')) $('botNavAlerts').classList.add('active');
 }
 
 export function updateAlertBadge() {
   const badge = $('alertBadge');
-  const botBadge = $('botNavAlertBadge');
   const count = state.alertsUnread;
   if (badge) {
     if (count > 0) { badge.textContent = count; badge.classList.add('on'); }
     else { badge.classList.remove('on'); }
-  }
-  if (botBadge) {
-    if (count > 0) { botBadge.textContent = count; botBadge.classList.add('on'); }
-    else { botBadge.classList.remove('on'); }
   }
 }
 
@@ -318,14 +301,11 @@ export function updateDmBadge() {
   });
   state.totalUnread = total;
   const badge = $('dmBadge');
-  const botBadge = $('botNavDmBadge');
   if (total > 0) {
     badge.textContent = total;
     badge.classList.add('on');
-    if (botBadge) { botBadge.textContent = total; botBadge.classList.add('on'); }
   } else {
     badge.classList.remove('on');
-    if (botBadge) botBadge.classList.remove('on');
   }
 }
 

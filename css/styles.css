@@ -1491,40 +1491,7 @@ mark {
 }
 .prof-link a:hover { border-bottom-color: var(--g); }
 
-/* ─── Bottom Nav Bar (mobile only) ──────────────────────────────────────── */
-.bot-nav {
-  display: none; /* shown via media query */
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-  background: var(--bg2); border-top: 1px dashed var(--border);
-  height: 56px; align-items: stretch; justify-content: stretch;
-  backdrop-filter: blur(8px);
-}
-.bot-nav-btn {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 2px;
-  background: 0; border: 0; border-right: 1px dashed var(--border);
-  color: var(--text-mute); font-family: var(--mono);
-  cursor: pointer; transition: .16s; padding: 6px 4px;
-  position: relative; min-height: 56px;
-}
-.bot-nav-btn:last-child { border-right: 0; }
-.bot-nav-btn:hover, .bot-nav-btn.active {
-  background: var(--g06); color: var(--g);
-}
-.bot-nav-ic { font-size: 1rem; line-height: 1; }
-.bot-nav-lbl { font-size: .46rem; letter-spacing: 1.2px; text-transform: uppercase; }
-.bot-nav-badge {
-  position: absolute; top: 6px; right: 6px;
-  min-width: 14px; height: 14px; border-radius: 7px;
-  background: var(--g); color: var(--bg);
-  font-size: .44rem; font-weight: 700; padding: 0 3px;
-  display: none; align-items: center; justify-content: center;
-}
-.bot-nav-badge.on { display: flex; }
-
 @media (max-width: 768px) {
-  .bot-nav { display: flex; }
-  .msgs { padding-bottom: 70px; } /* avoid messages hidden behind bot nav */
   .m-reply-btn, .m-del {
     min-height: 36px; padding: 6px 8px;
     display: inline-flex; align-items: center; justify-content: center;
