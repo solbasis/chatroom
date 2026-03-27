@@ -1,20 +1,61 @@
 // ─── Buy Alert Poller (GitHub Actions) ──────────────────────────────────────
 // Runs every 5 minutes via GitHub Actions cron. Polls Helius for new $BASIS
-// buys and writes alert messages to Firestore. Tracks last-seen transaction
-// in a Firestore document to avoid duplicates across runs.
+// buys/sells and writes alert messages to Firestore. Tracks last-seen
+// transaction in a Firestore document to avoid duplicates across runs.
 
-const TOKEN_CA    = 'A5BJBQUTR5sTzkM89hRDuApWyvgjdXpR7B7rW1r9pump';
-const DEX_LINK    = 'https://dexscreener.com/solana/cf8bkjprah98nxyuttx9o2r8edxfbvjw7t1f55xv5fpi';
-const WSOL        = 'So11111111111111111111111111111111111111112';
-const JUP_PRICE   = 'https://api.jup.ag/price/v2';
-const DEX_TOKENS  = `https://api.dexscreener.com/tokens/v1/solana/${TOKEN_CA}`;
+const TOKEN_CA     = 'A5BJBQUTR5sTzkM89hRDuApWyvgjdXpR7B7rW1r9pump';
+const DEX_LINK     = 'https://dexscreener.com/solana/cf8bkjprah98nxyuttx9o2r8edxfbvjw7t1f55xv5fpi';
+const WSOL         = 'So11111111111111111111111111111111111111112';
+const JUP_PRICE    = 'https://api.jup.ag/price/v2';
+const DEX_TOKENS   = `https://api.dexscreener.com/tokens/v1/solana/${TOKEN_CA}`;
 const BASIS_SUPPLY = 1_000_000_000;
-const MIN_SOL     = 0.5;
+const MIN_SOL      = 0.5;
+const FETCH_LIMIT  = 50; // increased from 20
+
+// ─── Tier thresholds (SOL) ───────────────────────────────────────────────────
+const TIERS = [
+  { min: 50,  emoji: '🐳', label: 'WHALE'   },
+  { min: 10,  emoji: '🦈', label: 'SHARK'   },
+  { min: 2,   emoji: '🐬', label: 'DOLPHIN' },
+  { min: 0,   emoji: '🐟', label: 'FISH'    },
+];
+
+function getTier(solAmt) {
+  return TIERS.find(t => solAmt >= t.min);
+}
+
+// ─── ASCII bar ───────────────────────────────────────────────────────────────
+function buildBar(solAmt) {
+  const max    = 50;
+  const filled = Math.min(Math.round((solAmt / max) * 20), 20);
+  const empty  = 20 - filled;
+  return '[' + '█'.repeat(filled) + '░'.repeat(empty) + ']';
+}
+
+// ─── Format helpers ──────────────────────────────────────────────────────────
+function fmtUsd(usd) {
+  if (usd >= 1_000_000) return '$' + (usd / 1_000_000).toFixed(2) + 'M';
+  if (usd >= 1_000)     return '$' + (usd / 1_000).toFixed(1) + 'K';
+  return '$' + usd.toFixed(2);
+}
+
+function fmtMcap(mcap) {
+  if (!mcap || mcap === 0) return '—';
+  if (mcap >= 1_000_000) return '$' + (mcap / 1_000_000).toFixed(2) + 'M';
+  if (mcap >= 1_000)     return '$' + (mcap / 1_000).toFixed(1) + 'K';
+  return '$' + mcap.toFixed(0);
+}
+
+function fmtPct(pct) {
+  if (pct === null || pct === undefined || isNaN(pct)) return '—';
+  const sign = pct >= 0 ? '+' : '';
+  return sign + pct.toFixed(2) + '%';
+}
 
 async function main() {
   // ── 1. Init Firebase Admin ────────────────────────────────────────────
   const admin = (await import('firebase-admin')).default;
-  const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  const sa    = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
   admin.initializeApp({ credential: admin.credential.cert(sa) });
   const db = admin.firestore();
   const ts = () => admin.firestore.FieldValue.serverTimestamp();
@@ -22,24 +63,29 @@ async function main() {
   const HELIUS_KEY = process.env.HELIUS_API_KEY;
   if (!HELIUS_KEY) { console.error('No HELIUS_API_KEY'); process.exit(1); }
 
-  // ── 2. Get last seen signature from Firestore ─────────────────────────
-  const stateRef = db.collection('bot-state').doc('buy-alerts');
-  const stateDoc = await stateRef.get();
-  let lastSig = stateDoc.exists ? stateDoc.data().lastSignature : null;
+  // ── 2. Get state from Firestore ───────────────────────────────────────
+  const stateRef  = db.collection('bot-state').doc('buy-alerts');
+  const stateDoc  = await stateRef.get();
+  const stateData = stateDoc.exists ? stateDoc.data() : {};
+  let lastSig     = stateData.lastSignature || null;
+  let athMcap     = stateData.athMcap       || 0;
+  // Known buyers: { [wallet]: count }
+  const knownBuyers = stateData.knownBuyers || {};
 
   console.log('Last seen sig:', lastSig ? lastSig.slice(0, 12) + '...' : 'none (first run)');
+  console.log('ATH mcap:', fmtMcap(athMcap));
 
   // ── 3. Fetch recent swaps from Helius ─────────────────────────────────
-  const url = `https://api.helius.xyz/v0/addresses/${TOKEN_CA}/transactions?api-key=${HELIUS_KEY}&limit=20`;
+  const url = `https://api.helius.xyz/v0/addresses/${TOKEN_CA}/transactions?api-key=${HELIUS_KEY}&limit=${FETCH_LIMIT}`;
   const res = await fetch(url);
   if (!res.ok) { console.error('Helius error:', res.status); process.exit(1); }
 
   const txns = await res.json();
   if (!txns?.length) { console.log('No transactions found.'); process.exit(0); }
 
-  // First run — just save the latest sig
+  // First run — anchor and exit
   if (!lastSig) {
-    await stateRef.set({ lastSignature: txns[0].signature, updatedAt: ts() });
+    await stateRef.set({ lastSignature: txns[0].signature, updatedAt: ts(), athMcap, knownBuyers });
     console.log('First run — anchored to:', txns[0].signature.slice(0, 12) + '...');
     process.exit(0);
   }
@@ -51,122 +97,214 @@ async function main() {
     fresh.push(tx);
   }
 
-  if (!fresh.length) {
-    console.log('No new transactions.');
-    process.exit(0);
-  }
-
+  if (!fresh.length) { console.log('No new transactions.'); process.exit(0); }
   console.log(`Found ${fresh.length} new transactions.`);
 
-  // Update last seen
-  await stateRef.set({ lastSignature: fresh[0].signature, updatedAt: ts() });
+  // ── 5. Fetch market data (price, mcap, 24h change, volume) ───────────
+  let price  = 0;
+  let mcap   = 0;
+  let pct24h = null;
+  let vol24h = 0;
 
-  // ── 5. Parse buys ────────────────────────────────────────────────────
-  const buys = [];
-  for (const tx of fresh) {
-    const txType = tx.type || 'UNKNOWN';
-    const sig = tx.signature?.slice(0, 12) || '?';
-    console.log(`  Tx ${sig}... type=${txType} hasSwap=${!!tx.events?.swap} transfers=${tx.tokenTransfers?.length || 0}`);
-
-    const buy = parseBuy(tx);
-    if (buy) {
-      if (buy.solAmt >= MIN_SOL) {
-        buys.push(buy);
-        console.log(`    → BUY: ${buy.solAmt.toFixed(4)} SOL → ${buy.basisAmt.toFixed(0)} BASIS`);
-      } else {
-        console.log(`    → Skip: ${buy.solAmt.toFixed(4)} SOL < ${MIN_SOL} min`);
-      }
-    } else {
-      console.log(`    → Not a buy (sell or other)`);
-    }
-  }
-
-  if (!buys.length) {
-    console.log('No qualifying buys (min', MIN_SOL, 'SOL).');
-    process.exit(0);
-  }
-
-  console.log(`${buys.length} buy alert(s) to post.`);
-
-  // ── 6. Fetch current market cap for alerts ────────────────────────────
-  let mcap = 0;
-  // Try DexScreener first for price
   try {
     const dexRes = await fetch(DEX_TOKENS);
     if (dexRes.ok) {
       const dexData = await dexRes.json();
-      const pairs = Array.isArray(dexData) ? dexData : (dexData.pairs ?? []);
+      const pairs   = Array.isArray(dexData) ? dexData : (dexData.pairs ?? []);
       for (const pair of pairs) {
         const base  = pair.baseToken?.address ?? '';
         const quote = pair.quoteToken?.address ?? '';
-        const price = parseFloat(pair.priceUsd);
-        if (!price || isNaN(price)) continue;
+        const p     = parseFloat(pair.priceUsd);
+        if (!p || isNaN(p)) continue;
         if (base === TOKEN_CA || quote === TOKEN_CA) {
-          const p = base === TOKEN_CA ? price : 1 / price;
-          mcap = p * BASIS_SUPPLY;
+          price  = base === TOKEN_CA ? p : 1 / p;
+          mcap   = price * BASIS_SUPPLY;
+          pct24h = parseFloat(pair.priceChange?.h24 ?? null);
+          vol24h = parseFloat(pair.volume?.h24 ?? 0);
           break;
         }
       }
     }
-  } catch (e) { console.warn('DexScreener mcap failed:', e.message); }
+  } catch (e) { console.warn('DexScreener failed:', e.message); }
 
-  // Fallback to Jupiter
-  if (mcap === 0) {
+  // Fallback to Jupiter for price
+  if (price === 0) {
     try {
-      const jupRes = await fetch(`${JUP_PRICE}?ids=${TOKEN_CA}`);
+      const jupRes  = await fetch(`${JUP_PRICE}?ids=${TOKEN_CA}`);
       const jupData = await jupRes.json();
-      const price = parseFloat(jupData?.data?.[TOKEN_CA]?.price || 0);
+      price = parseFloat(jupData?.data?.[TOKEN_CA]?.price || 0);
       if (price > 0) mcap = price * BASIS_SUPPLY;
-    } catch (e) { console.warn('Jupiter mcap failed:', e.message); }
+    } catch (e) { console.warn('Jupiter price failed:', e.message); }
   }
 
-  const mcapStr = mcap > 0
-    ? '$' + Number(mcap).toLocaleString('en-US', { maximumFractionDigits: 0 })
-    : '—';
-
-  // ── 7. Post buy alerts to Firestore ───────────────────────────────────
-  for (const buy of buys.reverse()) {  // oldest first
-    const solFmt   = Number(buy.solAmt).toLocaleString('en-US', { maximumFractionDigits: 4 });
-    const basisFmt = Number(buy.basisAmt).toLocaleString('en-US', { maximumFractionDigits: 0 });
-    const addr     = buy.buyer.slice(0, 6) + '...' + buy.buyer.slice(-4);
-    const txUrl    = `https://solscan.io/tx/${buy.sig}`;
-
-    const text = `**$BASIS BUY DETECTED**\n\n` +
-      `Amount: ${solFmt} SOL → ${basisFmt} $BASIS\n` +
-      `Buyer: ${addr}\n` +
-      `Txn: ${txUrl}\n` +
-      `Market Cap: ${mcapStr}`;
-
-    await db.collection('messages').add({
-      type: 'user',
-      uid: 'bot-databasis',
-      name: 'databasis',
-      color: '#6ee75a',
-      role: 'bot',
-      avatarUrl: '',
-      text,
-      ts: ts(),
-      deleted: false,
-    });
-
-    console.log(`🟢 Posted alert: ${solFmt} SOL by ${addr}`);
+  // ── 6. ATH check ─────────────────────────────────────────────────────
+  let newAth = false;
+  if (mcap > 0 && mcap > athMcap) {
+    athMcap = mcap;
+    newAth  = true;
+    console.log('🏆 New ATH mcap:', fmtMcap(athMcap));
   }
 
+  // ── 7. Parse buys and sells ───────────────────────────────────────────
+  const alerts = [];
+  for (const tx of fresh) {
+    const txType = tx.type || 'UNKNOWN';
+    const sig    = tx.signature?.slice(0, 12) || '?';
+    console.log(`  Tx ${sig}... type=${txType}`);
+
+    const buy = parseBuy(tx);
+    if (buy) {
+      if (buy.solAmt >= MIN_SOL) {
+        alerts.push({ ...buy, kind: 'buy' });
+        console.log(`    → BUY: ${buy.solAmt.toFixed(4)} SOL → ${buy.basisAmt.toFixed(0)} BASIS`);
+      } else {
+        console.log(`    → Skip buy: ${buy.solAmt.toFixed(4)} SOL < ${MIN_SOL} min`);
+      }
+      continue;
+    }
+
+    const sell = parseSell(tx);
+    if (sell) {
+      if (sell.basisAmt >= 10_000) { // min 10k BASIS to post sell alert
+        alerts.push({ ...sell, kind: 'sell' });
+        console.log(`    → SELL: ${sell.basisAmt.toFixed(0)} BASIS → ${sell.solAmt.toFixed(4)} SOL`);
+      } else {
+        console.log(`    → Skip sell: ${sell.basisAmt.toFixed(0)} BASIS < min`);
+      }
+      continue;
+    }
+
+    console.log(`    → Not a qualifying swap`);
+  }
+
+  // Update state
+  await stateRef.set({
+    lastSignature: fresh[0].signature,
+    updatedAt: ts(),
+    athMcap,
+    knownBuyers,
+  });
+
+  if (!alerts.length) {
+    console.log('No qualifying alerts.');
+    process.exit(0);
+  }
+
+  console.log(`${alerts.length} alert(s) to post.`);
+
+  // ── 8. Post alerts to Firestore ───────────────────────────────────────
+  const batch = db.batch();
+  const alertsCol   = db.collection('alerts');
+  const messagesCol = db.collection('messages');
+
+  for (const alert of alerts.reverse()) { // oldest first
+    const walletShort = alert.buyer.slice(0, 6) + '...' + alert.buyer.slice(-4);
+    const walletUrl   = `https://solscan.io/account/${alert.buyer}`;
+    const txUrl       = `https://solscan.io/tx/${alert.sig}`;
+
+    if (alert.kind === 'buy') {
+      // Track buyer
+      knownBuyers[alert.buyer] = (knownBuyers[alert.buyer] || 0) + 1;
+      const buyCount    = knownBuyers[alert.buyer];
+      const returning   = buyCount > 1 ? `🔁 Returning buyer (#${buyCount})` : '🆕 New buyer';
+
+      const tier        = getTier(alert.solAmt);
+      const usdValue    = price > 0 ? alert.solAmt * (price / (alert.basisAmt / alert.solAmt || 1)) : 0;
+      // Simpler: USD = solAmt * SOL price. Estimate SOL price from mcap/supply ratio isn't right.
+      // Use: if we have BASIS price in USD, usd = basisAmt * price
+      const usdSpent    = price > 0 ? alert.basisAmt * price : 0;
+      const pctSupply   = (alert.basisAmt / BASIS_SUPPLY * 100).toFixed(4);
+      const bar         = buildBar(alert.solAmt);
+      const solFmt      = alert.solAmt.toLocaleString('en-US', { maximumFractionDigits: 4 });
+      const basisFmt    = alert.basisAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
+
+      const athLine     = newAth ? `\n🏆 NEW ATH MCAP: ${fmtMcap(athMcap)}` : '';
+      const vol24hLine  = vol24h > 0 ? `\n📊 24h Volume: ${fmtMcap(vol24h)}` : '';
+      const pctLine     = pct24h !== null ? `\n📈 24h Change: ${fmtPct(pct24h)}` : '';
+
+      const text =
+        `${tier.emoji} **$BASIS ${tier.label} BUY!** ${tier.emoji}\n` +
+        `${bar}\n\n` +
+        `💰 ${solFmt} SOL${usdSpent > 0 ? ` (${fmtUsd(usdSpent)})` : ''} → ${basisFmt} $BASIS\n` +
+        `📦 ${pctSupply}% of supply\n` +
+        `👤 [${walletShort}](${walletUrl}) — ${returning}\n` +
+        `🔗 [View Tx](${txUrl})\n` +
+        `📉 MCap: ${fmtMcap(mcap)}${athLine}${pctLine}${vol24hLine}\n` +
+        `📈 [Chart](${DEX_LINK})`;
+
+      const docData = {
+        type: 'user',
+        uid: 'bot-databasis',
+        name: 'databasis',
+        color: '#6ee75a',
+        role: 'bot',
+        avatarUrl: '',
+        text,
+        ts: ts(),
+        deleted: false,
+      };
+
+      // Post to both main messages + dedicated alerts collection
+      batch.set(messagesCol.doc(), docData);
+      batch.set(alertsCol.doc(), { ...docData, kind: 'buy', solAmt: alert.solAmt, basisAmt: alert.basisAmt, buyer: alert.buyer, sig: alert.sig });
+
+      console.log(`🟢 Buy alert: ${solFmt} SOL by ${walletShort} [${tier.label}]`);
+
+    } else {
+      // SELL alert
+      const basisFmt  = alert.basisAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
+      const solFmt    = alert.solAmt.toLocaleString('en-US', { maximumFractionDigits: 4 });
+      const usdVal    = price > 0 ? alert.basisAmt * price : 0;
+      const pctSupply = (alert.basisAmt / BASIS_SUPPLY * 100).toFixed(4);
+      const walletShort2 = alert.buyer.slice(0, 6) + '...' + alert.buyer.slice(-4);
+      const walletUrl2   = `https://solscan.io/account/${alert.buyer}`;
+
+      const text =
+        `🔴 **$BASIS SELL ALERT**\n\n` +
+        `💸 ${basisFmt} $BASIS${usdVal > 0 ? ` (${fmtUsd(usdVal)})` : ''} → ${solFmt} SOL\n` +
+        `📦 ${pctSupply}% of supply\n` +
+        `👤 [${walletShort2}](${walletUrl2})\n` +
+        `🔗 [View Tx](${txUrl})\n` +
+        `📉 MCap: ${fmtMcap(mcap)}\n` +
+        `📈 [Chart](${DEX_LINK})`;
+
+      const docData = {
+        type: 'user',
+        uid: 'bot-databasis',
+        name: 'databasis',
+        color: '#e75a5a',
+        role: 'bot',
+        avatarUrl: '',
+        text,
+        ts: ts(),
+        deleted: false,
+      };
+
+      batch.set(messagesCol.doc(), docData);
+      batch.set(alertsCol.doc(), { ...docData, kind: 'sell', solAmt: alert.solAmt, basisAmt: alert.basisAmt, buyer: alert.buyer, sig: alert.sig });
+
+      console.log(`🔴 Sell alert: ${basisFmt} BASIS by ${walletShort2}`);
+    }
+  }
+
+  // Persist updated knownBuyers
+  await stateRef.update({ knownBuyers, athMcap, updatedAt: ts() });
+
+  await batch.commit();
   console.log('Done.');
   process.exit(0);
 }
 
-// ─── Parse buy from Helius enhanced transaction ─────────────────────────────
+// ─── Parse BUY from Helius enhanced transaction ──────────────────────────────
 function parseBuy(tx) {
   try {
     const buyer = tx.feePayer || '';
     let solAmt = 0, basisAmt = 0;
 
-    // Method 1: Check swap events (standard DEX swaps)
     if (tx.events?.swap) {
       const swap = tx.events.swap;
       if (swap.nativeInput) solAmt = (swap.nativeInput.amount || 0) / 1e9;
-      for (const ti of swap.tokenInputs || []) {
+      for (const ti of swap.tokenInputs  || []) {
         if (ti.mint === WSOL) solAmt += parseFloat(ti.tokenAmount || 0);
       }
       for (const to of swap.tokenOutputs || []) {
@@ -178,31 +316,64 @@ function parseBuy(tx) {
       }
     }
 
-    // Method 2: Always check tokenTransfers (pump.fun swaps may not have events.swap)
     if (basisAmt === 0) {
       for (const t of tx.tokenTransfers || []) {
-        if (t.mint === TOKEN_CA) {
-          // Buyer receives $BASIS — could be feePayer or any user in the tx
-          basisAmt += t.tokenAmount || 0;
-        }
-        if (t.mint === WSOL && t.fromUserAccount === buyer) {
-          solAmt += t.tokenAmount || 0;
-        }
+        if (t.mint === TOKEN_CA) basisAmt += t.tokenAmount || 0;
+        if (t.mint === WSOL && t.fromUserAccount === buyer) solAmt += t.tokenAmount || 0;
       }
     }
 
-    // Method 3: Check native SOL transfers if still missing SOL amount
     if (solAmt === 0) {
       for (const t of tx.nativeTransfers || []) {
-        if (t.fromUserAccount === buyer && t.amount > 10_000_000) { // > 0.01 SOL (skip tiny fees)
+        if (t.fromUserAccount === buyer && t.amount > 10_000_000) {
           solAmt += (t.amount || 0) / 1e9;
         }
       }
     }
 
-    // Only count as a buy if we see both SOL spent and BASIS received
     if (basisAmt <= 0 || solAmt <= 0) return null;
     return { sig: tx.signature, buyer, solAmt, basisAmt };
+  } catch { return null; }
+}
+
+// ─── Parse SELL from Helius enhanced transaction ─────────────────────────────
+function parseSell(tx) {
+  try {
+    const seller = tx.feePayer || '';
+    let solAmt = 0, basisAmt = 0;
+
+    if (tx.events?.swap) {
+      const swap = tx.events.swap;
+      if (swap.nativeOutput) solAmt = (swap.nativeOutput.amount || 0) / 1e9;
+      for (const to of swap.tokenOutputs || []) {
+        if (to.mint === WSOL) solAmt += parseFloat(to.tokenAmount || 0);
+      }
+      for (const ti of swap.tokenInputs || []) {
+        if (ti.mint === TOKEN_CA) {
+          basisAmt += ti.rawTokenAmount
+            ? parseFloat(ti.rawTokenAmount.tokenAmount) / Math.pow(10, ti.rawTokenAmount.decimals || 6)
+            : parseFloat(ti.tokenAmount || 0);
+        }
+      }
+    }
+
+    if (basisAmt === 0) {
+      for (const t of tx.tokenTransfers || []) {
+        if (t.mint === TOKEN_CA && t.fromUserAccount === seller) basisAmt += t.tokenAmount || 0;
+        if (t.mint === WSOL && t.toUserAccount === seller) solAmt += t.tokenAmount || 0;
+      }
+    }
+
+    if (solAmt === 0) {
+      for (const t of tx.nativeTransfers || []) {
+        if (t.toUserAccount === seller && t.amount > 10_000_000) {
+          solAmt += (t.amount || 0) / 1e9;
+        }
+      }
+    }
+
+    if (basisAmt <= 0 || solAmt <= 0) return null;
+    return { sig: tx.signature, buyer: seller, solAmt, basisAmt };
   } catch { return null; }
 }
 

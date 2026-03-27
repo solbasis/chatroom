@@ -152,5 +152,12 @@ service cloud.firestore {
       // Client-side reads are allowed so the bot engine can check state.
       allow write: if false;
     }
+
+    // ── ALERTS (dedicated buy/sell alert feed) ────────────────────────────────
+    match /alerts/{doc} {
+      allow read: if authed();
+      // Only Admin SDK (GitHub Actions) writes alerts
+      allow write: if false;
+    }
   }
 }
