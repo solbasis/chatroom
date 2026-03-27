@@ -149,7 +149,7 @@
     radial-gradient(ellipse 110px 110px at 45% 40%, rgba(58, 122, 40, .04) 0%, transparent 70%);
   animation: thermalDrift 20s ease-in-out infinite alternate;
 }
-[data-theme="light"] #S_chat > * { position: relative; z-index: 1; }
+[data-theme="light"] .chat-wrap { position: relative; z-index: 1; }
 
 @keyframes thermalDrift {
   0%   { opacity: .6; transform: scale(1) translate(0, 0); }
