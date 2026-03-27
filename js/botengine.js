@@ -145,17 +145,19 @@ const GOODBYES = [
 // LOCK (prevents duplicate bot responses from multiple clients)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-async function tryLock(lockId, ttlMs = 10000) {
+async function tryLock(lockId, ttlMs = 15000) {
   const db = getDb();
   const ref = db.collection('bot-locks').doc(lockId);
   try {
-    const doc = await ref.get();
-    if (doc.exists) {
-      const age = Date.now() - (doc.data().ts?.toMillis?.() || 0);
-      if (age < ttlMs) return false;
-    }
-    await ref.set({ ts: serverTimestamp(), by: state.me?.uid || 'unknown' });
-    return true;
+    return await db.runTransaction(async txn => {
+      const doc = await txn.get(ref);
+      if (doc.exists) {
+        const age = Date.now() - (doc.data().ts?.toMillis?.() || 0);
+        if (age < ttlMs) return false;
+      }
+      txn.set(ref, { ts: serverTimestamp(), by: state.me?.uid || 'unknown' });
+      return true;
+    });
   } catch { return false; }
 }
 
@@ -192,15 +194,28 @@ export async function handleBotSystemMessage(text) {
     if (name.toLowerCase() === 'databasis') return;
     if (name === state.me?.name) return;
 
-    const lockId = `welcome-${name}-${Date.now().toString(36).slice(-4)}`;
+    // Deterministic 20-second bucket — all clients generate the same lock ID
+    const bucket = Math.floor(Date.now() / 20000);
+    const lockId = `welcome-${name.toLowerCase().replace(/\W/g, '')}-${bucket}`;
     if (!(await tryLock(lockId))) return;
+
+    // Detect returning user: lastSeen exists and is > 2 minutes old
+    const userProfile = state.allUsers.find(u => u.name === name);
+    const lastSeenMs = userProfile?.lastSeen?.toMillis?.() || 0;
+    const isReturning = lastSeenMs > 0 && (Date.now() - lastSeenMs) > 120000;
 
     setTimeout(async () => {
       const greeting = pick(GREETINGS)(name);
-      const bull = pick(BULLISH);
-      const info = pick(INFO_BLOCKS)();
-      const closer = Math.random() > 0.5 ? '\n\n' + pick(CLOSERS) : '';
-      await botPost(`${greeting}\n\n${bull}\n\n${info}${closer}`);
+      if (isReturning) {
+        // Short welcome for regulars
+        await botPost(greeting);
+      } else {
+        // Full welcome for newcomers
+        const bull = pick(BULLISH);
+        const info = pick(INFO_BLOCKS)();
+        const closer = Math.random() > 0.5 ? '\n\n' + pick(CLOSERS) : '';
+        await botPost(`${greeting}\n\n${bull}\n\n${info}${closer}`);
+      }
     }, 1500);
     return;
   }
@@ -208,7 +223,8 @@ export async function handleBotSystemMessage(text) {
   const kickMatch = text.match(/^(.+) (kicked|banned) by/);
   if (kickMatch) {
     const name = kickMatch[1];
-    const lockId = `bye-${name}-${Date.now().toString(36).slice(-4)}`;
+    const bucket = Math.floor(Date.now() / 20000);
+    const lockId = `bye-${name.toLowerCase().replace(/\W/g, '')}-${bucket}`;
     if (!(await tryLock(lockId))) return;
 
     setTimeout(async () => {
@@ -222,17 +238,20 @@ export async function handleBotSystemMessage(text) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const BOT_TRIGGERS = [
-  '/price', '/basis', 'price', 'price?', '$basis',
-  '/sol', 'sol price', 'sol price?', 'sol?',
-  '/ca', 'ca', 'ca?', '/links', 'links', '/contract', 'contract',
-  'what is the ca', 'whats the ca', "what's the ca",
+  // Slash commands — always unambiguous
+  '/price', '/basis', '/sol', '/ca', '/links', '/contract',
+  '/mcap', '/website', '/site', '/chart', '/dex',
+  '/twitter', '/x', '/tg', '/telegram',
+  // Short shorthands that are clear in a crypto context
+  'price', 'price?', '$basis',
+  'sol price', 'sol price?',
+  // CA requests
+  'ca?', 'what is the ca', 'whats the ca', "what's the ca",
   'send ca', 'drop the ca', 'ca pls', 'contract address',
   'drop ca', 'give ca', 'where to buy', 'how to buy',
-  '/mcap', 'mcap', 'market cap', 'marketcap', 'mc', 'mc?',
-  '/website', 'website', 'site', '/site',
-  '/chart', '/dex', 'chart', 'dex', 'chart?',
-  '/twitter', '/x', 'twitter', 'x?',
-  '/tg', '/telegram', 'telegram', 'tg', 'tg?',
+  // Market cap
+  'mcap', 'market cap', 'marketcap',
+  // Advanced commands
   '/volume', '/ath', '/holders',
 ];
 
@@ -262,7 +281,7 @@ export async function handleBotCommand(text) {
   }
 
   // ── SOL price ─────────────────────────────────────────────────────────
-  if (['/sol', 'sol price', 'sol price?', 'sol?'].includes(t)) {
+  if (['/sol', 'sol price', 'sol price?'].includes(t)) {
     try {
       const p = await getPrices();
       if (p.sol) await botPost(`SOL: $${fmtNum(p.sol, 2)} USD`);
@@ -272,7 +291,7 @@ export async function handleBotCommand(text) {
   }
 
   // ── CA / links ────────────────────────────────────────────────────────
-  if (['/ca', 'ca', 'ca?', '/links', 'links', '/contract', 'contract',
+  if (['/ca', 'ca?', '/links', '/contract',
        'what is the ca', 'whats the ca', "what's the ca",
        'send ca', 'drop the ca', 'ca pls', 'contract address',
        'drop ca', 'give ca', 'where to buy', 'how to buy'].includes(t)) {
@@ -285,7 +304,7 @@ export async function handleBotCommand(text) {
   }
 
   // ── Market cap ────────────────────────────────────────────────────────
-  if (['/mcap', 'mcap', 'market cap', 'marketcap', 'mc', 'mc?'].includes(t)) {
+  if (['/mcap', 'mcap', 'market cap', 'marketcap'].includes(t)) {
     try {
       const p = await getPrices();
       if (p.basis) {
@@ -299,16 +318,16 @@ export async function handleBotCommand(text) {
   }
 
   // ── Website ───────────────────────────────────────────────────────────
-  if (['/website', 'website', 'site', '/site'].includes(t)) { await botPost(`BASIS Website: ${TOKEN.website}`); return true; }
+  if (['/website', '/site'].includes(t)) { await botPost(`BASIS Website: ${TOKEN.website}`); return true; }
 
   // ── Chart / DEX ───────────────────────────────────────────────────────
-  if (['/chart', '/dex', 'chart', 'dex', 'chart?'].includes(t)) { await botPost(`$BASIS Chart: ${TOKEN.dex}`); return true; }
+  if (['/chart', '/dex'].includes(t)) { await botPost(`$BASIS Chart: ${TOKEN.dex}`); return true; }
 
   // ── Twitter ───────────────────────────────────────────────────────────
-  if (['/twitter', '/x', 'twitter', 'x?'].includes(t)) { await botPost(`Follow $BASIS on X: ${TOKEN.twitter}`); return true; }
+  if (['/twitter', '/x'].includes(t)) { await botPost(`Follow $BASIS on X: ${TOKEN.twitter}`); return true; }
 
   // ── Telegram ──────────────────────────────────────────────────────────
-  if (['/tg', '/telegram', 'telegram', 'tg', 'tg?'].includes(t)) { await botPost(`Join the $BASIS Telegram: ${TOKEN.telegram}`); return true; }
+  if (['/tg', '/telegram'].includes(t)) { await botPost(`Join the $BASIS Telegram: ${TOKEN.telegram}`); return true; }
 
   // ── Volume ────────────────────────────────────────────────────────────
   if (t === '/volume') {

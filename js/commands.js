@@ -60,14 +60,20 @@ export async function handleCommand(raw) {
       break;
 
     case '/users':
-    case '/who':
+    case '/who': {
+      const now = Date.now();
+      const onlineUsers = state.allUsers.filter(u => {
+        if (!u.lastSeen?.toMillis) return false;
+        return (now - u.lastSeen.toMillis()) < 90000;
+      });
       addLocalMessage(
-        `<strong>Online (${state.allUsers.length}):</strong>\n` +
-        state.allUsers.map(u =>
+        `<strong>Online (${onlineUsers.length}):</strong>\n` +
+        onlineUsers.map(u =>
           `  ${u.name} [${u.role || 'user'}]${u.muted ? ' (muted)' : ''}`
         ).join('\n')
       );
       break;
+    }
 
     case '/profile':
       openProfile(state.me?.name);

@@ -45,8 +45,8 @@ export async function enterChat() {
       // Only render if we're in chatroom view
       if (!state.dmView) renderChatMessages(msgs);
 
-      // Ping + pill for new messages (skip initial load)
-      if (isNew && last && last.uid !== state.me?.uid) {
+      // Ping + pill for new messages (skip initial load, skip bot messages)
+      if (isNew && last && last.uid !== state.me?.uid && last.uid !== 'bot-databasis') {
         const mentionsMe = last.text && state.me?.name &&
           last.text.toLowerCase().includes('@' + state.me.name.toLowerCase());
         if (!state.atBottom && !state.dmView) $('npill').classList.add('on');
@@ -60,8 +60,10 @@ export async function enterChat() {
       state.lastMsgCount = msgs.length;
 
       // Bot: handle new system messages (welcome / goodbye)
-      if (isNew && last && last.type === 'system' && last.uid !== 'bot-databasis') {
-        handleBotSystemMessage(last.text);
+      // Only handle messages < 30s old to prevent re-firing on reload
+      if (isNew && last && last.type === 'system') {
+        const msgAge = last.ts?.toMillis ? Date.now() - last.ts.toMillis() : Infinity;
+        if (msgAge < 30000) handleBotSystemMessage(last.text);
       }
 
       if (!state.initialLoadDone) {
