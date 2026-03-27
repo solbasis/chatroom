@@ -347,11 +347,18 @@ export async function handleBotCommand(text) {
     try {
       const db = getDb();
       const snap = await db.collection('bot-state').doc('buy-alerts').get();
-      if (snap.exists && snap.data().athMcap) {
-        const ath = snap.data().athMcap;
-        await botPost(`$BASIS ATH Market Cap: ${fmtUSD(ath)}\n\nChart: ${TOKEN.dex}`);
+      const recorded = snap.exists ? (snap.data().athMcap || 0) : 0;
+      if (recorded > 0) {
+        await botPost(`$BASIS ATH Market Cap: ${fmtUSD(recorded)}\n\nChart: ${TOKEN.dex}`);
       } else {
-        await botPost('⚠ ATH data not available yet.');
+        // Fall back to live price as minimum known ATH
+        const p = await getPrices();
+        if (p.basis) {
+          const liveMcap = p.basis * BASIS_SUPPLY;
+          await botPost(`$BASIS Market Cap (live): ${fmtUSD(liveMcap)}\n\nATH tracking begins once the buy-alert poller records a new high.\n\nChart: ${TOKEN.dex}`);
+        } else {
+          await botPost('⚠ ATH data not available yet.');
+        }
       }
     } catch { await botPost('⚠ Unable to fetch ATH data.'); }
     return true;
@@ -363,7 +370,7 @@ export async function handleBotCommand(text) {
       const result = await heliusPost('getTokenAccounts', {
         mint: BASIS_MINT,
         limit: 10,
-        sortBy: { sortBy: 'ui_token_amount', sortDirection: 'desc' },
+        sortBy: { sortBy: 'amount', sortDirection: 'desc' },
       });
       const accounts = result?.token_accounts ?? [];
       if (!accounts.length) { await botPost('⚠ No holder data available.'); return true; }
