@@ -50,8 +50,16 @@ service cloud.firestore {
         )
       );
 
-      // Only admin+ can soft-delete
-      allow update: if authed() && isAtLeast('admin');
+      // Admin+ can soft-delete; any authed user can toggle reactions on non-deleted messages
+      allow update: if authed() && (
+        isAtLeast('admin')
+        ||
+        // Reactions: user can update only the reactions map on any non-deleted message
+        (
+          !resource.data.get('deleted', false)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+        )
+      );
     }
 
     // ── USERS ─────────────────────────────────────────────────────────────────
@@ -67,7 +75,7 @@ service cloud.firestore {
         // ① User updates their OWN safe profile fields
         (request.auth.uid == userId
           && request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['bio', 'avatarUrl', 'color', 'online', 'lastSeen'])
+               .hasOnly(['bio', 'avatarUrl', 'color', 'online', 'lastSeen', 'twitterHandle', 'walletAddress'])
           && (!('color' in request.resource.data.diff(resource.data).affectedKeys())
               || validHex(request.resource.data.color))
         )

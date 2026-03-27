@@ -88,6 +88,20 @@
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <div class="scr" id="S_chat">
 
+    <!-- Live Price Ticker -->
+    <div class="price-ticker" id="priceTicker">
+      <div class="ticker-inner">
+        <span class="ticker-live"><span class="ticker-dot"></span>LIVE</span>
+        <span class="ticker-item" id="tickBasis">$BASIS —</span>
+        <span class="ticker-sep">|</span>
+        <span class="ticker-item ticker-hide-mobile" id="tickMcap">MCAP —</span>
+        <span class="ticker-sep ticker-hide-mobile">|</span>
+        <span class="ticker-item ticker-hide-mobile" id="tickSol">SOL —</span>
+        <span class="ticker-sep ticker-hide-mobile">|</span>
+        <span class="ticker-item" id="tickMcapMobile" style="display:none">MCAP —</span>
+      </div>
+    </div>
+
     <!-- Sidebar overlay (mobile) -->
     <div class="sb-ov" id="sbOv" onclick="togSb()"></div>
 
@@ -144,6 +158,10 @@
             <span>✉</span> DMs
             <span class="unread-num" id="dmBadge"></span>
           </button>
+          <button class="sb-nav-tab" id="navAlerts">
+            <span>📊</span> Alerts
+            <span class="unread-num" id="alertBadge"></span>
+          </button>
         </div>
 
         <div class="sb-panel on" id="panelChat">
@@ -162,6 +180,16 @@
               <div class="dm-empty-ic">✉</div>
               No conversations yet<br>
               <span style="font-size:.56rem">Click a user → Direct Message</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sb-panel" id="panelAlerts">
+          <div class="sb-alerts" id="alertList">
+            <div class="dm-empty">
+              <div class="dm-empty-ic">📊</div>
+              No alerts yet<br>
+              <span style="font-size:.56rem">Buy/sell alerts appear here</span>
             </div>
           </div>
         </div>
@@ -185,6 +213,8 @@
             </div>
           </div>
           <div class="mc-head-r">
+            <button class="head-icon-btn" id="searchBtn" title="Search messages">🔍</button>
+            <button class="head-icon-btn" id="notifBell" title="Toggle notifications">🔕</button>
             <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark theme">
               <span id="themeIcon">☀</span>
             </button>
@@ -193,6 +223,16 @@
               <span class="mc-h-name" id="hName"></span>
             </div>
             <button class="mc-exit" onclick="logout()">EXIT</button>
+          </div>
+        </div>
+
+        <!-- Search bar (slides in below header) -->
+        <div class="search-bar" id="searchBar">
+          <div class="search-bar-inner">
+            <span class="search-icon">🔍</span>
+            <input class="search-input" id="searchInput" type="text" placeholder="Search messages..." maxlength="100" autocomplete="off">
+            <span class="search-count" id="searchCount"></span>
+            <button class="search-close" id="searchClose">✕</button>
           </div>
         </div>
 
@@ -258,7 +298,42 @@
 
       </div>
     </div>
-  </div>
+
+    <!-- Bottom navigation (mobile only) -->
+    <nav class="bot-nav" id="botNav">
+      <button class="bot-nav-btn" id="botNavChat" onclick="switchSbTabGlobal('chat')">
+        <span class="bot-nav-ic">◈</span>
+        <span class="bot-nav-lbl">Chat</span>
+      </button>
+      <button class="bot-nav-btn" id="botNavDms" onclick="switchSbTabGlobal('dms')">
+        <span class="bot-nav-ic">✉</span>
+        <span class="bot-nav-lbl">DMs</span>
+        <span class="bot-nav-badge" id="botNavDmBadge"></span>
+      </button>
+      <button class="bot-nav-btn" id="botNavAlerts" onclick="switchSbTabGlobal('alerts')">
+        <span class="bot-nav-ic">📊</span>
+        <span class="bot-nav-lbl">Alerts</span>
+        <span class="bot-nav-badge" id="botNavAlertBadge"></span>
+      </button>
+      <button class="bot-nav-btn" id="botNavProfile" onclick="openProfile()">
+        <span class="bot-nav-ic">👤</span>
+        <span class="bot-nav-lbl">Profile</span>
+      </button>
+    </nav>
+
+    <!-- Emoji reaction picker -->
+    <div class="emoji-picker" id="emojiPicker" style="display:none">
+      <button class="emoji-opt" data-emoji="🔥">🔥</button>
+      <button class="emoji-opt" data-emoji="💎">💎</button>
+      <button class="emoji-opt" data-emoji="🚀">🚀</button>
+      <button class="emoji-opt" data-emoji="😂">😂</button>
+      <button class="emoji-opt" data-emoji="💀">💀</button>
+      <button class="emoji-opt" data-emoji="👀">👀</button>
+      <button class="emoji-opt" data-emoji="🙌">🙌</button>
+      <button class="emoji-opt" data-emoji="❤️">❤️</button>
+    </div>
+
+  </div><!-- end S_chat -->
 
   <!-- Image lightbox -->
   <div class="lightbox-ov" id="lightboxOv">

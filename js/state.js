@@ -19,6 +19,7 @@ export const state = {
     ban:         null,
     dmChannels:  null,
     dmMessages:  null,
+    alerts:      null,
   },
 
   // Intervals / timeouts
@@ -46,10 +47,18 @@ export const state = {
   pendingImage: null,       // File object waiting to be sent
 
   // Sidebar
-  sbTab: 'chat',           // 'chat' | 'dms'
+  sbTab: 'chat',           // 'chat' | 'dms' | 'alerts'
 
   // Audio
   audioCtx: null,          // Web Audio context for notification pings
+
+  // Alerts
+  alerts:         [],      // Alert feed items
+  alertsUnread:   0,       // Unread count for badge
+
+  // Search
+  searchActive:   false,
+  searchQuery:    '',
 };
 
 // ─── Quick accessors ────────────────────────────────────────────────────────

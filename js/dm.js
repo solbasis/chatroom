@@ -81,6 +81,7 @@ export function showDmView(channelId, target) {
   // Listen to DM messages
   if (state.unsubs.dmMessages) state.unsubs.dmMessages();
 
+  let dmInitDone = false;
   state.unsubs.dmMessages = db.collection('dm-channels').doc(channelId)
     .collection('messages')
     .orderBy('ts', 'asc')
@@ -88,6 +89,16 @@ export function showDmView(channelId, target) {
     .onSnapshot(snap => {
       state.dmMsgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderDmMessages(state.dmMsgs);
+
+      // Notify on new DMs (via event to avoid circular import)
+      if (dmInitDone) {
+        snap.docChanges().forEach(c => {
+          if (c.type === 'added') {
+            document.dispatchEvent(new CustomEvent('dm-received', { detail: c.doc.data() }));
+          }
+        });
+      }
+      dmInitDone = true;
 
       // Mark as read
       const chan = state.dmChannels.find(c => c.id === channelId);

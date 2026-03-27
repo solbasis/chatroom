@@ -29,7 +29,7 @@ export async function handleCommand(raw) {
     // ─── USER COMMANDS ──────────────────────────────────────────────────
     case '/help':
       addLocalMessage(
-        `<strong>— $BASIS —</strong> /price · /sol · /mcap · /ca · /links · /chart · /twitter · /tg · /website\n` +
+        `<strong>— $BASIS —</strong> /price · /sol · /mcap · /ca · /links · /chart · /twitter · /tg · /website · /volume · /ath · /holders\n` +
         `<strong>— USER —</strong> /help · /me · /clear · /users · /profile · /bio · /avatar · /color · /roll · /flip · /shrug · /tableflip · <strong>/dm &lt;user&gt;</strong>\n` +
         `<strong>— MOD —</strong> /mute · /unmute\n` +
         `<strong>— ADMIN —</strong> /kick · /ban · /unban · /banlist · /mod · /unmod · DEL button\n` +

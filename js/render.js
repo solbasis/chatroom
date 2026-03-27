@@ -4,6 +4,7 @@ import {
   esc, escAttr, initials, avatarHTML, roleBadge,
   formatTime, formatDate, msgGroupKey, formatMessage, hasRole, themeColor
 } from './utils.js';
+import { isSearchActive, getSearchQuery, highlightText } from './search.js';
 
 // ─── Lookup current user profile for live avatar/color ─────────────────────
 function liveProfile(m) {
@@ -108,12 +109,33 @@ export function renderChatMessages(msgs) {
       if (m.imageUrl) {
         html += `<div class="m-img"><img src="${esc(m.imageUrl)}" alt="shared image" loading="lazy" data-lightbox></div>`;
       }
-      if (m.text) html += `<div class="m-txt">${formatMessage(m.text)}</div>`;
+      // Apply search highlight if search is active
+      const msgText = m.text;
+      if (msgText) {
+        const query = isSearchActive() ? getSearchQuery() : (m._searchQuery || '');
+        const formatted = query ? highlightText(formatMessage(msgText), query) : formatMessage(msgText);
+        html += `<div class="m-txt">${formatted}</div>`;
+      }
+    }
+
+    // Reactions display
+    const reactions = m.reactions || {};
+    const reactionKeys = Object.keys(reactions);
+    if (reactionKeys.length > 0) {
+      html += `<div class="m-reactions">`;
+      reactionKeys.forEach(emoji => {
+        const users = reactions[emoji] || [];
+        if (!users.length) return;
+        const isMineR = users.includes(state.me?.uid);
+        html += `<button class="m-react-chip${isMineR ? ' mine' : ''}" data-msgid="${esc(m.id)}" data-emoji="${esc(emoji)}">${emoji} ${users.length}</button>`;
+      });
+      html += `</div>`;
     }
 
     html += `<div class="m-meta"><span class="m-time">${time}</span>`;
     if (!isDeleted) {
       html += `<button class="m-reply-btn" data-replyid="${esc(m.id)}" data-replyname="${esc(m.name)}" data-replytext="${escAttr((m.text || (m.imageUrl ? '📷 Image' : '')).substring(0, 80))}" data-replycolor="${esc(m.color)}">REPLY</button>`;
+      html += `<button class="m-react-btn" data-msgid="${esc(m.id)}" title="React">+</button>`;
     }
     if (canDelete) {
       html += `<button class="m-del" data-delid="${esc(m.id)}">DEL</button>`;

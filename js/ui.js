@@ -118,8 +118,84 @@ export function switchSbTab(tab) {
   state.sbTab = tab;
   $('navChat').classList.toggle('on', tab === 'chat');
   $('navDms').classList.toggle('on', tab === 'dms');
+  $('navAlerts')?.classList.toggle('on', tab === 'alerts');
   $('panelChat').classList.toggle('on', tab === 'chat');
   $('panelDms').classList.toggle('on', tab === 'dms');
+  $('panelAlerts')?.classList.toggle('on', tab === 'alerts');
+
+  // Clear alerts unread when switching to alerts tab
+  if (tab === 'alerts') {
+    state.alertsUnread = 0;
+    updateAlertBadge();
+  }
+
+  // Update bottom nav active state
+  updateBotNavActive(tab);
+}
+
+export function updateBotNavActive(tab) {
+  ['botNavChat', 'botNavDms', 'botNavAlerts'].forEach(id => {
+    const el = $(id);
+    if (el) el.classList.remove('active');
+  });
+  if (tab === 'chat' && $('botNavChat')) $('botNavChat').classList.add('active');
+  if (tab === 'dms'  && $('botNavDms'))  $('botNavDms').classList.add('active');
+  if (tab === 'alerts' && $('botNavAlerts')) $('botNavAlerts').classList.add('active');
+}
+
+export function updateAlertBadge() {
+  const badge = $('alertBadge');
+  const botBadge = $('botNavAlertBadge');
+  const count = state.alertsUnread;
+  if (badge) {
+    if (count > 0) { badge.textContent = count; badge.classList.add('on'); }
+    else { badge.classList.remove('on'); }
+  }
+  if (botBadge) {
+    if (count > 0) { botBadge.textContent = count; botBadge.classList.add('on'); }
+    else { botBadge.classList.remove('on'); }
+  }
+}
+
+export function renderAlerts(alerts) {
+  const list = $('alertList');
+  if (!list) return;
+  if (!alerts || !alerts.length) {
+    list.innerHTML = '<div class="dm-empty"><div class="dm-empty-ic">📊</div>No alerts yet<br><span style="font-size:.56rem">Buy/sell alerts appear here</span></div>';
+    return;
+  }
+
+  let html = '';
+  alerts.forEach(a => {
+    const isBuy  = (a.type || '').toLowerCase() !== 'sell';
+    const ts     = a.ts?.toDate ? a.ts.toDate() : new Date();
+    const time   = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const buyer  = a.buyer || a.address || '';
+    const short  = buyer.length > 10 ? buyer.slice(0, 4) + '…' + buyer.slice(-4) : buyer;
+    const sol    = a.solAmount   != null ? parseFloat(a.solAmount).toFixed(2)   : '?';
+    const basis  = a.basisAmount != null ? parseFloat(a.basisAmount).toLocaleString('en-US', { maximumFractionDigits: 0 }) : '?';
+    const tier   = a.tier || (isBuy ? '🟢' : '🔴');
+    const mcap   = a.mcap ? fmtAlertMcap(a.mcap) : '';
+
+    html += `<div class="alert-item ${isBuy ? 'buy' : 'sell'}">` +
+      `<div class="alert-tier">${tier}</div>` +
+      `<div class="alert-body">` +
+        `<div class="alert-main">${isBuy ? 'BUY' : 'SELL'} <span class="alert-sol">${sol} SOL</span>` +
+        (mcap ? ` · <span class="alert-mcap">${mcap}</span>` : '') + `</div>` +
+        `<div class="alert-sub">${basis} BASIS · <span class="alert-addr">${esc(short)}</span></div>` +
+      `</div>` +
+      `<div class="alert-time">${time}</div>` +
+    `</div>`;
+  });
+
+  list.innerHTML = html;
+}
+
+function fmtAlertMcap(n) {
+  if (!n || isNaN(n)) return '';
+  if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
+  return '$' + n.toFixed(0);
 }
 
 // ─── Scroll helpers ─────────────────────────────────────────────────────────
@@ -242,11 +318,14 @@ export function updateDmBadge() {
   });
   state.totalUnread = total;
   const badge = $('dmBadge');
+  const botBadge = $('botNavDmBadge');
   if (total > 0) {
     badge.textContent = total;
     badge.classList.add('on');
+    if (botBadge) { botBadge.textContent = total; botBadge.classList.add('on'); }
   } else {
     badge.classList.remove('on');
+    if (botBadge) botBadge.classList.remove('on');
   }
 }
 

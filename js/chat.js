@@ -27,6 +27,8 @@ export async function enterChat() {
 
   updateHeader();
   showChatView();
+  // Signal app.js to init new features (avoid circular imports)
+  document.dispatchEvent(new CustomEvent('user-logged-in'));
 
   // ─── Messages listener ─────────────────────────────────────────────
   if (state.unsubs.messages) state.unsubs.messages();
@@ -51,6 +53,8 @@ export async function enterChat() {
         if (!state.dmView) playPing();
         if (state.dmView && mentionsMe) playPing();
         if (state.dmView) $('chatDot').classList.add('on');
+        // Push notification for @mentions (via event to avoid circular import)
+        if (mentionsMe) document.dispatchEvent(new CustomEvent('chat-mention', { detail: last }));
       }
 
       state.lastMsgCount = msgs.length;

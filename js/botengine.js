@@ -1,17 +1,14 @@
 // ─── Bot Engine (Client-Side) ───────────────────────────────────────────────
-// Price fetching copied VERBATIM from the working databasis.info live prices page.
-
 import { state } from './state.js';
 import { getDb, serverTimestamp } from './utils.js';
+import { getPrices, fmtNum, fmtUSD, BASIS_SUPPLY } from './prices.js';
 
-// ─── Config (identical to databasis.info) ───────────────────────────────────
+// ─── Config ───────────────────────────────────────────────────────────────────
 const BASIS_MINT   = 'A5BJBQUTR5sTzkM89hRDuApWyvgjdXpR7B7rW1r9pump';
 const SOL_MINT     = 'So11111111111111111111111111111111111111112';
-const BASIS_SUPPLY = 1_000_000_000;
 const HELIUS_KEY   = 'c417718c-6576-4e1b-9f59-557124378a12';
 const HELIUS_URL   = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
-const DEX_URL      = `https://api.dexscreener.com/tokens/v1/solana/${BASIS_MINT},${SOL_MINT}`;
-const JUP_URL      = `https://api.jup.ag/price/v2?ids=${BASIS_MINT},${SOL_MINT}`;
+// Note: DEX_URL, JUP_URL, price fetching functions moved to js/prices.js
 
 const TOKEN = {
   ca:       BASIS_MINT,
@@ -24,122 +21,18 @@ const TOKEN = {
 const pick = a => a[Math.floor(Math.random() * a.length)];
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PRICE FETCHING — EXACT COPY from databasis.info/index.html
+// PRICE / HELIUS HELPERS (local to bot)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Source 1: DexScreener (free, no key, pump.fun native)
-async function fetchDexScreener() {
-  const r = await fetch(DEX_URL);
-  if (!r.ok) throw new Error(`DexScreener HTTP ${r.status}`);
-  const data = await r.json();
-  const pairs = Array.isArray(data) ? data : (data.pairs ?? []);
-
-  let solPrice = null, solVol = 0;
-  let basisPrice = null, basisVol = 0;
-
-  for (const pair of pairs) {
-    const base  = pair.baseToken?.address ?? '';
-    const quote = pair.quoteToken?.address ?? '';
-    const price = parseFloat(pair.priceUsd);
-    if (!price || isNaN(price)) continue;
-    const vol = pair.volume?.h24 ?? 0;
-
-    if (base === BASIS_MINT || quote === BASIS_MINT) {
-      const p = base === BASIS_MINT ? price : 1 / price;
-      if (basisPrice === null || vol > basisVol) {
-        basisPrice = p;
-        basisVol = vol;
-      }
-    }
-    if (base === SOL_MINT || quote === SOL_MINT) {
-      const p = base === SOL_MINT ? price : 1 / price;
-      if (solPrice === null || vol > solVol) {
-        solPrice = p;
-        solVol = vol;
-      }
-    }
-  }
-
-  return { sol: solPrice, basis: basisPrice };
-}
-
-// Source 2: Jupiter Price API v2 (fallback)
-async function fetchJupiter() {
-  const r = await fetch(JUP_URL);
-  if (!r.ok) throw new Error(`Jupiter HTTP ${r.status}`);
-  const d = await r.json();
-  return {
-    sol:   parseFloat(d?.data?.[SOL_MINT]?.price)   || null,
-    basis: parseFloat(d?.data?.[BASIS_MINT]?.price)  || null,
-  };
-}
-
-// Source 3: Helius DAS (second fallback)
-async function fetchHeliusDAS(mint) {
+// Helius DAS fetch (for /holders)
+async function heliusPost(method, params) {
   const r = await fetch(HELIUS_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      jsonrpc: '2.0', id: 'p', method: 'getAsset',
-      params: { id: mint, displayOptions: { showFungible: true } },
-    }),
+    body: JSON.stringify({ jsonrpc: '2.0', id: 'bot', method, params }),
   });
-  if (!r.ok) throw new Error(`Helius DAS HTTP ${r.status}`);
-  const d = await r.json();
-  return d?.result?.token_info?.price_info?.price_per_token ?? null;
-}
-
-// Waterfall: DexScreener → Jupiter → Helius DAS (SAME as databasis.info)
-async function getPrices() {
-  let solPrice   = null;
-  let basisPrice = null;
-
-  // Try Source 1: DexScreener
-  try {
-    const dex = await fetchDexScreener();
-    solPrice   = dex.sol;
-    basisPrice = dex.basis;
-  } catch (e) { console.warn('[bot] DexScreener failed:', e.message); }
-
-  // Try Source 2: Jupiter (fill any still-null values)
-  if (solPrice === null || basisPrice === null) {
-    try {
-      const jup = await fetchJupiter();
-      if (solPrice   === null) solPrice   = jup.sol;
-      if (basisPrice === null) basisPrice = jup.basis;
-    } catch (e) { console.warn('[bot] Jupiter failed:', e.message); }
-  }
-
-  // Try Source 3: Helius DAS (fill any still-null values)
-  if (solPrice === null || basisPrice === null) {
-    try {
-      const [s, b] = await Promise.all([
-        solPrice   === null ? fetchHeliusDAS(SOL_MINT)   : Promise.resolve(null),
-        basisPrice === null ? fetchHeliusDAS(BASIS_MINT) : Promise.resolve(null),
-      ]);
-      if (solPrice   === null) solPrice   = s;
-      if (basisPrice === null) basisPrice = b;
-    } catch (e) { console.warn('[bot] Helius DAS failed:', e.message); }
-  }
-
-  return { sol: solPrice, basis: basisPrice };
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// FORMATTERS (same as databasis.info)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function fmtNum(n, d = 2) {
-  if (n === null || n === undefined || isNaN(n)) return '—';
-  return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
-}
-
-function fmtUSD(n) {
-  if (!n || isNaN(n)) return '$—';
-  if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
-  if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
-  if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
-  return '$' + n.toFixed(4);
+  if (!r.ok) throw new Error(`Helius HTTP ${r.status}`);
+  return (await r.json()).result;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -340,6 +233,7 @@ const BOT_TRIGGERS = [
   '/chart', '/dex', 'chart', 'dex', 'chart?',
   '/twitter', '/x', 'twitter', 'x?',
   '/tg', '/telegram', 'telegram', 'tg', 'tg?',
+  '/volume', '/ath', '/holders',
 ];
 
 export function isBotCommand(text) {
@@ -415,6 +309,58 @@ export async function handleBotCommand(text) {
 
   // ── Telegram ──────────────────────────────────────────────────────────
   if (['/tg', '/telegram', 'telegram', 'tg', 'tg?'].includes(t)) { await botPost(`Join the $BASIS Telegram: ${TOKEN.telegram}`); return true; }
+
+  // ── Volume ────────────────────────────────────────────────────────────
+  if (t === '/volume') {
+    try {
+      const p = await getPrices();
+      if (p.volume24h != null) {
+        await botPost(`$BASIS 24h Trading Volume: ${fmtUSD(p.volume24h)}\n\nChart: ${TOKEN.dex}`);
+      } else {
+        await botPost('⚠ Unable to fetch volume data.');
+      }
+    } catch { await botPost('⚠ Unable to fetch volume data.'); }
+    return true;
+  }
+
+  // ── ATH mcap ──────────────────────────────────────────────────────────
+  if (t === '/ath') {
+    try {
+      const db = getDb();
+      const snap = await db.collection('bot-state').doc('buy-alerts').get();
+      if (snap.exists && snap.data().athMcap) {
+        const ath = snap.data().athMcap;
+        await botPost(`$BASIS ATH Market Cap: ${fmtUSD(ath)}\n\nChart: ${TOKEN.dex}`);
+      } else {
+        await botPost('⚠ ATH data not available yet.');
+      }
+    } catch { await botPost('⚠ Unable to fetch ATH data.'); }
+    return true;
+  }
+
+  // ── Top holders ───────────────────────────────────────────────────────
+  if (t === '/holders') {
+    try {
+      const result = await heliusPost('getTokenAccounts', {
+        mint: BASIS_MINT,
+        limit: 10,
+        sortBy: { sortBy: 'ui_token_amount', sortDirection: 'desc' },
+      });
+      const accounts = result?.token_accounts ?? [];
+      if (!accounts.length) { await botPost('⚠ No holder data available.'); return true; }
+      const top5 = accounts.slice(0, 5);
+      let msg = '$BASIS Top 5 Holders:\n\n';
+      top5.forEach((a, i) => {
+        const addr = a.owner || a.address || '???';
+        const short = addr.length > 10 ? addr.slice(0, 4) + '...' + addr.slice(-4) : addr;
+        const amt = a.amount ? (parseFloat(a.amount) / 1e6).toLocaleString('en-US', { maximumFractionDigits: 0 }) : '?';
+        msg += `${i + 1}. ${short} — ${amt} BASIS\n`;
+      });
+      msg += `\nhttps://solscan.io/token/${BASIS_MINT}#holders`;
+      await botPost(msg);
+    } catch (e) { await botPost('⚠ Unable to fetch holder data: ' + e.message); }
+    return true;
+  }
 
   return false;
 }
