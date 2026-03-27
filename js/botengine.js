@@ -275,7 +275,7 @@ async function botPost(text) {
   const db = getDb();
   await db.collection('messages').add({
     type: 'user',
-    uid: state.me.uid,
+    uid: 'bot-databasis',
     name: 'databasis',
     color: '#6ee75a',
     role: 'bot',
