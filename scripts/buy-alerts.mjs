@@ -101,10 +101,11 @@ async function main() {
   console.log(`Found ${fresh.length} new transactions.`);
 
   // ── 5. Fetch market data (price, mcap, 24h change, volume) ───────────
-  let price  = 0;
-  let mcap   = 0;
-  let pct24h = null;
-  let vol24h = 0;
+  let price   = 0;
+  let mcap    = 0;
+  let pct24h  = null;
+  let vol24h  = 0;
+  let dexLink = DEX_LINK; // will be replaced with live pair URL if available
 
   try {
     const dexRes = await fetch(DEX_TOKENS);
@@ -117,10 +118,11 @@ async function main() {
         const p     = parseFloat(pair.priceUsd);
         if (!p || isNaN(p)) continue;
         if (base === TOKEN_CA || quote === TOKEN_CA) {
-          price  = base === TOKEN_CA ? p : 1 / p;
-          mcap   = price * BASIS_SUPPLY;
-          pct24h = parseFloat(pair.priceChange?.h24 ?? null);
-          vol24h = parseFloat(pair.volume?.h24 ?? 0);
+          price   = base === TOKEN_CA ? p : 1 / p;
+          mcap    = price * BASIS_SUPPLY;
+          pct24h  = parseFloat(pair.priceChange?.h24 ?? null);
+          vol24h  = parseFloat(pair.volume?.h24 ?? 0);
+          if (pair.url) dexLink = pair.url; // use live pair URL from DexScreener
           break;
         }
       }
@@ -230,7 +232,7 @@ async function main() {
         `👤 [${walletShort}](${walletUrl}) — ${returning}\n` +
         `🔗 [View Tx](${txUrl})\n` +
         `📉 MCap: ${fmtMcap(mcap)}${athLine}${pctLine}${vol24hLine}\n` +
-        `📈 [Chart](${DEX_LINK})`;
+        `📈 [Chart](${dexLink})`;
 
       const docData = {
         type: 'user',
@@ -266,7 +268,7 @@ async function main() {
         `👤 [${walletShort2}](${walletUrl2})\n` +
         `🔗 [View Tx](${txUrl})\n` +
         `📉 MCap: ${fmtMcap(mcap)}\n` +
-        `📈 [Chart](${DEX_LINK})`;
+        `📈 [Chart](${dexLink})`;
 
       const docData = {
         type: 'user',
@@ -303,9 +305,14 @@ function parseBuy(tx) {
 
     if (tx.events?.swap) {
       const swap = tx.events.swap;
-      if (swap.nativeInput) solAmt = (swap.nativeInput.amount || 0) / 1e9;
-      for (const ti of swap.tokenInputs  || []) {
-        if (ti.mint === WSOL) solAmt += parseFloat(ti.tokenAmount || 0);
+      // Use nativeInput OR WSOL tokenInputs — not both (Jupiter wraps native SOL
+      // into WSOL before the swap, so both can appear for the same SOL amount)
+      if (swap.nativeInput?.amount > 0) {
+        solAmt = swap.nativeInput.amount / 1e9;
+      } else {
+        for (const ti of swap.tokenInputs || []) {
+          if (ti.mint === WSOL) solAmt += parseFloat(ti.tokenAmount || 0);
+        }
       }
       for (const to of swap.tokenOutputs || []) {
         if (to.mint === TOKEN_CA) {
@@ -316,18 +323,11 @@ function parseBuy(tx) {
       }
     }
 
+    // Fallback: use tokenTransfers only (buyer receives BASIS, buyer sends WSOL)
     if (basisAmt === 0) {
       for (const t of tx.tokenTransfers || []) {
-        if (t.mint === TOKEN_CA) basisAmt += t.tokenAmount || 0;
-        if (t.mint === WSOL && t.fromUserAccount === buyer) solAmt += t.tokenAmount || 0;
-      }
-    }
-
-    if (solAmt === 0) {
-      for (const t of tx.nativeTransfers || []) {
-        if (t.fromUserAccount === buyer && t.amount > 10_000_000) {
-          solAmt += (t.amount || 0) / 1e9;
-        }
+        if (t.mint === TOKEN_CA && t.toUserAccount === buyer) basisAmt += t.tokenAmount || 0;
+        if (t.mint === WSOL && t.fromUserAccount === buyer && solAmt === 0) solAmt += t.tokenAmount || 0;
       }
     }
 
@@ -344,9 +344,14 @@ function parseSell(tx) {
 
     if (tx.events?.swap) {
       const swap = tx.events.swap;
-      if (swap.nativeOutput) solAmt = (swap.nativeOutput.amount || 0) / 1e9;
-      for (const to of swap.tokenOutputs || []) {
-        if (to.mint === WSOL) solAmt += parseFloat(to.tokenAmount || 0);
+      // Use nativeOutput OR WSOL tokenOutputs — not both (same double-counting
+      // risk as on the buy side when Jupiter unwraps WSOL back to native SOL)
+      if (swap.nativeOutput?.amount > 0) {
+        solAmt = swap.nativeOutput.amount / 1e9;
+      } else {
+        for (const to of swap.tokenOutputs || []) {
+          if (to.mint === WSOL) solAmt += parseFloat(to.tokenAmount || 0);
+        }
       }
       for (const ti of swap.tokenInputs || []) {
         if (ti.mint === TOKEN_CA) {
@@ -357,18 +362,11 @@ function parseSell(tx) {
       }
     }
 
+    // Fallback: use tokenTransfers only (seller sends BASIS, seller receives WSOL)
     if (basisAmt === 0) {
       for (const t of tx.tokenTransfers || []) {
         if (t.mint === TOKEN_CA && t.fromUserAccount === seller) basisAmt += t.tokenAmount || 0;
-        if (t.mint === WSOL && t.toUserAccount === seller) solAmt += t.tokenAmount || 0;
-      }
-    }
-
-    if (solAmt === 0) {
-      for (const t of tx.nativeTransfers || []) {
-        if (t.toUserAccount === seller && t.amount > 10_000_000) {
-          solAmt += (t.amount || 0) / 1e9;
-        }
+        if (t.mint === WSOL && t.toUserAccount === seller && solAmt === 0) solAmt += t.tokenAmount || 0;
       }
     }
 
