@@ -796,8 +796,7 @@ body::before, body::after { display: none; }
   font-size: .58rem; font-weight: 600;
   letter-spacing: 1.5px; text-transform: uppercase;
   cursor: pointer; display: none; z-index: 10;
-  backdrop-filter: blur(8px);
-  box-shadow: var(--glow); transition: .16s;
+   box-shadow: var(--glow); transition: .16s;
 }
 .npill.on { display: block; animation: fadeUp .25s ease; }
 .npill:hover { background: var(--g06); box-shadow: var(--glow-lg); }
@@ -909,8 +908,7 @@ body::before, body::after { display: none; }
 /* ─── Image lightbox ────────────────────────────────────────────────────── */
 .lightbox-ov {
   display: none; position: fixed; inset: 0; z-index: 400;
-  background: rgba(0,0,0,.85); backdrop-filter: blur(8px);
-  align-items: center; justify-content: center;
+  background: rgba(0,0,0,.85);  align-items: center; justify-content: center;
   cursor: pointer;
 }
 .lightbox-ov.on { display: flex; }
@@ -999,8 +997,7 @@ body::before, body::after { display: none; }
 /* Confirm dialog */
 .confirm-ov {
   display: none; position: fixed; inset: 0; z-index: 300;
-  background: var(--ov-bg); backdrop-filter: blur(4px);
-  align-items: center; justify-content: center;
+  background: var(--ov-bg);  align-items: center; justify-content: center;
 }
 .confirm-ov.on { display: flex; }
 .confirm-box {
@@ -1052,8 +1049,7 @@ body::before, body::after { display: none; }
 /* Profile overlay */
 .prof-ov {
   display: none; position: fixed; inset: 0; z-index: 250;
-  background: var(--ov-bg); backdrop-filter: blur(4px);
-  align-items: center; justify-content: center;
+  background: var(--ov-bg);  align-items: center; justify-content: center;
 }
 .prof-ov.on { display: flex; }
 .prof-box {
@@ -1251,8 +1247,7 @@ body::before, body::after { display: none; }
 /* ─── Crop overlay ──────────────────────────────────────────────────────── */
 .crop-ov {
   display: none; position: fixed; inset: 0; z-index: 260;
-  background: rgba(0,0,0,.75); backdrop-filter: blur(4px);
-  align-items: center; justify-content: center;
+  background: rgba(0,0,0,.75);  align-items: center; justify-content: center;
 }
 .crop-ov.on { display: flex; }
 .crop-box {
