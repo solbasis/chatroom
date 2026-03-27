@@ -70,10 +70,15 @@ export async function enterChat() {
   if (state.unsubs.users) state.unsubs.users();
   state.unsubs.users = db.collection('users')
     .onSnapshot(snap => {
+      const prev = state.allUsers;
       state.allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderUsers(state.allUsers);
-      // Re-render messages so avatars stay in sync
-      if (!state.dmView) renderChatMessages(state.cachedMsgs);
+      // Re-render messages only when avatar/color/role actually changed
+      const profileChanged = state.allUsers.some(u => {
+        const old = prev.find(p => p.id === u.id);
+        return !old || old.avatarUrl !== u.avatarUrl || old.color !== u.color || old.role !== u.role;
+      });
+      if (profileChanged && !state.dmView) renderChatMessages(state.cachedMsgs);
     });
 
   // ─── Typing indicators listener ───────────────────────────────────
