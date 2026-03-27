@@ -510,6 +510,10 @@ body::before, body::after { display: none; }
 }
 .sb-u:hover { background: var(--g06); }
 .sb-u.me { background: var(--g06); border: 1px dashed var(--border); }
+.sb-u.offline { opacity: .4; }
+.sb-u.offline:hover { opacity: .65; }
+.sb-u.offline .sb-u-name { text-shadow: none; }
+.sb-u.offline .sb-u-name span { filter: none; }
 .sb-u-info { flex: 1; min-width: 0; }
 .sb-u-name {
   font-size: .78rem; font-weight: 700; display: flex; align-items: center;

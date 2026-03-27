@@ -5,6 +5,16 @@ import {
   formatTime, formatDate, msgGroupKey, formatMessage, hasRole, themeColor
 } from './utils.js';
 
+// ─── Lookup current user profile for live avatar/color ─────────────────────
+function liveProfile(m) {
+  const user = state.allUsers.find(u => u.id === m.uid);
+  return {
+    avatarUrl: user?.avatarUrl || m.avatarUrl || '',
+    color: user?.color || m.color || '#6ee75a',
+    role: user?.role || m.role || 'user'
+  };
+}
+
 // ─── Render chatroom messages ───────────────────────────────────────────────
 export function renderChatMessages(msgs) {
   const container = $('msgs');
@@ -48,12 +58,13 @@ export function renderChatMessages(msgs) {
       return;
     }
 
-    // User messages
+    // User messages — use live profile for current avatar/color
+    const live = liveProfile(m);
     const isMine = m.uid === state.me?.uid;
     const time = m.ts?.toDate ? formatTime(m.ts.toDate()) : '';
     const minute = m.ts?.toDate ? msgGroupKey(m.ts.toDate()) : '';
     const isGrouped = m.uid === lastUid && minute === lastMinute;
-    const rawColor = m.color || '#6ee75a';
+    const rawColor = live.color;
     const color = esc(themeColor(rawColor));
     const isDeleted = m.deleted;
     const canDelete = hasRole('admin') && !isDeleted;
@@ -61,12 +72,12 @@ export function renderChatMessages(msgs) {
     html += `<div class="m-row ${isMine ? 'mi' : 'ot'}">`;
     html += `<div class="m-grp"${isMine ? ' style="flex-direction:row-reverse"' : ''}>`;
 
-    // Avatar (other users only — keep raw color for bg)
+    // Avatar (other users only — use live avatar, raw color for bg)
     if (!isMine) {
       const safeIni = escAttr(initials(m.name));
       html += `<div class="m-av pfp ${isGrouped ? 'hid' : ''}" style="background:${esc(rawColor)};cursor:pointer" data-profname="${esc(m.name)}">`;
-      if (m.avatarUrl) {
-        html += `<img src="${esc(m.avatarUrl)}" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent='${safeIni}';">`;
+      if (live.avatarUrl) {
+        html += `<img src="${esc(live.avatarUrl)}" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent='${safeIni}';">`;
       } else {
         html += initials(m.name);
       }
@@ -77,7 +88,7 @@ export function renderChatMessages(msgs) {
 
     // Author line (other users, not grouped)
     if (!isMine && !isGrouped) {
-      html += `<div class="m-au clickable-name" style="color:${color}" data-profname="${esc(m.name)}"><span>${esc(m.name)}</span>${roleBadge(m.role || 'user')}</div>`;
+      html += `<div class="m-au clickable-name" style="color:${color}" data-profname="${esc(m.name)}"><span>${esc(m.name)}</span>${roleBadge(live.role)}</div>`;
     }
 
     // Bubble
@@ -149,22 +160,23 @@ export function renderDmMessages(msgs) {
       }
     }
 
+    const live = liveProfile(m);
     const isMine = m.uid === state.me?.uid;
     const time = m.ts?.toDate ? formatTime(m.ts.toDate()) : '';
     const minute = m.ts?.toDate ? msgGroupKey(m.ts.toDate()) : '';
     const isGrouped = m.uid === lastUid && minute === lastMinute;
-    const rawColor = m.color || '#6ee75a';
+    const rawColor = live.color;
     const color = esc(themeColor(rawColor));
 
     html += `<div class="m-row ${isMine ? 'mi' : 'ot'}">`;
     html += `<div class="m-grp"${isMine ? ' style="flex-direction:row-reverse"' : ''}>`;
 
-    // Avatar (keep raw color for bg)
+    // Avatar (use live avatar, raw color for bg)
     if (!isMine) {
       const safeIni = escAttr(initials(m.name));
       html += `<div class="m-av pfp ${isGrouped ? 'hid' : ''}" style="background:${esc(rawColor)}">`;
-      if (m.avatarUrl) {
-        html += `<img src="${esc(m.avatarUrl)}" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent='${safeIni}';">`;
+      if (live.avatarUrl) {
+        html += `<img src="${esc(live.avatarUrl)}" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent='${safeIni}';">`;
       } else {
         html += initials(m.name);
       }

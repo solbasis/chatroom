@@ -139,28 +139,32 @@ export function isNearBottom() {
 
 // ─── User list rendering ───────────────────────────────────────────────────
 export function renderUsers(users) {
-  $('uCnt').textContent = users.length;
-  $('hDesc').textContent = users.length + ' node' + (users.length !== 1 ? 's' : '') + ' connected';
+  const onlineCount = users.filter(u => isOnline(u)).length;
+  $('uCnt').textContent = onlineCount;
+  $('hDesc').textContent = onlineCount + ' node' + (onlineCount !== 1 ? 's' : '') + ' connected';
 
   const list = $('uList');
   if (!users.length) {
-    list.innerHTML = '<div style="color:var(--text-mute);font-size:.66rem;padding:8px 10px;letter-spacing:1px">No nodes online</div>';
+    list.innerHTML = '<div style="color:var(--text-mute);font-size:.66rem;padding:8px 10px;letter-spacing:1px">No registered nodes</div>';
     return;
   }
 
   let html = '';
-  // Sort: self first, then alphabetical
+  // Sort: self first, then online alphabetical, then offline alphabetical
   const sorted = [...users].sort((a, b) => {
     if (a.id === state.me?.uid) return -1;
     if (b.id === state.me?.uid) return 1;
+    const aOn = isOnline(a), bOn = isOnline(b);
+    if (aOn !== bOn) return aOn ? -1 : 1;
     return (a.name || '').localeCompare(b.name || '');
   });
 
   sorted.forEach(u => {
     const isMe = u.id === state.me?.uid;
     const presence = lastSeenLabel(u);
-    html += `<div class="sb-u${isMe ? ' me' : ''}" data-username="${esc(u.name)}" data-uid="${esc(u.id)}">` +
-      avatarHTML(u.color, u.name, u.avatarUrl, 32, presence === 'Online') +
+    const online = isOnline(u);
+    html += `<div class="sb-u${isMe ? ' me' : ''}${!online ? ' offline' : ''}" data-username="${esc(u.name)}" data-uid="${esc(u.id)}">` +
+      avatarHTML(u.color, u.name, u.avatarUrl, 32, online) +
       `<div class="sb-u-info">` +
         `<div class="sb-u-name"><span style="color:${esc(themeColor(u.color))}">${esc(u.name)}</span>${roleBadge(u.role || 'user')}</div>` +
         `<div class="sb-u-role">${presence}</div>` +
@@ -168,6 +172,11 @@ export function renderUsers(users) {
   });
 
   list.innerHTML = html;
+}
+
+function isOnline(u) {
+  if (!u.lastSeen?.toDate) return false;
+  return (Date.now() - u.lastSeen.toDate().getTime()) < 90000;
 }
 
 // ─── DM list rendering ─────────────────────────────────────────────────────
