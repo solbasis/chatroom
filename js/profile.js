@@ -1,6 +1,6 @@
 // ─── User Profiles ──────────────────────────────────────────────────────────
 import { state, $ } from './state.js';
-import { esc, initials, roleBadge, lastSeenLabel, getDb, isValidUrl, isValidHex } from './utils.js';
+import { esc, initials, roleBadge, lastSeenLabel, getDb, isValidUrl, isValidHex, themeColor } from './utils.js';
 import { addLocalMessage } from './commands.js';
 import { updateHeader } from './ui.js';
 import { findUser } from './moderation.js';
@@ -27,14 +27,14 @@ export async function openProfile(username) {
         `<div class="prof-av" style="background:${esc(user.color)}">` +
           (user.avatarUrl ? `<img src="${esc(user.avatarUrl)}" alt="">` : initials(user.name)) +
         `</div>` +
-        `<div class="prof-name"><span style="color:${esc(user.color)}">${esc(user.name)}</span>${roleBadge(user.role || 'user')}</div>` +
+        `<div class="prof-name"><span style="color:${esc(themeColor(user.color))}">${esc(user.name)}</span>${roleBadge(user.role || 'user')}</div>` +
         `<div class="prof-role-line">${roleLabel} · Joined ${joined}</div>` +
         `<div class="prof-bio ${user.bio ? '' : 'empty'}">${user.bio ? esc(user.bio) : 'No bio set'}</div>` +
       `</div>` +
       `<div class="prof-body">` +
         `<div class="prof-stats">` +
           `<div class="prof-stat">` +
-            `<div class="prof-stat-v" style="color:${esc(user.color)}">${presence}</div>` +
+            `<div class="prof-stat-v" style="color:${esc(themeColor(user.color))}">${presence}</div>` +
             `<div class="prof-stat-l">Presence</div>` +
           `</div>` +
           `<div class="prof-stat">` +

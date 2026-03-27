@@ -2,7 +2,7 @@
 import { state, $ } from './state.js';
 import {
   esc, escAttr, initials, avatarHTML, roleBadge,
-  formatTime, formatDate, msgGroupKey, formatMessage, hasRole
+  formatTime, formatDate, msgGroupKey, formatMessage, hasRole, themeColor
 } from './utils.js';
 
 // ─── Render chatroom messages ───────────────────────────────────────────────
@@ -44,7 +44,7 @@ export function renderChatMessages(msgs) {
     // Action messages (/me)
     if (m.type === 'action') {
       lastUid = '';
-      html += `<div class="act-msg"><strong style="color:${esc(m.color || '#6ee75a')}" class="clickable-name" data-profname="${esc(m.name)}">${esc(m.name)}</strong> ${esc(m.text)}</div>`;
+      html += `<div class="act-msg"><strong style="color:${esc(themeColor(m.color || '#6ee75a'))}" class="clickable-name" data-profname="${esc(m.name)}">${esc(m.name)}</strong> ${esc(m.text)}</div>`;
       return;
     }
 
@@ -53,17 +53,18 @@ export function renderChatMessages(msgs) {
     const time = m.ts?.toDate ? formatTime(m.ts.toDate()) : '';
     const minute = m.ts?.toDate ? msgGroupKey(m.ts.toDate()) : '';
     const isGrouped = m.uid === lastUid && minute === lastMinute;
-    const color = esc(m.color || '#6ee75a');
+    const rawColor = m.color || '#6ee75a';
+    const color = esc(themeColor(rawColor));
     const isDeleted = m.deleted;
     const canDelete = hasRole('admin') && !isDeleted;
 
     html += `<div class="m-row ${isMine ? 'mi' : 'ot'}">`;
     html += `<div class="m-grp"${isMine ? ' style="flex-direction:row-reverse"' : ''}>`;
 
-    // Avatar (other users only)
+    // Avatar (other users only — keep raw color for bg)
     if (!isMine) {
       const safeIni = escAttr(initials(m.name));
-      html += `<div class="m-av pfp ${isGrouped ? 'hid' : ''}" style="background:${color};cursor:pointer" data-profname="${esc(m.name)}">`;
+      html += `<div class="m-av pfp ${isGrouped ? 'hid' : ''}" style="background:${esc(rawColor)};cursor:pointer" data-profname="${esc(m.name)}">`;
       if (m.avatarUrl) {
         html += `<img src="${esc(m.avatarUrl)}" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent='${safeIni}';">`;
       } else {
@@ -85,7 +86,7 @@ export function renderChatMessages(msgs) {
     // Reply quote
     if (m.replyToId && !isDeleted) {
       html += `<div class="m-reply" data-scrollto="${esc(m.replyToId)}">` +
-        `<div class="m-reply-name" style="color:${esc(m.replyToColor || '#78b15a')}">${esc(m.replyToName)}</div>` +
+        `<div class="m-reply-name" style="color:${esc(themeColor(m.replyToColor || '#78b15a'))}">${esc(m.replyToName)}</div>` +
         `<div class="m-reply-text">${esc(m.replyToSnippet)}</div>` +
       `</div>`;
     }
@@ -152,15 +153,16 @@ export function renderDmMessages(msgs) {
     const time = m.ts?.toDate ? formatTime(m.ts.toDate()) : '';
     const minute = m.ts?.toDate ? msgGroupKey(m.ts.toDate()) : '';
     const isGrouped = m.uid === lastUid && minute === lastMinute;
-    const color = esc(m.color || '#6ee75a');
+    const rawColor = m.color || '#6ee75a';
+    const color = esc(themeColor(rawColor));
 
     html += `<div class="m-row ${isMine ? 'mi' : 'ot'}">`;
     html += `<div class="m-grp"${isMine ? ' style="flex-direction:row-reverse"' : ''}>`;
 
-    // Avatar
+    // Avatar (keep raw color for bg)
     if (!isMine) {
       const safeIni = escAttr(initials(m.name));
-      html += `<div class="m-av pfp ${isGrouped ? 'hid' : ''}" style="background:${color}">`;
+      html += `<div class="m-av pfp ${isGrouped ? 'hid' : ''}" style="background:${esc(rawColor)}">`;
       if (m.avatarUrl) {
         html += `<img src="${esc(m.avatarUrl)}" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent='${safeIni}';">`;
       } else {
@@ -180,7 +182,7 @@ export function renderDmMessages(msgs) {
     // Reply quote
     if (m.replyToId) {
       html += `<div class="m-reply" data-scrollto="${esc(m.replyToId)}">` +
-        `<div class="m-reply-name" style="color:${esc(m.replyToColor || '#78b15a')}">${esc(m.replyToName)}</div>` +
+        `<div class="m-reply-name" style="color:${esc(themeColor(m.replyToColor || '#78b15a'))}">${esc(m.replyToName)}</div>` +
         `<div class="m-reply-text">${esc(m.replyToSnippet)}</div>` +
       `</div>`;
     }
