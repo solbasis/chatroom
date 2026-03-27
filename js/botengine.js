@@ -21,10 +21,15 @@ const TOKEN = {
 const pick = a => a[Math.floor(Math.random() * a.length)];
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PRICE / HELIUS HELPERS (local to bot)
+// HELIUS HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Helius DAS fetch (for /holders)
+const HELIUS_REST = `https://api.helius.xyz/v0`;
+
+const KNOWN_WALLETS = {
+  '39azUYFWPz3VChUwbpURdCHRxjWVowf5jUJjg': 'Pump.fun Bonding Curve',
+};
+
 async function heliusPost(method, params) {
   const r = await fetch(HELIUS_URL, {
     method: 'POST',
@@ -32,7 +37,46 @@ async function heliusPost(method, params) {
     body: JSON.stringify({ jsonrpc: '2.0', id: 'bot', method, params }),
   });
   if (!r.ok) throw new Error(`Helius HTTP ${r.status}`);
-  return (await r.json()).result;
+  const j = await r.json();
+  if (j.error) throw new Error(j.error.message || 'RPC error');
+  return j.result;
+}
+
+// Paginate ALL token accounts and aggregate by owner wallet (mirrors terminal logic)
+async function fetchAllHolders(maxPages = 15) {
+  const owners = new Map();
+  let page = 1;
+  while (page <= maxPages) {
+    const res = await heliusPost('getTokenAccounts', {
+      mint: BASIS_MINT,
+      page,
+      limit: 1000,
+      displayOptions: {},
+    });
+    const accounts = res?.token_accounts ?? [];
+    if (!accounts.length) break;
+    for (const a of accounts) {
+      if (!a.owner) continue;
+      const amt = (Number(a.amount) || 0) / 1e6;
+      if (amt > 0) owners.set(a.owner, (owners.get(a.owner) || 0) + amt);
+    }
+    if (accounts.length < 1000) break;
+    page++;
+    await new Promise(r => setTimeout(r, 50));
+  }
+  return [...owners.entries()]
+    .map(([owner, amount]) => ({ owner, amount }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
+function holderTier(a) {
+  if (a >= 1e7) return 'Whale';
+  if (a >= 1e6) return 'Shark';
+  if (a >= 1e5) return 'Dolphin';
+  if (a >= 1e4) return 'Fish';
+  if (a >= 1e3) return 'Shrimp';
+  if (a >= 1) return 'Plankton';
+  return 'Dust';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -252,11 +296,16 @@ const BOT_TRIGGERS = [
   // Market cap
   'mcap', 'market cap', 'marketcap',
   // Advanced commands
-  '/volume', '/ath', '/holders',
+  '/volume', '/ath', '/holders', '/whales', '/supply',
 ];
 
+// Commands that accept arguments — match by prefix
+const BOT_PREFIX_CMDS = ['/balance', '/rank', '/tx', '/compare'];
+
 export function isBotCommand(text) {
-  return BOT_TRIGGERS.includes(text.trim().toLowerCase());
+  const t = text.trim().toLowerCase();
+  if (BOT_TRIGGERS.includes(t)) return true;
+  return BOT_PREFIX_CMDS.some(cmd => t === cmd || t.startsWith(cmd + ' '));
 }
 
 export async function handleBotCommand(text) {
@@ -364,27 +413,166 @@ export async function handleBotCommand(text) {
     return true;
   }
 
-  // ── Top holders ───────────────────────────────────────────────────────
+  // ── Top 5 holders ─────────────────────────────────────────────────────
   if (t === '/holders') {
     try {
-      const result = await heliusPost('getTokenAccounts', {
-        mint: BASIS_MINT,
-        limit: 10,
-        sortBy: { sortBy: 'amount', sortDirection: 'desc' },
-      });
-      const accounts = result?.token_accounts ?? [];
-      if (!accounts.length) { await botPost('⚠ No holder data available.'); return true; }
-      const top5 = accounts.slice(0, 5);
-      let msg = '$BASIS Top 5 Holders:\n\n';
-      top5.forEach((a, i) => {
-        const addr = a.owner || a.address || '???';
-        const short = addr.length > 10 ? addr.slice(0, 4) + '...' + addr.slice(-4) : addr;
-        const amt = a.amount ? (parseFloat(a.amount) / 1e6).toLocaleString('en-US', { maximumFractionDigits: 0 }) : '?';
-        msg += `${i + 1}. ${short} — ${amt} BASIS\n`;
+      await botPost('⏳ Fetching holder data…');
+      const holders = await fetchAllHolders();
+      if (!holders.length) { await botPost('⚠ No holder data available.'); return true; }
+      const top5 = holders.slice(0, 5);
+      let msg = `$BASIS Top 5 Holders (${holders.length.toLocaleString()} total):\n\n`;
+      top5.forEach((h, i) => {
+        const short = h.owner.slice(0, 4) + '...' + h.owner.slice(-4);
+        const amt = h.amount.toLocaleString('en-US', { maximumFractionDigits: 0 });
+        const pct = (h.amount / BASIS_SUPPLY * 100).toFixed(2);
+        const label = KNOWN_WALLETS[h.owner] ? ` [${KNOWN_WALLETS[h.owner]}]` : '';
+        msg += `${i + 1}. ${short} — ${amt} BASIS (${pct}%)${label}\n`;
       });
       msg += `\nhttps://solscan.io/token/${BASIS_MINT}#holders`;
       await botPost(msg);
     } catch (e) { await botPost('⚠ Unable to fetch holder data: ' + e.message); }
+    return true;
+  }
+
+  // ── Top 10 whales ──────────────────────────────────────────────────────
+  if (t === '/whales') {
+    try {
+      await botPost('⏳ Fetching whale data…');
+      const holders = await fetchAllHolders();
+      if (!holders.length) { await botPost('⚠ No holder data available.'); return true; }
+      const top10 = holders.slice(0, 10);
+      const whaleTotal = top10.reduce((s, h) => s + h.amount, 0);
+      let msg = `$BASIS Top 10 Holders:\n\n`;
+      top10.forEach((h, i) => {
+        const short = h.owner.slice(0, 4) + '...' + h.owner.slice(-4);
+        const amt = h.amount.toLocaleString('en-US', { maximumFractionDigits: 0 });
+        const pct = (h.amount / BASIS_SUPPLY * 100).toFixed(2);
+        const label = KNOWN_WALLETS[h.owner] ? ` [${KNOWN_WALLETS[h.owner]}]` : '';
+        msg += `${i + 1}. ${short} — ${amt} BASIS (${pct}%)${label}\n`;
+      });
+      msg += `\nTop 10 hold: ${(whaleTotal / BASIS_SUPPLY * 100).toFixed(2)}% of supply`;
+      await botPost(msg);
+    } catch (e) { await botPost('⚠ Unable to fetch whale data: ' + e.message); }
+    return true;
+  }
+
+  // ── Supply distribution ────────────────────────────────────────────────
+  if (t === '/supply') {
+    try {
+      await botPost('⏳ Fetching supply data…');
+      const holders = await fetchAllHolders();
+      if (!holders.length) { await botPost('⚠ No holder data available.'); return true; }
+      const inWallets = holders.reduce((s, h) => s + h.amount, 0);
+      const top10pct  = (holders.slice(0, 10).reduce((s, h) => s + h.amount, 0) / BASIS_SUPPLY * 100).toFixed(2);
+      const top50pct  = (holders.slice(0, 50).reduce((s, h) => s + h.amount, 0) / BASIS_SUPPLY * 100).toFixed(2);
+      const top100pct = (holders.slice(0, 100).reduce((s, h) => s + h.amount, 0) / BASIS_SUPPLY * 100).toFixed(2);
+      const tiers = [
+        { n: 'Whale 🐳',   min: 1e7 },
+        { n: 'Shark 🦈',   min: 1e6 },
+        { n: 'Dolphin 🐬', min: 1e5 },
+        { n: 'Fish 🐟',    min: 1e4 },
+        { n: 'Shrimp 🦐',  min: 1e3 },
+        { n: 'Plankton',   min: 1 },
+      ];
+      let msg = `$BASIS Supply Distribution:\n\n`;
+      msg += `Total Supply: ${BASIS_SUPPLY.toLocaleString()} BASIS\n`;
+      msg += `In Wallets:   ${inWallets.toLocaleString('en-US', { maximumFractionDigits: 0 })}\n`;
+      msg += `Holders:      ${holders.length.toLocaleString()}\n\n`;
+      msg += `Concentration:\n`;
+      msg += `Top 10:  ${top10pct}%\n`;
+      msg += `Top 50:  ${top50pct}%\n`;
+      msg += `Top 100: ${top100pct}%\n\n`;
+      msg += `Tiers:\n`;
+      tiers.forEach(tier => {
+        const count = holders.filter(h => h.amount >= tier.min).length;
+        if (count > 0) msg += `${tier.n}: ${count.toLocaleString()}\n`;
+      });
+      await botPost(msg);
+    } catch (e) { await botPost('⚠ Unable to fetch supply data: ' + e.message); }
+    return true;
+  }
+
+  // ── Wallet balance ─────────────────────────────────────────────────────
+  if (t.startsWith('/balance')) {
+    const wallet = text.trim().split(/\s+/)[1];
+    if (!wallet) { await botPost('Usage: /balance <wallet address>'); return true; }
+    try {
+      const res = await heliusPost('getTokenAccounts', { mint: BASIS_MINT, owner: wallet, displayOptions: {} });
+      let total = 0;
+      for (const a of (res?.token_accounts ?? [])) total += (Number(a.amount) || 0) / 1e6;
+      if (total === 0) { await botPost(`No $BASIS found for ${wallet.slice(0, 8)}...`); return true; }
+      const pct = (total / BASIS_SUPPLY * 100).toFixed(4);
+      const short = wallet.slice(0, 4) + '...' + wallet.slice(-4);
+      await botPost(
+        `$BASIS Balance:\n\n` +
+        `${short}\n` +
+        `${total.toLocaleString('en-US', { maximumFractionDigits: 0 })} BASIS\n` +
+        `${pct}% of supply\n` +
+        `Tier: ${holderTier(total)}\n\n` +
+        `https://solscan.io/account/${wallet}`
+      );
+    } catch (e) { await botPost('⚠ Unable to fetch balance: ' + e.message); }
+    return true;
+  }
+
+  // ── Holder rank ────────────────────────────────────────────────────────
+  if (t.startsWith('/rank')) {
+    const wallet = text.trim().split(/\s+/)[1];
+    if (!wallet) { await botPost('Usage: /rank <wallet address>'); return true; }
+    try {
+      await botPost('⏳ Fetching rank data…');
+      const holders = await fetchAllHolders();
+      const idx = holders.findIndex(h => h.owner === wallet);
+      if (idx === -1) { await botPost('Wallet not found among $BASIS holders.'); return true; }
+      const h = holders[idx];
+      const rank = idx + 1;
+      const pctile = ((holders.length - idx) / holders.length * 100).toFixed(1);
+      const short = wallet.slice(0, 4) + '...' + wallet.slice(-4);
+      await botPost(
+        `$BASIS Holder Rank:\n\n` +
+        `${short}\n` +
+        `Rank: #${rank} of ${holders.length.toLocaleString()}\n` +
+        `Top ${pctile}% of holders\n` +
+        `${h.amount.toLocaleString('en-US', { maximumFractionDigits: 0 })} BASIS (${(h.amount / BASIS_SUPPLY * 100).toFixed(4)}%)\n` +
+        `Tier: ${holderTier(h.amount)}\n\n` +
+        `https://solscan.io/account/${wallet}`
+      );
+    } catch (e) { await botPost('⚠ Unable to fetch rank: ' + e.message); }
+    return true;
+  }
+
+  // ── Recent transfers ───────────────────────────────────────────────────
+  if (t.startsWith('/tx')) {
+    const wallet = text.trim().split(/\s+/)[1];
+    if (!wallet) { await botPost('Usage: /tx <wallet address>'); return true; }
+    try {
+      const url = `${HELIUS_REST}/addresses/${wallet}/transactions?api-key=${HELIUS_KEY}&limit=20&type=TRANSFER`;
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const txs = await r.json();
+      const bTxs = [];
+      for (const tx of (txs || [])) {
+        for (const tt of (tx.tokenTransfers || [])) {
+          if (tt.mint !== BASIS_MINT) continue;
+          bTxs.push({
+            type: tt.fromUserAccount === wallet ? 'SENT' : 'RECV',
+            amount: tt.tokenAmount || 0,
+            other: (tt.fromUserAccount === wallet ? tt.toUserAccount : tt.fromUserAccount) || '?',
+            time: tx.timestamp ? new Date(tx.timestamp * 1000).toLocaleDateString() : '',
+          });
+        }
+      }
+      if (!bTxs.length) { await botPost(`No recent $BASIS transfers for ${wallet.slice(0, 8)}...`); return true; }
+      const short = wallet.slice(0, 4) + '...' + wallet.slice(-4);
+      let msg = `$BASIS Recent Transfers — ${short}:\n\n`;
+      bTxs.slice(0, 8).forEach(tx => {
+        const amt = tx.amount.toLocaleString('en-US', { maximumFractionDigits: 0 });
+        const cp = tx.other.slice(0, 4) + '...' + tx.other.slice(-4);
+        msg += `${tx.type}  ${amt} BASIS  ${tx.type === 'SENT' ? '→' : '←'} ${cp}${tx.time ? '  · ' + tx.time : ''}\n`;
+      });
+      msg += `\nhttps://solscan.io/account/${wallet}`;
+      await botPost(msg);
+    } catch (e) { await botPost('⚠ Unable to fetch transactions: ' + e.message); }
     return true;
   }
 
