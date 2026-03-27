@@ -279,7 +279,7 @@ async function botPost(text) {
     name: 'databasis',
     color: '#6ee75a',
     role: 'bot',
-    avatarUrl: '',
+    avatarUrl: 'https://chat.databasis.info/bot-avatar.jpg',
     text,
     ts: serverTimestamp(),
     deleted: false,
