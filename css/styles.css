@@ -939,14 +939,20 @@ body::before, body::after { display: none; }
 .sb-ov.on { display: block; }
 
 /* User popup */
-.u-popup-ov { display: none; position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,.5); }
+.u-popup-ov { display: none; position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,.45); }
 .u-popup-ov.on { display: block; }
+[data-theme="light"] .u-popup-ov { background: rgba(0,0,0,.15); }
 .u-popup {
   position: fixed; z-index: 501; width: 230px;
   background: var(--bg2); border: 1px dashed var(--border-hi);
   border-radius: var(--r);
   box-shadow: var(--shadow), 0 8px 32px rgba(0,0,0,.6);
   overflow: hidden; animation: fadeUp .15s ease;
+}
+[data-theme="light"] .u-popup {
+  background: #f4f4ee;
+  box-shadow: 0 2px 12px rgba(0,0,0,.12), 0 8px 32px rgba(0,0,0,.10);
+  border-color: rgba(58, 122, 40, .30);
 }
 .u-popup-close {
   position: absolute; top: 8px; right: 8px; z-index: 2;
