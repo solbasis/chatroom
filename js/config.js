@@ -33,5 +33,5 @@ export const ROLES = { dev: 4, admin: 3, mod: 2, user: 1 };
 export const HEARTBEAT_MS      = 15000;   // Presence heartbeat interval
 export const TYPING_TIMEOUT_MS = 3000;    // Clear typing indicator after
 export const TYPING_STALE_MS   = 5000;    // Ignore typing older than
-export const MSG_QUERY_LIMIT   = 200;     // Last N messages to load
+export const MSG_QUERY_LIMIT   = 1000;    // Last N messages to load (history preserved)
 export const DM_QUERY_LIMIT    = 100;     // Last N DM messages to load

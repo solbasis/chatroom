@@ -66,13 +66,14 @@ export async function enterChat() {
       }
     });
 
-  // ─── Online users listener ─────────────────────────────────────────
+  // ─── All registered users listener ────────────────────────────────
   if (state.unsubs.users) state.unsubs.users();
   state.unsubs.users = db.collection('users')
-    .where('online', '==', true)
     .onSnapshot(snap => {
       state.allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderUsers(state.allUsers);
+      // Re-render messages so avatars stay in sync
+      if (!state.dmView) renderChatMessages(state.cachedMsgs);
     });
 
   // ─── Typing indicators listener ───────────────────────────────────
