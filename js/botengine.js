@@ -6,7 +6,7 @@ import { getPrices, fmtNum, fmtUSD, BASIS_SUPPLY } from './prices.js';
 // ─── Config ───────────────────────────────────────────────────────────────────
 const BASIS_MINT   = 'A5BJBQUTR5sTzkM89hRDuApWyvgjdXpR7B7rW1r9pump';
 const SOL_MINT     = 'So11111111111111111111111111111111111111112';
-const HELIUS_KEY   = 'c417718c-6576-4e1b-9f59-557124378a12';
+const HELIUS_KEY   = '00ddde2e-972f-4cbf-a505-f17e13f54dfb';
 const HELIUS_URL   = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 // Note: DEX_URL, JUP_URL, price fetching functions moved to js/prices.js
 

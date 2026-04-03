@@ -4,7 +4,7 @@
 const BASIS_MINT   = 'A5BJBQUTR5sTzkM89hRDuApWyvgjdXpR7B7rW1r9pump';
 const SOL_MINT     = 'So11111111111111111111111111111111111111112';
 export const BASIS_SUPPLY = 1_000_000_000;
-const HELIUS_KEY   = 'c417718c-6576-4e1b-9f59-557124378a12';
+const HELIUS_KEY   = '00ddde2e-972f-4cbf-a505-f17e13f54dfb';
 const HELIUS_URL   = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 const DEX_URL      = `https://api.dexscreener.com/tokens/v1/solana/${BASIS_MINT},${SOL_MINT}`;
 const JUP_URL      = `https://api.jup.ag/price/v2?ids=${BASIS_MINT},${SOL_MINT}`;
