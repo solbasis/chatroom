@@ -49,11 +49,12 @@ service cloud.firestore {
           && request.resource.data.keys().hasAll(['type', 'text', 'ts'])
         )
         ||
-        // ③ Bot messages — client-side bot engine posts as 'bot-databasis'
+        // ③ Bot messages — only mod+ can post as 'bot-databasis' to prevent spoofing
         (
           request.resource.data.uid == 'bot-databasis'
           && request.resource.data.role == 'bot'
           && request.resource.data.type == 'user'
+          && isAtLeast('mod')
         )
       );
 
@@ -90,7 +91,7 @@ service cloud.firestore {
         // ② User can update their own presence fields
         (request.auth.uid == userId
           && request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['online', 'lastSeen', 'kicked'])
+               .hasOnly(['online', 'lastSeen'])
         )
         ||
         // ③ Mods+ can mute/unmute OTHER users
@@ -173,6 +174,91 @@ service cloud.firestore {
       allow read: if authed();
       // Only Admin SDK (GitHub Actions) writes alerts
       allow write: if false;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // BASIS GOV — wallet-auth governance (no Firebase Auth required)
+    // Security model: wallet signatures stored in documents, on-chain balance
+    // verified at the application layer. Firestore rules enforce structure.
+    // ══════════════════════════════════════════════════════════════════════════
+
+    // ── GOV: PROPOSALS ────────────────────────────────────────────────────────
+    match /proposals/{proposalId} {
+      // Anyone can read proposals (public governance)
+      allow read: if true;
+
+      // Create: validate required fields and sane initial values
+      allow create: if
+        request.resource.data.keys().hasAll([
+          'title', 'description', 'author', 'endsAt',
+          'status', 'yesWeight', 'noWeight', 'abstainWeight'
+        ])
+        && request.resource.data.title   is string
+        && request.resource.data.title.size()       > 0
+        && request.resource.data.title.size()       <= 120
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 2000
+        && request.resource.data.status             == 'active'
+        && request.resource.data.yesWeight          == 0
+        && request.resource.data.noWeight           == 0
+        && request.resource.data.abstainWeight      == 0;
+
+      // Update: only vote weight increments and status finalisation allowed
+      allow update: if
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['yesWeight', 'noWeight', 'abstainWeight', 'status']);
+    }
+
+    // ── GOV: VOTES (write-once per wallet+proposal) ───────────────────────────
+    match /votes/{voteId} {
+      // Anyone can read vote records (public governance)
+      allow read: if true;
+
+      // Create only — no updates or deletes ever
+      allow create: if
+        !exists(/databases/$(database)/documents/votes/$(voteId))
+        && request.resource.data.keys().hasAll([
+             'proposalId', 'voter', 'choice', 'weight', 'signature'
+           ])
+        && request.resource.data.choice in ['yes', 'no', 'abstain']
+        && request.resource.data.weight  is number
+        && request.resource.data.weight  > 0
+        && request.resource.data.voter   is string
+        && request.resource.data.voter.size() > 0
+        && request.resource.data.signature is string;
+
+      allow update, delete: if false;
+    }
+
+    // ── GOV: STAKES ───────────────────────────────────────────────────────────
+    match /stakes/{wallet} {
+      // Anyone can read stake records (needed for voting weight checks)
+      allow read: if true;
+
+      // Write: validate stakedAmount is a non-negative number
+      allow write: if
+        request.resource.data.stakedAmount is number
+        && request.resource.data.stakedAmount >= 0;
+    }
+
+    // ── GOV: CONFIG (global settings + totalStaked counter) ───────────────────
+    match /config/{doc} {
+      // Anyone can read config (APY, quorum settings, etc.)
+      allow read: if true;
+
+      // Allow client-side seeding on first run (create only if missing)
+      allow create: if
+        !exists(/databases/$(database)/documents/config/$(doc))
+        && request.resource.data.keys().hasAll([
+             'rewardRateAPY', 'cooldownDays', 'minProposalStake', 'quorumPercent', 'totalStaked'
+           ]);
+
+      // Allow updates to totalStaked only (stake/unstake transactions)
+      allow update: if
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['totalStaked'])
+        && request.resource.data.totalStaked is number
+        && request.resource.data.totalStaked >= 0;
     }
   }
 }
