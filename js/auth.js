@@ -171,7 +171,11 @@ async function doSignup(au, db, email, name, pass) {
 async function doLogin(au, db, email, name, pass) {
   const cred = await au.signInWithEmailAndPassword(email, pass);
 
-  const userDoc = await db.collection('users').doc(cred.user.uid).get();
+  let userDoc;
+  try {
+    userDoc = await db.collection('users').doc(cred.user.uid).get();
+  } catch (e) { throw Object.assign(e, { message: '[step:user-read] ' + e.message }); }
+
   if (!userDoc.exists) {
     state.busy = false;
     showStatus('Profile not found', 'err');
@@ -188,8 +192,11 @@ async function doLogin(au, db, email, name, pass) {
     return;
   }
 
-  // Check ban
-  const banDoc = await db.collection('bans').doc(userDoc.data().nameLower).get();
+  let banDoc;
+  try {
+    banDoc = await db.collection('bans').doc(userDoc.data().nameLower).get();
+  } catch (e) { throw Object.assign(e, { message: '[step:ban-read] ' + e.message }); }
+
   if (banDoc.exists) {
     await au.signOut();
     state.busy = false;
@@ -199,17 +206,20 @@ async function doLogin(au, db, email, name, pass) {
   }
 
   state.me = { uid: cred.user.uid, ...userDoc.data() };
-  await db.collection('users').doc(cred.user.uid).update({
-    online: true,
-    lastSeen: serverTimestamp()
-  });
+  try {
+    await db.collection('users').doc(cred.user.uid).update({
+      online: true,
+      lastSeen: serverTimestamp()
+    });
+  } catch (e) { throw Object.assign(e, { message: '[step:user-update] ' + e.message }); }
 
-  // Post "entered the room" so the bot welcomes returning users too
-  await db.collection('messages').add({
-    type: 'system',
-    text: userDoc.data().name + ' has entered the room',
-    ts: serverTimestamp()
-  });
+  try {
+    await db.collection('messages').add({
+      type: 'system',
+      text: userDoc.data().name + ' has entered the room',
+      ts: serverTimestamp()
+    });
+  } catch (e) { throw Object.assign(e, { message: '[step:msg-add] ' + e.message }); }
 
   state.busy = false;
   enterChat();
