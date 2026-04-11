@@ -111,7 +111,9 @@ export async function doAuth() {
 // ─── Signup flow ────────────────────────────────────────────────────────────
 async function doSignup(au, db, email, name, pass) {
   const cred = await au.createUserWithEmailAndPassword(email, pass);
-  await cred.user.getIdToken(); // ensure auth token propagated before Firestore calls
+  await new Promise(resolve => {
+    const unsub = au.onAuthStateChanged(user => { if (user) { unsub(); resolve(); } });
+  });
 
   try {
     // Check ban
@@ -171,9 +173,13 @@ async function doSignup(au, db, email, name, pass) {
 // ─── Login flow ─────────────────────────────────────────────────────────────
 async function doLogin(au, db, email, name, pass) {
   const cred = await au.signInWithEmailAndPassword(email, pass);
-  // Firebase 11 compat: Firestore's internal auth listener is async — force
-  // token resolution so the SDK attaches the auth token before any Firestore call.
-  await cred.user.getIdToken();
+  // Firebase 11 compat: Firestore updates its internal auth state via its own
+  // onAuthStateChanged listener. That listener fires asynchronously AFTER the
+  // signIn promise resolves, so the first Firestore call can go out before
+  // Firestore has the token. Wait for the auth-state event to propagate first.
+  await new Promise(resolve => {
+    const unsub = au.onAuthStateChanged(user => { if (user) { unsub(); resolve(); } });
+  });
 
   let userDoc;
   try {
