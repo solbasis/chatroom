@@ -20,9 +20,12 @@ import { getPrices, fmtNum, fmtUSD, BASIS_SUPPLY } from './prices.js';
 
 // ─── Firebase init ──────────────────────────────────────────────────────────
 firebase.initializeApp(FIREBASE_CONFIG);
-// enablePersistence disabled: can cause Firestore to enter offline mode and
-// drop auth tokens from requests when it fails (multi-tab, storage quota, etc.)
-// firebase.firestore().enablePersistence().catch(() => {});
+// Force long-polling transport instead of WebChannel/gRPC.
+// MetaMask (LavaMoat/SES) removes JavaScript intrinsics that Firebase's
+// WebChannel implementation relies on to attach auth tokens to requests.
+// Long-polling uses plain fetch() which is unaffected by SES and correctly
+// includes Authorization headers, preventing spurious permission-denied errors.
+firebase.firestore().settings({ experimentalForceLongPolling: true });
 
 // ─── Theme ───────────────────────────────────────────────────────────────────
 loadTheme();
