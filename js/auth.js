@@ -181,10 +181,17 @@ async function doLogin(au, db, email, name, pass) {
     const unsub = au.onAuthStateChanged(user => { if (user) { unsub(); resolve(); } });
   });
 
+  const currentUser = getAuth().currentUser;
+  console.error('[debug] currentUser after wait:', currentUser?.uid, 'cred uid:', cred.user.uid);
+  if (currentUser) {
+    const tok = await currentUser.getIdTokenResult();
+    console.error('[debug] token issued:', tok.issuedAtTime, 'exp:', tok.expirationTime, 'authTime:', tok.authTime);
+  }
+
   let userDoc;
   try {
     userDoc = await db.collection('users').doc(cred.user.uid).get();
-  } catch (e) { throw Object.assign(e, { message: '[step:user-read] ' + e.message }); }
+  } catch (e) { throw Object.assign(e, { message: '[step:user-read code:' + e.code + '] ' + e.message }); }
 
   if (!userDoc.exists) {
     state.busy = false;
