@@ -20,12 +20,6 @@ import { getPrices, fmtNum, fmtUSD, BASIS_SUPPLY } from './prices.js';
 
 // ─── Firebase init ──────────────────────────────────────────────────────────
 firebase.initializeApp(FIREBASE_CONFIG);
-// Force long-polling transport instead of WebChannel/gRPC.
-// MetaMask (LavaMoat/SES) removes JavaScript intrinsics that Firebase's
-// WebChannel implementation relies on to attach auth tokens to requests.
-// Long-polling uses plain fetch() which is unaffected by SES and correctly
-// includes Authorization headers, preventing spurious permission-denied errors.
-firebase.firestore().settings({ experimentalForceLongPolling: true, merge: true });
 
 // ─── Theme ───────────────────────────────────────────────────────────────────
 loadTheme();

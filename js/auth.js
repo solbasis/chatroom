@@ -325,7 +325,14 @@ export function initAuth() {
 
     if (user) {
       try {
-        const doc = await db.collection('users').doc(user.uid).get();
+        // Race the Firestore read against a 6 s timeout so that a hanging
+        // WebChannel (e.g. MetaMask/SES stripping intrinsics) never leaves the
+        // loading screen stuck indefinitely.
+        const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000));
+        const doc = await Promise.race([
+          db.collection('users').doc(user.uid).get(),
+          timeout
+        ]);
         if (doc.exists) {
           state.me = { uid: user.uid, ...doc.data() };
           setTimeout(() => enterChat(), 250);
