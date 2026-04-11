@@ -318,17 +318,25 @@ export function initAuth() {
     bar.style.width = progress + '%';
   }, 180);
 
+  // Fallback: if Firebase Auth never resolves its initial state (e.g. MetaMask/SES
+  // blocking IndexedDB session restore), show the auth screen after 5 seconds.
+  const authFallback = setTimeout(() => {
+    clearInterval(iv);
+    bar.style.width = '100%';
+    showScreen('auth');
+  }, 5000);
+
   au.onAuthStateChanged(async user => {
+    clearTimeout(authFallback); // cancel the fallback — Auth resolved normally
     if (state.busy) return;
     clearInterval(iv);
     bar.style.width = '100%';
 
     if (user) {
       try {
-        // Race the Firestore read against a 6 s timeout so that a hanging
-        // WebChannel (e.g. MetaMask/SES stripping intrinsics) never leaves the
-        // loading screen stuck indefinitely.
-        const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000));
+        // Race Firestore read against a 5 s timeout so a stalled WebChannel
+        // doesn't freeze the loading screen either.
+        const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000));
         const doc = await Promise.race([
           db.collection('users').doc(user.uid).get(),
           timeout
