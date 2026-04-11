@@ -173,25 +173,36 @@ async function doSignup(au, db, email, name, pass) {
 // ─── Login flow ─────────────────────────────────────────────────────────────
 async function doLogin(au, db, email, name, pass) {
   const cred = await au.signInWithEmailAndPassword(email, pass);
-  // Firebase 11 compat: Firestore updates its internal auth state via its own
-  // onAuthStateChanged listener. That listener fires asynchronously AFTER the
-  // signIn promise resolves, so the first Firestore call can go out before
-  // Firestore has the token. Wait for the auth-state event to propagate first.
+
+  // Wait for Firebase Auth to propagate the new session to all SDK services.
+  // The Firestore SDK updates its internal auth state asynchronously via its
+  // own onAuthStateChanged listener — waiting here ensures that listener has fired.
   await new Promise(resolve => {
     const unsub = au.onAuthStateChanged(user => { if (user) { unsub(); resolve(); } });
   });
 
-  const currentUser = getAuth().currentUser;
-  console.error('[debug] currentUser after wait:', currentUser?.uid, 'cred uid:', cred.user.uid);
-  if (currentUser) {
-    const tok = await currentUser.getIdTokenResult();
-    console.error('[debug] token issued:', tok.issuedAtTime, 'exp:', tok.expirationTime, 'authTime:', tok.authTime);
-  }
+  // Force-refresh the ID token. This causes Firebase Auth to deliver the fresh
+  // token synchronously to the Firestore SDK's credential provider, guaranteeing
+  // it is included in the next request.
+  try { await cred.user.getIdToken(true); } catch {}
 
   let userDoc;
   try {
     userDoc = await db.collection('users').doc(cred.user.uid).get();
-  } catch (e) { throw Object.assign(e, { message: '[step:user-read code:' + e.code + '] ' + e.message }); }
+  } catch (e) {
+    // Retry once if permission-denied — the auth token propagation to Firestore's
+    // internal gRPC channel can lag behind the onAuthStateChanged notification.
+    if (e.code === 'permission-denied') {
+      await new Promise(r => setTimeout(r, 500));
+      try {
+        userDoc = await db.collection('users').doc(cred.user.uid).get();
+      } catch (e2) {
+        throw Object.assign(e2, { message: '[step:user-read code:' + e2.code + '] ' + e2.message });
+      }
+    } else {
+      throw Object.assign(e, { message: '[step:user-read code:' + e.code + '] ' + e.message });
+    }
+  }
 
   if (!userDoc.exists) {
     state.busy = false;
