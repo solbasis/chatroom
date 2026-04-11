@@ -173,6 +173,49 @@ async function doSignup(au, email, name, pass) {
   }
 }
 
+// ─── Firestore REST helpers (bypass SDK auth for SES-restricted environments) ─
+const FS_BASE = 'https://firestore.googleapis.com/v1/projects/basis-acfec/databases/(default)/documents';
+
+function parseRestDoc(json) {
+  if (!json || !json.fields) return null;
+  const out = {};
+  for (const [k, v] of Object.entries(json.fields)) {
+    if ('stringValue'    in v) out[k] = v.stringValue;
+    else if ('booleanValue' in v) out[k] = v.booleanValue;
+    else if ('integerValue' in v) out[k] = Number(v.integerValue);
+    else if ('doubleValue'  in v) out[k] = v.doubleValue;
+    else if ('nullValue'    in v) out[k] = null;
+    else if ('timestampValue' in v) {
+      const d = new Date(v.timestampValue);
+      out[k] = { toDate: () => d, seconds: Math.floor(d / 1000) };
+    }
+  }
+  return out;
+}
+
+async function readDocRest(collection, docId, token) {
+  if (!docId) return null;
+  try {
+    const res = await fetch(`${FS_BASE}/${collection}/${encodeURIComponent(docId)}`,
+      { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      const err = new Error(body.error?.message || `REST ${res.status}`);
+      err.code = res.status === 403 ? 'permission-denied' : 'unavailable';
+      throw err;
+    }
+    return parseRestDoc(await res.json());
+  } catch (e) {
+    if (e.code) throw e;
+    throw Object.assign(e, { code: 'unavailable' });
+  }
+}
+
+async function readUserRest(uid, token) {
+  return readDocRest('users', uid, token);
+}
+
 // ─── Login flow ─────────────────────────────────────────────────────────────
 async function doLogin(au, email, name, pass) {
   const cred = await au.signInWithEmailAndPassword(email, pass);
@@ -182,34 +225,20 @@ async function doLogin(au, email, name, pass) {
     const unsub = au.onAuthStateChanged(user => { if (user) { unsub(); resolve(); } });
   });
 
-  // Initialise Firestore HERE — after authentication — so its internal
-  // credential provider starts in the already-signed-in state and reads the
-  // current user's token synchronously on first use.  MetaMask/SES breaks the
-  // *async* token-delivery notification that fires when auth state changes on
-  // an already-running Firestore instance; starting Firestore post-auth
-  // sidesteps that async path entirely.
+  // Get a fresh ID token and use the Firestore REST API for the login reads.
+  // The Firestore SDK's internal auth-token delivery is broken by MetaMask/SES
+  // regardless of initialisation order. The REST API accepts an explicit Bearer
+  // token in the Authorization header and is completely unaffected by SES.
+  const idToken = await cred.user.getIdToken(true);
+
+  // Also initialise the Firestore SDK now (post-auth) so that subsequent
+  // real-time listeners and writes have the best chance of picking up the token.
   const db = getDb();
-  try { await cred.user.getIdToken(true); } catch {}
 
-  let userDoc;
-  try {
-    userDoc = await db.collection('users').doc(cred.user.uid).get();
-  } catch (e) {
-    // Retry once if permission-denied — the auth token propagation to Firestore's
-    // internal gRPC channel can lag behind the onAuthStateChanged notification.
-    if (e.code === 'permission-denied') {
-      await new Promise(r => setTimeout(r, 500));
-      try {
-        userDoc = await db.collection('users').doc(cred.user.uid).get();
-      } catch (e2) {
-        throw Object.assign(e2, { message: '[step:user-read code:' + e2.code + '] ' + e2.message });
-      }
-    } else {
-      throw Object.assign(e, { message: '[step:user-read code:' + e.code + '] ' + e.message });
-    }
-  }
+  const userData = await readUserRest(cred.user.uid, idToken);
+  const banData  = await readDocRest('bans', userData && userData.nameLower, idToken);
 
-  if (!userDoc.exists) {
+  if (!userData) {
     state.busy = false;
     showStatus('Profile not found', 'err');
     setLoading(false);
@@ -217,7 +246,7 @@ async function doLogin(au, email, name, pass) {
   }
 
   // Check kicked
-  if (userDoc.data().kicked) {
+  if (userData.kicked) {
     await au.signOut();
     state.busy = false;
     showStatus('You have been kicked from this room', 'err');
@@ -225,12 +254,7 @@ async function doLogin(au, email, name, pass) {
     return;
   }
 
-  let banDoc;
-  try {
-    banDoc = await db.collection('bans').doc(userDoc.data().nameLower).get();
-  } catch (e) { throw Object.assign(e, { message: '[step:ban-read] ' + e.message }); }
-
-  if (banDoc.exists) {
+  if (banData) {
     await au.signOut();
     state.busy = false;
     showStatus('You are banned', 'err');
@@ -238,7 +262,7 @@ async function doLogin(au, email, name, pass) {
     return;
   }
 
-  state.me = { uid: cred.user.uid, ...userDoc.data() };
+  state.me = { uid: cred.user.uid, ...userData };
   try {
     await db.collection('users').doc(cred.user.uid).update({
       online: true,
@@ -249,7 +273,7 @@ async function doLogin(au, email, name, pass) {
   try {
     await db.collection('messages').add({
       type: 'system',
-      text: userDoc.data().name + ' has entered the room',
+      text: userData.name + ' has entered the room',
       ts: serverTimestamp()
     });
   } catch (e) { throw Object.assign(e, { message: '[step:msg-add] ' + e.message }); }
