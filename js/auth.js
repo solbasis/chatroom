@@ -91,14 +91,13 @@ export async function doAuth() {
   state.busy = true;
 
   const au = getAuth();
-  const db = getDb();
   const email = name.toLowerCase() + '@basis.chat';
 
   try {
     if (state.mode === 'signup') {
-      await doSignup(au, db, email, name, pass);
+      await doSignup(au, email, name, pass);
     } else {
-      await doLogin(au, db, email, name, pass);
+      await doLogin(au, email, name, pass);
     }
   } catch (e) {
     state.busy = false;
@@ -109,11 +108,15 @@ export async function doAuth() {
 }
 
 // ─── Signup flow ────────────────────────────────────────────────────────────
-async function doSignup(au, db, email, name, pass) {
+async function doSignup(au, email, name, pass) {
   const cred = await au.createUserWithEmailAndPassword(email, pass);
   await new Promise(resolve => {
     const unsub = au.onAuthStateChanged(user => { if (user) { unsub(); resolve(); } });
   });
+  // Initialise Firestore NOW — while the user is already authenticated.
+  // This ensures the SDK's credential provider starts in the signed-in state
+  // and never needs the async token-delivery path that MetaMask/SES can break.
+  const db = getDb();
 
   try {
     // Check ban
@@ -171,19 +174,21 @@ async function doSignup(au, db, email, name, pass) {
 }
 
 // ─── Login flow ─────────────────────────────────────────────────────────────
-async function doLogin(au, db, email, name, pass) {
+async function doLogin(au, email, name, pass) {
   const cred = await au.signInWithEmailAndPassword(email, pass);
 
-  // Wait for Firebase Auth to propagate the new session to all SDK services.
-  // The Firestore SDK updates its internal auth state asynchronously via its
-  // own onAuthStateChanged listener — waiting here ensures that listener has fired.
+  // Wait for Firebase Auth to propagate the new session.
   await new Promise(resolve => {
     const unsub = au.onAuthStateChanged(user => { if (user) { unsub(); resolve(); } });
   });
 
-  // Force-refresh the ID token. This causes Firebase Auth to deliver the fresh
-  // token synchronously to the Firestore SDK's credential provider, guaranteeing
-  // it is included in the next request.
+  // Initialise Firestore HERE — after authentication — so its internal
+  // credential provider starts in the already-signed-in state and reads the
+  // current user's token synchronously on first use.  MetaMask/SES breaks the
+  // *async* token-delivery notification that fires when auth state changes on
+  // an already-running Firestore instance; starting Firestore post-auth
+  // sidesteps that async path entirely.
+  const db = getDb();
   try { await cred.user.getIdToken(true); } catch {}
 
   let userDoc;
@@ -308,7 +313,6 @@ export function showScreen(id) {
 // ─── Init auth listeners ───────────────────────────────────────────────────
 export function initAuth() {
   const au = getAuth();
-  const db = getDb();
 
   let progress = 0;
   const bar = $('ldBar');
@@ -334,6 +338,9 @@ export function initAuth() {
 
     if (user) {
       try {
+        // Initialise Firestore while the user is already authenticated (same
+        // rationale as in doLogin — avoids async token-delivery path).
+        const db = getDb();
         // Race Firestore read against a 5 s timeout so a stalled WebChannel
         // doesn't freeze the loading screen either.
         const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000));
