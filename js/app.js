@@ -20,7 +20,9 @@ import { getPrices, fmtNum, fmtUSD, BASIS_SUPPLY } from './prices.js';
 
 // ─── Firebase init ──────────────────────────────────────────────────────────
 firebase.initializeApp(FIREBASE_CONFIG);
-firebase.firestore().enablePersistence().catch(() => {});
+// enablePersistence disabled: can cause Firestore to enter offline mode and
+// drop auth tokens from requests when it fails (multi-tab, storage quota, etc.)
+// firebase.firestore().enablePersistence().catch(() => {});
 
 // ─── Theme ───────────────────────────────────────────────────────────────────
 loadTheme();
