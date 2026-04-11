@@ -111,6 +111,7 @@ export async function doAuth() {
 // ─── Signup flow ────────────────────────────────────────────────────────────
 async function doSignup(au, db, email, name, pass) {
   const cred = await au.createUserWithEmailAndPassword(email, pass);
+  await cred.user.getIdToken(); // ensure auth token propagated before Firestore calls
 
   try {
     // Check ban
@@ -170,6 +171,9 @@ async function doSignup(au, db, email, name, pass) {
 // ─── Login flow ─────────────────────────────────────────────────────────────
 async function doLogin(au, db, email, name, pass) {
   const cred = await au.signInWithEmailAndPassword(email, pass);
+  // Firebase 11 compat: Firestore's internal auth listener is async — force
+  // token resolution so the SDK attaches the auth token before any Firestore call.
+  await cred.user.getIdToken();
 
   let userDoc;
   try {
