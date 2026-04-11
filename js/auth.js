@@ -179,6 +179,15 @@ async function doLogin(au, db, email, name, pass) {
     return;
   }
 
+  // Check kicked
+  if (userDoc.data().kicked) {
+    await au.signOut();
+    state.busy = false;
+    showStatus('You have been kicked from this room', 'err');
+    setLoading(false);
+    return;
+  }
+
   // Check ban
   const banDoc = await db.collection('bans').doc(userDoc.data().nameLower).get();
   if (banDoc.exists) {
@@ -192,7 +201,6 @@ async function doLogin(au, db, email, name, pass) {
   state.me = { uid: cred.user.uid, ...userDoc.data() };
   await db.collection('users').doc(cred.user.uid).update({
     online: true,
-    kicked: false,
     lastSeen: serverTimestamp()
   });
 
@@ -203,7 +211,6 @@ async function doLogin(au, db, email, name, pass) {
     ts: serverTimestamp()
   });
 
-  state.me.kicked = false;
   state.busy = false;
   enterChat();
 }
