@@ -196,11 +196,13 @@ function parseRestDoc(json) {
 async function readDocRest(collection, docId, token) {
   if (!docId) return null;
   try {
-    const res = await fetch(`${FS_BASE}/${collection}/${encodeURIComponent(docId)}`,
-      { headers: { Authorization: `Bearer ${token}` } });
+    const url = `${FS_BASE}/${collection}/${encodeURIComponent(docId)}`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    console.log(`[rest] GET ${collection}/${docId} → ${res.status}`);
     if (res.status === 404) return null;
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
+      console.error(`[rest] ${res.status} body:`, JSON.stringify(body));
       const err = new Error(body.error?.message || `REST ${res.status}`);
       err.code = res.status === 403 ? 'permission-denied' : 'unavailable';
       throw err;
@@ -230,6 +232,17 @@ async function doLogin(au, email, name, pass) {
   // regardless of initialisation order. The REST API accepts an explicit Bearer
   // token in the Authorization header and is completely unaffected by SES.
   const idToken = await cred.user.getIdToken(true);
+
+  // ── DIAGNOSTIC: log token validity ───────────────────────────────────────
+  console.log('[auth] uid:', cred.user.uid);
+  console.log('[auth] token type:', typeof idToken);
+  console.log('[auth] token ok:', typeof idToken === 'string' && idToken.startsWith('eyJ'));
+  if (idToken) console.log('[auth] token[:20]:', idToken.substring(0, 20));
+
+  // Validate token before making REST calls
+  if (typeof idToken !== 'string' || !idToken.startsWith('eyJ')) {
+    throw new Error('Token invalid after getIdToken(true) — cannot authenticate with Firestore');
+  }
 
   // Also initialise the Firestore SDK now (post-auth) so that subsequent
   // real-time listeners and writes have the best chance of picking up the token.
