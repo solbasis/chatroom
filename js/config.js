@@ -30,10 +30,12 @@ export const FIREBASE_CONFIG = {
 // fails with "Missing or insufficient permissions" because the REST helper
 // in auth.js gets a 403 on every read.
 //
-// Make sure chat.databasis.info is in this site key's allowed-domains list
-// at https://www.google.com/recaptcha/admin (or that databasis.info is
-// configured as a root domain — that covers all subdomains).
-export const RECAPTCHA_SITE_KEY = '6LdtEKIsAAAAAHAHowzhBeoVeNUuALU0WDWxT1lv';
+// Dedicated reCAPTCHA v3 key for chat.databasis.info (label "basis-chat",
+// owned by the basis Google Cloud project). The matching SECRET key is
+// registered in Firebase Console → App Check → basis chatroom. Keep these
+// in sync — if you rotate the key in reCAPTCHA admin, also update the
+// secret half in Firebase Console.
+export const RECAPTCHA_SITE_KEY = '6Ld34sssAAAAAMpVYpHF2zY5EROfO-upX5wQU_Ng';
 
 // ─── Node colors available on signup ────────────────────────────────────────
 export const NODE_COLORS = [
