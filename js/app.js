@@ -1,5 +1,5 @@
 // ─── BASIS://CHAT — Main Entry Point ────────────────────────────────────────
-import { FIREBASE_CONFIG } from './config.js';
+import { FIREBASE_CONFIG, RECAPTCHA_SITE_KEY } from './config.js';
 import { state, $ } from './state.js';
 import { initAuth, doAuth, switchAuthMode, doPasswordReset, buildColorPicker, logout } from './auth.js';
 import { handleSend, setPendingImage, clearPendingImage } from './chat.js';
@@ -20,6 +20,36 @@ import { getPrices, fmtNum, fmtUSD, BASIS_SUPPLY } from './prices.js';
 
 // ─── Firebase init ──────────────────────────────────────────────────────────
 firebase.initializeApp(FIREBASE_CONFIG);
+
+// ─── App Check init (REQUIRED — Firestore enforcement is ON) ────────────────
+// Project basis-acfec has Firestore App Check enforcement enabled. Without
+// activating App Check here, every Firestore read/write fails with
+// permission-denied — including the REST helper in auth.js that runs the
+// login flow. Use the same reCAPTCHA v3 site key shared with burn /
+// basis-gov (all under *.databasis.info).
+//
+// Dev escape hatch: set localStorage.FIREBASE_APPCHECK_DEBUG_TOKEN = 'true'
+// in DevTools BEFORE first load. The SDK then prints a debug token to the
+// console you can register at Firebase Console → App Check → Apps →
+// Manage debug tokens. Useful when working on chat.localhost and you don't
+// want to add localhost to the reCAPTCHA allowed-domains list.
+if (typeof window !== 'undefined') {
+  if (localStorage.getItem('FIREBASE_APPCHECK_DEBUG_TOKEN') === 'true') {
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  }
+  try {
+    firebase.appCheck().activate(
+      new firebase.appCheck.ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+      true   // isTokenAutoRefreshEnabled
+    );
+  } catch (err) {
+    // Double-init (hot reload) throws; ignore. Surface anything else so
+    // the dev sees why their Firestore calls are 403'ing.
+    if (!String(err?.message ?? '').includes('already-initialized')) {
+      console.warn('[firebase] App Check init failed:', err?.message ?? err);
+    }
+  }
+}
 
 // ─── Theme ───────────────────────────────────────────────────────────────────
 loadTheme();

@@ -17,6 +17,24 @@ export const FIREBASE_CONFIG = {
   appId:             "1:884887459105:web:e39be97abde4afcc271a60"
 };
 
+// ─── reCAPTCHA v3 site key for Firebase App Check ───────────────────────────
+// PUBLIC VALUE — ships in every Firebase web bundle that uses App Check. The
+// secret key lives in Google Cloud and is what validates tokens server-side.
+// Shared with burn.databasis.info and dao.databasis.info — all three apps
+// live under *.databasis.info so reusing one reCAPTCHA config keeps the
+// admin console simple.
+//
+// Project basis-acfec has Firestore App Check ENFORCEMENT enabled, which
+// means every Firestore read/write (SDK or REST) requires a valid App Check
+// token. Without this the chatroom can't reach Firestore at all — login
+// fails with "Missing or insufficient permissions" because the REST helper
+// in auth.js gets a 403 on every read.
+//
+// Make sure chat.databasis.info is in this site key's allowed-domains list
+// at https://www.google.com/recaptcha/admin (or that databasis.info is
+// configured as a root domain — that covers all subdomains).
+export const RECAPTCHA_SITE_KEY = '6LdtEKIsAAAAAHAHowzhBeoVeNUuALU0WDWxT1lv';
+
 // ─── Node colors available on signup ────────────────────────────────────────
 export const NODE_COLORS = [
   "#6ee75a", "#5abbe7", "#e75ae7", "#e7a85a", "#e75a5a",

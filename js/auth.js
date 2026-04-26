@@ -174,7 +174,28 @@ async function doSignup(au, email, name, pass) {
 }
 
 // ─── Firestore REST helpers (bypass SDK auth for SES-restricted environments) ─
+// Project basis-acfec has Firestore App Check enforcement enabled, so EVERY
+// REST call must include both:
+//   Authorization:        Bearer <Firebase Auth ID token>
+//   X-Firebase-AppCheck:  <App Check token>
+// Without the App Check header, Firestore returns 403 → the SDK error code
+// "permission-denied" → the user sees "Missing or insufficient permissions"
+// even though their auth and the rules are perfectly fine.
 const FS_BASE = 'https://firestore.googleapis.com/v1/projects/basis-acfec/databases/(default)/documents';
+
+// Cache the App Check token across login calls (it's good for ~1h, the SDK
+// auto-refreshes). Falls back to null if App Check failed to initialise —
+// the request will 403 and the caller will see a clear permission-denied
+// instead of a silent indefinite hang.
+async function getAppCheckTokenSafe() {
+  try {
+    const r = await firebase.appCheck().getToken(/* forceRefresh */ false);
+    return r?.token ?? null;
+  } catch (e) {
+    console.warn('[appcheck] getToken failed:', e?.message ?? e);
+    return null;
+  }
+}
 
 function parseRestDoc(json) {
   if (!json || !json.fields) return null;
@@ -197,8 +218,11 @@ async function readDocRest(collection, docId, token) {
   if (!docId) return null;
   try {
     const url = `${FS_BASE}/${collection}/${encodeURIComponent(docId)}`;
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    console.log(`[rest] GET ${collection}/${docId} → ${res.status}`);
+    const headers = { Authorization: `Bearer ${token}` };
+    const appCheckToken = await getAppCheckTokenSafe();
+    if (appCheckToken) headers['X-Firebase-AppCheck'] = appCheckToken;
+    const res = await fetch(url, { headers });
+    console.log(`[rest] GET ${collection}/${docId} → ${res.status}${appCheckToken ? ' (appcheck:ok)' : ' (appcheck:missing)'}`);
     if (res.status === 404) return null;
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
