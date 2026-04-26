@@ -428,7 +428,7 @@ export async function handleBotCommand(text) {
         const label = KNOWN_WALLETS[h.owner] ? ` [${KNOWN_WALLETS[h.owner]}]` : '';
         msg += `${i + 1}. ${short} — ${amt} BASIS (${pct}%)${label}\n`;
       });
-      msg += `\nhttps://solscan.io/token/${BASIS_MINT}#holders`;
+      msg += `\nhttps://orbmarkets.io/token/${BASIS_MINT}`;
       await botPost(msg);
     } catch (e) { await botPost('⚠ Unable to fetch holder data: ' + e.message); }
     return true;
@@ -509,7 +509,7 @@ export async function handleBotCommand(text) {
         `${total.toLocaleString('en-US', { maximumFractionDigits: 0 })} BASIS\n` +
         `${pct}% of supply\n` +
         `Tier: ${holderTier(total)}\n\n` +
-        `https://solscan.io/account/${wallet}`
+        `https://orbmarkets.io/account/${wallet}`
       );
     } catch (e) { await botPost('⚠ Unable to fetch balance: ' + e.message); }
     return true;
@@ -535,7 +535,7 @@ export async function handleBotCommand(text) {
         `Top ${pctile}% of holders\n` +
         `${h.amount.toLocaleString('en-US', { maximumFractionDigits: 0 })} BASIS (${(h.amount / BASIS_SUPPLY * 100).toFixed(4)}%)\n` +
         `Tier: ${holderTier(h.amount)}\n\n` +
-        `https://solscan.io/account/${wallet}`
+        `https://orbmarkets.io/account/${wallet}`
       );
     } catch (e) { await botPost('⚠ Unable to fetch rank: ' + e.message); }
     return true;
@@ -570,7 +570,7 @@ export async function handleBotCommand(text) {
         const cp = tx.other.slice(0, 4) + '...' + tx.other.slice(-4);
         msg += `${tx.type}  ${amt} BASIS  ${tx.type === 'SENT' ? '→' : '←'} ${cp}${tx.time ? '  · ' + tx.time : ''}\n`;
       });
-      msg += `\nhttps://solscan.io/account/${wallet}`;
+      msg += `\nhttps://orbmarkets.io/account/${wallet}`;
       await botPost(msg);
     } catch (e) { await botPost('⚠ Unable to fetch transactions: ' + e.message); }
     return true;

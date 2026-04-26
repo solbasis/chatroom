@@ -201,8 +201,8 @@ async function main() {
 
   for (const alert of alerts.reverse()) { // oldest first
     const walletShort = alert.buyer.slice(0, 6) + '...' + alert.buyer.slice(-4);
-    const walletUrl   = `https://solscan.io/account/${alert.buyer}`;
-    const txUrl       = `https://solscan.io/tx/${alert.sig}`;
+    const walletUrl   = `https://orbmarkets.io/account/${alert.buyer}`;
+    const txUrl       = `https://orbmarkets.io/tx/${alert.sig}`;
 
     if (alert.kind === 'buy') {
       // Track buyer
@@ -259,7 +259,7 @@ async function main() {
       const usdVal    = price > 0 ? alert.basisAmt * price : 0;
       const pctSupply = (alert.basisAmt / BASIS_SUPPLY * 100).toFixed(4);
       const walletShort2 = alert.buyer.slice(0, 6) + '...' + alert.buyer.slice(-4);
-      const walletUrl2   = `https://solscan.io/account/${alert.buyer}`;
+      const walletUrl2   = `https://orbmarkets.io/account/${alert.buyer}`;
 
       const text =
         `🔴 **$BASIS SELL ALERT**\n\n` +

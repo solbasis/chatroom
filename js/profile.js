@@ -40,7 +40,7 @@ export async function openProfile(username) {
         `<div class="prof-bio ${user.bio ? '' : 'empty'}">${user.bio ? esc(user.bio) : 'No bio set'}</div>` +
         // Twitter / Wallet display (non-edit view)
         (!isMe && user.twitterHandle ? `<div class="prof-link"><a href="https://x.com/${esc(user.twitterHandle)}" target="_blank" rel="noopener">@${esc(user.twitterHandle)} ↗</a></div>` : '') +
-        (!isMe && user.walletAddress ? `<div class="prof-link"><a href="https://solscan.io/address/${esc(user.walletAddress)}" target="_blank" rel="noopener">${esc(user.walletAddress.slice(0,4))}…${esc(user.walletAddress.slice(-4))} ↗</a></div>` : '') +
+        (!isMe && user.walletAddress ? `<div class="prof-link"><a href="https://orbmarkets.io/account/${esc(user.walletAddress)}" target="_blank" rel="noopener">${esc(user.walletAddress.slice(0,4))}…${esc(user.walletAddress.slice(-4))} ↗</a></div>` : '') +
       `</div>` +
       `<div class="prof-body">` +
         `<div class="prof-stats">` +
