@@ -222,7 +222,6 @@ async function readDocRest(collection, docId, token) {
     const appCheckToken = await getAppCheckTokenSafe();
     if (appCheckToken) headers['X-Firebase-AppCheck'] = appCheckToken;
     const res = await fetch(url, { headers });
-    console.log(`[rest] GET ${collection}/${docId} → ${res.status}${appCheckToken ? ' (appcheck:ok)' : ' (appcheck:missing)'}`);
     if (res.status === 404) return null;
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
@@ -249,25 +248,19 @@ async function doLogin(au, email, name, pass) {
   // by an extension, network failure, etc.) we fail fast with a clear
   // message instead of bouncing off Firestore with a generic permission
   // error that doesn't tell the user where the actual failure is.
-  let appCheckToken = null;
   try {
     const r = await firebase.appCheck().getToken(false);
-    appCheckToken = r?.token ?? null;
-    console.log('[appcheck] token[:20]:', appCheckToken ? appCheckToken.substring(0, 20) : '(null)');
+    if (!r?.token) {
+      throw Object.assign(new Error('App Check returned no token (reCAPTCHA likely blocked or domain not allowed)'),
+                          { code: 'app-check-no-token' });
+    }
   } catch (acErr) {
-    console.error('[appcheck] mint failed:', acErr);
+    if (acErr.code === 'app-check-no-token') throw acErr;
     throw Object.assign(new Error('App Check token mint failed: ' + (acErr?.message ?? acErr)),
                         { code: 'app-check-mint-failed' });
   }
-  if (!appCheckToken) {
-    throw Object.assign(new Error('App Check returned no token (reCAPTCHA likely blocked or domain not allowed)'),
-                        { code: 'app-check-no-token' });
-  }
 
-  let cred;
-  try {
-    cred = await au.signInWithEmailAndPassword(email, pass);
-  } catch (e) { throw Object.assign(e, { message: '[step:auth-signin] ' + e.message }); }
+  const cred = await au.signInWithEmailAndPassword(email, pass);
 
   // Wait for Firebase Auth to propagate the new session.
   await new Promise(resolve => {
@@ -279,14 +272,6 @@ async function doLogin(au, email, name, pass) {
   // regardless of initialisation order. The REST API accepts an explicit Bearer
   // token in the Authorization header and is completely unaffected by SES.
   const idToken = await cred.user.getIdToken(true);
-
-  // ── DIAGNOSTIC: log token validity ───────────────────────────────────────
-  console.log('[auth] uid:', cred.user.uid);
-  console.log('[auth] token type:', typeof idToken);
-  console.log('[auth] token ok:', typeof idToken === 'string' && idToken.startsWith('eyJ'));
-  if (idToken) console.log('[auth] token[:20]:', idToken.substring(0, 20));
-
-  // Validate token before making REST calls
   if (typeof idToken !== 'string' || !idToken.startsWith('eyJ')) {
     throw new Error('Token invalid after getIdToken(true) — cannot authenticate with Firestore');
   }
@@ -295,11 +280,8 @@ async function doLogin(au, email, name, pass) {
   // real-time listeners and writes have the best chance of picking up the token.
   const db = getDb();
 
-  let userData, banData;
-  try { userData = await readUserRest(cred.user.uid, idToken); }
-  catch (e) { throw Object.assign(e, { message: '[step:user-read] ' + e.message }); }
-  try { banData  = await readDocRest('bans', userData && userData.nameLower, idToken); }
-  catch (e) { throw Object.assign(e, { message: '[step:bans-read] ' + e.message }); }
+  const userData = await readUserRest(cred.user.uid, idToken);
+  const banData  = await readDocRest('bans', userData && userData.nameLower, idToken);
 
   if (!userData) {
     state.busy = false;
@@ -362,14 +344,9 @@ function friendlyError(e) {
       return 'Network error — check connection';
     case 'app-check-mint-failed':
     case 'app-check-no-token':
-      return 'App Check token unavailable — reCAPTCHA may be blocked or domain not allowed';
-    default: {
-      // Surface step + code + message so the failing path is obvious
-      // from the UI alone (no DevTools required on mobile).
-      const code = e?.code ? `[${e.code}] ` : '';
-      const msg  = e?.message || 'Unknown error';
-      return 'Auth failed: ' + code + msg;
-    }
+      return 'App Check token unavailable — try refreshing the page';
+    default:
+      return 'Auth failed: ' + (e.message || 'Unknown error');
   }
 }
 
