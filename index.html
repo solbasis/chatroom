@@ -21,8 +21,34 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap">
   <link rel="stylesheet" href="css/styles.css">
+
+  <!-- BASIS Theme — sets <html data-theme="dark|light"> before paint.
+       Chatroom already has its own [data-theme="light"] CSS overrides;
+       this script just toggles the attribute they react to. -->
+  <script src="theme.js"></script>
 </head>
 <body>
+
+  <!-- Floating theme toggle — visible across loading / auth / chat screens.
+       Sets html[data-theme] which chatroom's existing light-theme CSS rules
+       react to. Position-fixed so it never fights existing layouts. -->
+  <button class="theme-toggle-float" type="button"
+          onclick="window.BasisTheme&&window.BasisTheme.toggle()"
+          aria-label="Toggle light/dark theme" title="Toggle theme"
+          id="themeToggleBtn">☼</button>
+  <script>
+    (function () {
+      if (!window.BasisTheme) return;
+      var btn = document.getElementById('themeToggleBtn');
+      if (!btn) return;
+      var update = function () {
+        btn.textContent = window.BasisTheme.get() === 'dark' ? '☼' : '☾';
+      };
+      update();
+      window.BasisTheme.onChange(update);
+    })();
+  </script>
+
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <!-- LOADING SCREEN                                                        -->

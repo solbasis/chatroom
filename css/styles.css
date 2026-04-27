@@ -1509,3 +1509,31 @@ mark {
 }
 .prof-copy-btn:hover { border-color: var(--g); color: var(--g); }
 
+
+/* ─── Floating theme toggle ─────────────────────────────────────────────── */
+.theme-toggle-float {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  width: 36px; height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg2);
+  color: var(--text-soft);
+  border: 1px solid var(--border-hi);
+  border-radius: 50%;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: var(--shadow), var(--glow);
+  transition: background .15s, border-color .15s, color .15s, transform .12s;
+}
+.theme-toggle-float:hover {
+  background: var(--bg3);
+  border-color: var(--border-act);
+  color: var(--g);
+  transform: translateY(-1px);
+}
+.theme-toggle-float:active { transform: translateY(0); }
